@@ -73,7 +73,7 @@ Each phrase should include the local script/text and its English meaning.
 
 HOTEL & STAY SELECTION:
 For EACH day, ensure the final activity slot (usually in the evening or night) is a high-quality hotel or accommodation suggestion. 
-This accommodation MUST be located efficiently near the day's final sightseeing spot to minimize commute time for the traveler. 
+This accommodation MUST be located efficiently near the day's final sightseeing spot of that day to minimize commute time for the traveler. 
 Include the specific name of the hotel in the "activity" and its real address in the "location".
 
 IMPORTANT BUDGET ALLOCATION:
