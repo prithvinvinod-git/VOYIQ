@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from "react";
@@ -21,9 +22,11 @@ import {
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { PlanSelectionDialog } from "@/components/shared/PlanSelectionDialog";
+import { useUser } from "@/firebase";
 
 export default function LandingPage() {
   const router = useRouter();
+  const { user } = useUser();
   const heroImg = PlaceHolderImages.find(img => img.id === "hero-travel");
 
   const handleProceed = (destination: string) => {
@@ -49,10 +52,16 @@ export default function LandingPage() {
             <Link href="/auth">
               <Button variant="ghost" className="hidden sm:inline-flex">Sign In</Button>
             </Link>
-            <PlanSelectionDialog 
-              trigger={<Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6">Get Started</Button>}
-              onSelectFree={() => handleProceed("/auth")}
-            />
+            {user ? (
+              <PlanSelectionDialog 
+                trigger={<Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6">Get Started</Button>}
+                onSelectFree={() => handleProceed("/plan/new")}
+              />
+            ) : (
+              <Link href="/auth">
+                <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6">Get Started</Button>
+              </Link>
+            )}
           </div>
         </div>
       </header>
@@ -72,22 +81,28 @@ export default function LandingPage() {
             Ditch the spreadsheets. VOYIQ uses AI to build hyper-personalized itineraries and track your budget in real-time. 
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-            <PlanSelectionDialog 
-              trigger={
+            {user ? (
+              <PlanSelectionDialog 
+                trigger={
+                  <Button size="lg" className="h-16 px-10 text-lg bg-primary hover:bg-primary/90 rounded-full shadow-2xl shadow-primary/20">
+                    Create My First Trip <ArrowRight className="ml-2 w-5 h-5" />
+                  </Button>
+                }
+                onSelectFree={() => handleProceed("/plan/new")}
+              />
+            ) : (
+              <Link href="/auth">
                 <Button size="lg" className="h-16 px-10 text-lg bg-primary hover:bg-primary/90 rounded-full shadow-2xl shadow-primary/20">
                   Create My First Trip <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
-              }
-              onSelectFree={() => handleProceed("/plan/new")}
-            />
-            <PlanSelectionDialog 
-              trigger={
-                <Button variant="outline" size="lg" className="h-16 px-10 text-lg border-white/10 hover:bg-white/5 rounded-full backdrop-blur-sm">
-                  Join for Free
-                </Button>
-              }
-              onSelectFree={() => handleProceed("/auth")}
-            />
+              </Link>
+            )}
+            
+            <Link href="/auth">
+              <Button variant="outline" size="lg" className="h-16 px-10 text-lg border-white/10 hover:bg-white/5 rounded-full backdrop-blur-sm">
+                Join for Free
+              </Button>
+            </Link>
           </div>
         </div>
 
@@ -205,14 +220,22 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl md:text-6xl font-headline font-bold mb-8">Ready to start roamin'?</h2>
           <p className="text-xl text-muted-foreground mb-12 max-w-xl mx-auto">Join the future of travel planning today. No hidden fees, just pure exploration.</p>
-          <PlanSelectionDialog 
-            trigger={
+          {user ? (
+            <PlanSelectionDialog 
+              trigger={
+                <Button size="lg" className="h-16 px-12 text-xl bg-accent text-accent-foreground hover:bg-accent/90 rounded-full shadow-2xl shadow-accent/20">
+                  Get Started Free
+                </Button>
+              }
+              onSelectFree={() => handleProceed("/plan/new")}
+            />
+          ) : (
+            <Link href="/auth">
               <Button size="lg" className="h-16 px-12 text-xl bg-accent text-accent-foreground hover:bg-accent/90 rounded-full shadow-2xl shadow-accent/20">
                 Get Started Free
               </Button>
-            }
-            onSelectFree={() => handleProceed("/auth")}
-          />
+            </Link>
+          )}
         </div>
       </section>
 
