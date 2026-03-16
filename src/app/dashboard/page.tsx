@@ -5,7 +5,7 @@ import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, MapPin, Calendar, Wallet, Progress as ProgressIcon, LogOut, Search } from "lucide-react";
+import { Plus, MapPin, Calendar, Wallet, Activity as ProgressIcon, LogOut, Search } from "lucide-react";
 import Link from "next/link";
 import { useUser, useCollection, useFirestore, useAuth, useMemoFirebase } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
