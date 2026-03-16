@@ -41,7 +41,7 @@ const ItinerarySlotSchema = z.object({
   durationMinutes: z.number().int().positive().describe('Duration in minutes.'),
   category: z.string().describe('Category of the activity.'),
   tips: z.string().describe('Helpful tips.'),
-  localPhrases: z.array(LocalPhraseSchema).describe('3-4 helpful phrases in the LOCAL language of the destination specifically for this activity/category.'),
+  localPhrases: z.array(LocalPhraseSchema).describe('3-4 helpful phrases in the LOCAL native language of the destination specifically for this activity/category.'),
 });
 
 const ItineraryDaySchema = z.object({
@@ -69,8 +69,8 @@ itinerary based on the provided trip details.
 
 LOCAL LANGUAGE INTEGRATION:
 Identify the primary language spoken at the destination ({{{destination}}}). 
-For EVERY activity slot, provide 3-4 "localPhrases" in that native language (e.g., if the destination is Paris, provide French phrases like "L'addition s'il vous plaît" for a restaurant visit).
-Each phrase should include the local text and its English meaning.
+For EVERY activity slot, provide 3-4 "localPhrases" in that NATIVE language (e.g., if the destination is Paris, provide French phrases; if Tokyo, provide Japanese phrases).
+Each phrase should include the local script/text and its English meaning.
 
 IMPORTANT BUDGET ALLOCATION:
 The user has a total budget of {{{totalBudget}}} {{{currency}}}. 

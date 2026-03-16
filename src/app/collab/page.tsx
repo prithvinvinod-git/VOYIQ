@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -40,7 +41,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 
 export default function CollabPage() {
@@ -239,9 +239,9 @@ export default function CollabPage() {
                 <Users className="w-6 h-6 text-primary" /> Room Members
               </DialogTitle>
             </div>
-            <DialogDescription className="text-muted-foreground">
+            <div className="text-sm text-muted-foreground">
               Current explorers in room <span className="font-bold text-accent">{displayCode}</span>
-            </DialogDescription>
+            </div>
           </DialogHeader>
           
           <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar py-4">
