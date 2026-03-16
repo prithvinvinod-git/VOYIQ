@@ -40,6 +40,7 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
   const firestore = useFirestore();
   const router = useRouter();
   const [isPlanDialogOpen, setIsPlanDialogOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -54,8 +55,10 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
   };
 
   const handleCollabClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsMenuOpen(false); // Close the menu immediately to prevent focus lock
+    
     if (!isPremium) {
-      e.preventDefault();
       setIsPlanDialogOpen(true);
     } else {
       router.push("/collab");
@@ -102,7 +105,7 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
         </div>
 
         <div className="flex items-center gap-4">
-          <DropdownMenu modal={false}>
+          <DropdownMenu modal={false} open={isMenuOpen} onOpenChange={setIsMenuOpen}>
             <DropdownMenuTrigger asChild>
               <div className="flex items-center gap-2 pl-2 pr-4 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full cursor-pointer transition-all">
                 <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border border-white/10">
@@ -124,10 +127,10 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
               <div className="px-2 py-1.5 text-xs font-bold text-muted-foreground uppercase tracking-widest">
                 Account
               </div>
-              <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/dashboard")}>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => { setIsMenuOpen(false); router.push("/dashboard"); }}>
                 <LayoutDashboard className="mr-2 w-4 h-4" /> Dashboard
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/plan/new")}>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => { setIsMenuOpen(false); router.push("/plan/new"); }}>
                 <Plane className="mr-2 w-4 h-4" /> Plan New Trip
               </DropdownMenuItem>
               

@@ -53,7 +53,11 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0, open
   const { toast } = useToast();
   
   const isOpen = openProp !== undefined ? openProp : internalOpen;
-  const setOpen = onOpenChange !== undefined ? onOpenChange : setInternalOpen;
+  const setOpen = (val: boolean) => {
+    if (onOpenChange) onOpenChange(val);
+    else setInternalOpen(val);
+    if (!val) setPromoCode(""); // Reset on close
+  };
   
   const isLimitReached = tripCount >= 4;
 
@@ -106,10 +110,9 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0, open
         description: "Your account has been upgraded successfully. Collab features are now unlocked!"
       });
       
-      // Closing with a slight delay to ensure UI states settle
       setTimeout(() => {
         setOpen(false);
-      }, 150);
+      }, 300);
     } catch (e: any) {
       console.error("Upgrade error:", e);
       toast({

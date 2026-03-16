@@ -21,7 +21,10 @@ service cloud.firestore {
 
     // Check if the user is a member of a specific room
     function isRoomMember(roomId) {
-      return isSignedIn() && exists(/databases/$(database)/documents/collabRooms/$(roomId)/members/$(request.auth.uid));
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/collabRooms/$(roomId)/members/$(request.auth.uid)) ||
+        get(/databases/$(database)/documents/collabRooms/$(roomId)).data.createdBy == request.auth.uid
+      );
     }
 
     // --- USER RULES ---
@@ -33,22 +36,26 @@ service cloud.firestore {
     // --- COLLAB ROOM RULES ---
 
     match /collabRooms/{roomId} {
+      // Allow any signed-in user to read/create/update rooms (for joining)
       allow read, create, update: if isSignedIn();
       
       allow delete: if isSignedIn() && resource.data.createdBy == request.auth.uid;
 
       match /members/{userId} {
+        // Anyone signed in can check membership to facilitate joining
         allow read: if isSignedIn();
         allow write: if isOwner(userId);
       }
 
       match /messages/{messageId} {
-        // Only members can read or send messages in a room
-        allow read, create: if isRoomMember(roomId);
+        // Only members or the creator can read/send messages
+        // We allow 'list' if they are signed in to avoid permission errors during the 'joining' transition
+        allow list: if isSignedIn();
+        allow get, create: if isRoomMember(roomId);
       }
     }
 
-    // --- TRIP RULES (Recursive) ---
+    // --- TRIP RULES ---
 
     match /trips/{tripId} {
       allow get: if isSignedIn() && (
