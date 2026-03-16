@@ -64,13 +64,17 @@ const itineraryGenerationPrompt = ai.definePrompt({
   name: 'itineraryGenerationPrompt',
   input: { schema: GeneratePersonalizedItineraryInputSchema },
   output: { schema: GeneratePersonalizedItineraryOutputSchema },
-  prompt: `You are VOYIQ's expert travel planner. Generate a hyper-personalized day-by-day
-itinerary based on the provided trip details.
+  prompt: `You are VOYIQ's expert travel planner. Generate a hyper-personalized day-by-day itinerary based on the provided trip details.
 
 LOCAL LANGUAGE INTEGRATION:
 Identify the primary language spoken at the destination ({{{destination}}}). 
 For EVERY activity slot, provide 3-4 "localPhrases" in that NATIVE language (e.g., if the destination is Paris, provide French phrases; if Tokyo, provide Japanese phrases).
 Each phrase should include the local script/text and its English meaning.
+
+HOTEL & STAY SELECTION:
+For EACH day, ensure the final activity slot (usually in the evening or night) is a high-quality hotel or accommodation suggestion. 
+This accommodation MUST be located efficiently near the day's final sightseeing spot to minimize commute time for the traveler. 
+Include the specific name of the hotel in the "activity" and its real address in the "location".
 
 IMPORTANT BUDGET ALLOCATION:
 The user has a total budget of {{{totalBudget}}} {{{currency}}}. 

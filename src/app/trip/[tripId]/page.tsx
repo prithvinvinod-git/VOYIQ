@@ -206,18 +206,25 @@ export default function TripDetail() {
   };
 
   const handleNavigateAll = () => {
-    if (!trip || !currentDay) return;
+    if (!trip || !currentDay || !currentDay.slots || currentDay.slots.length === 0) return;
     
-    const origin = encodeURIComponent(trip.origin || "current location");
-    const waypoints = currentDay.slots?.map((s: any) => encodeURIComponent(s.location)).filter(Boolean) || [];
+    const slots = currentDay.slots;
+    // Start navigation from the first spot of the day
+    const origin = encodeURIComponent(slots[0].location);
     
-    if (waypoints.length === 0) return;
+    if (slots.length === 1) {
+      // If only one spot, navigate from current location to that spot
+      const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=current+location&destination=${origin}&travelmode=driving`;
+      window.open(mapsUrl, '_blank');
+      return;
+    }
 
-    // Use the last waypoint as the destination for the day
-    const destination = waypoints.pop();
+    const waypoints = slots.slice(1, -1).map((s: any) => encodeURIComponent(s.location)).filter(Boolean);
+    const destination = encodeURIComponent(slots[slots.length - 1].location);
+    
     const waypointQuery = waypoints.length > 0 ? `&waypoints=${waypoints.join('|')}` : '';
     
-    // Construct Google Maps direction URL
+    // Construct Google Maps direction URL: Start at Slot 1, go through waypoints, end at Last Slot
     const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}${waypointQuery}&travelmode=driving`;
     window.open(mapsUrl, '_blank');
   };
