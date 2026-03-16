@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/tabs";
 import { Compass, Mail, Phone, Lock, ArrowRight, Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -37,16 +37,26 @@ export default function AuthPage() {
   const [configError, setConfigError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Initialize ReCAPTCHA verifier for phone auth
     if (typeof window !== "undefined" && auth && !recaptchaVerifier) {
       try {
         const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
           size: 'invisible',
+          callback: () => {
+            // reCAPTCHA solved, allow signInWithPhoneNumber.
+          }
         });
         setRecaptchaVerifier(verifier);
       } catch (e) {
         console.error("Recaptcha init failed:", e);
       }
     }
+    
+    return () => {
+      if (recaptchaVerifier) {
+        recaptchaVerifier.clear();
+      }
+    };
   }, [auth, recaptchaVerifier]);
 
   const handleGoogleSignIn = async () => {
@@ -62,10 +72,16 @@ export default function AuthPage() {
       router.push("/dashboard");
     } catch (error: any) {
       console.error("Google Auth Error:", error);
+      // Handle the case where the user simply closes the popup
+      if (error.code === "auth/popup-closed-by-user") {
+        setLoading(false);
+        return; 
+      }
+      
       if (error.code === "auth/operation-not-allowed") {
         setConfigError("Google sign-in is not enabled in your Firebase Console. Please enable it under Authentication > Sign-in method.");
       } else if (error.code === "auth/unauthorized-domain") {
-        setConfigError(`This domain is not authorized. Please go to Firebase Console > Authentication > Settings > Authorized domains and add "${window.location.hostname}".`);
+        setConfigError(`This domain is not authorized. Please go to Firebase Console > Authentication > Settings > Authorized domains and add your current domain.`);
       } else {
         toast({
           variant: "destructive",
@@ -130,7 +146,7 @@ export default function AuthPage() {
       if (error.code === "auth/operation-not-allowed") {
         setConfigError("Phone sign-in is not enabled in your Firebase Console.");
       } else if (error.code === "auth/unauthorized-domain") {
-        setConfigError(`This domain is not authorized for phone sign-in. Add "${window.location.hostname}" to Authorized Domains in Firebase Console.`);
+        setConfigError(`This domain is not authorized for phone sign-in. Add your current domain to Authorized Domains in Firebase Console.`);
       } else {
         toast({ variant: "destructive", title: "Phone auth failed", description: error.message });
       }
@@ -158,6 +174,7 @@ export default function AuthPage() {
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_30%_30%,hsl(var(--primary)/0.1),transparent_50%)]" />
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_70%_70%,hsl(var(--accent)/0.05),transparent_50%)]" />
 
+      {/* Invisible ReCAPTCHA container */}
       <div id="recaptcha-container"></div>
 
       <div className="w-full max-w-md space-y-4">
