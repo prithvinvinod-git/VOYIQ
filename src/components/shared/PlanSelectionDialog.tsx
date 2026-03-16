@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Check, Sparkles, Zap, Crown, Users, Wallet, MessageSquare, AlertTriangle, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore } from "@/firebase";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 
 interface PlanSelectionDialogProps {
@@ -51,7 +51,9 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0 }: Pl
   ];
 
   const handleUpgrade = async () => {
-    if (promoCode.trim().toLowerCase() !== "coet") {
+    const inputCode = promoCode.trim().toLowerCase();
+    
+    if (inputCode !== "coet") {
       toast({
         variant: "destructive",
         title: "Invalid Code",
@@ -71,19 +73,28 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0 }: Pl
 
     setIsUpgrading(true);
     try {
-      await updateDoc(doc(firestore, "users", user.uid), {
-        isPremium: true
-      });
+      // Use setDoc with merge: true to ensure the document exists
+      const userRef = doc(firestore, "users", user.uid);
+      await setDoc(userRef, {
+        isPremium: true,
+        id: user.uid,
+        email: user.email,
+        name: user.displayName,
+        photoURL: user.photoURL,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
       toast({
         title: "Welcome to Premium!",
         description: "Your account has been upgraded successfully. Collab features are now unlocked!"
       });
       setOpen(false);
     } catch (e: any) {
+      console.error("Upgrade error:", e);
       toast({
         variant: "destructive",
         title: "Upgrade Failed",
-        description: e.message
+        description: e.message || "Could not process upgrade. Please try again."
       });
     } finally {
       setIsUpgrading(false);
@@ -95,23 +106,23 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0 }: Pl
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className="max-w-[95vw] sm:max-w-[700px] glass-card border-white/10 p-0 overflow-hidden flex flex-col max-h-[90vh]">
-        <DialogHeader className="p-6 md:p-8 pb-4 text-center shrink-0">
-          <DialogTitle className="text-2xl md:text-3xl font-headline font-bold mb-2">Explorer Tiers</DialogTitle>
-          <DialogDescription className="text-muted-foreground text-sm">
+      <DialogContent className="max-w-[95vw] sm:max-w-[700px] glass-card border-white/10 p-0 overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[90vh]">
+        <DialogHeader className="p-4 sm:p-8 pb-2 text-center shrink-0">
+          <DialogTitle className="text-xl sm:text-3xl font-headline font-bold mb-1">Explorer Tiers</DialogTitle>
+          <DialogDescription className="text-muted-foreground text-xs sm:text-sm">
             Unlock the future of collaborative travel.
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex-1 overflow-y-auto px-6 md:px-8 pb-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-8 pb-6 sm:pb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {/* Free Plan */}
             <Card className={`bg-white/5 border-white/10 hover:border-primary/50 transition-all flex flex-col ${isLimitReached ? 'ring-2 ring-destructive/50' : ''}`}>
-              <CardContent className="p-5 md:p-6 flex-1 flex flex-col">
-                <div className="mb-4 md:mb-6">
+              <CardContent className="p-4 sm:p-6 flex-1 flex flex-col">
+                <div className="mb-4">
                   <Badge variant="outline" className="mb-2 border-primary/30 text-primary">Standard</Badge>
-                  <h3 className="text-xl md:text-2xl font-bold">Explorer</h3>
-                  <p className="text-2xl md:text-3xl font-headline font-bold mt-2">Free</p>
+                  <h3 className="text-lg sm:text-xl font-bold">Explorer</h3>
+                  <p className="text-xl sm:text-2xl font-headline font-bold mt-1">Free</p>
                   {isLimitReached && (
                     <div className="mt-2 flex items-center gap-2 text-destructive text-[10px] font-bold uppercase">
                       <AlertTriangle className="w-3 h-3" /> Limit Reached ({tripCount}/4)
@@ -119,9 +130,9 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0 }: Pl
                   )}
                 </div>
                 
-                <ul className="space-y-3 mb-6 md:mb-8 flex-1">
+                <ul className="space-y-2 mb-6 flex-1">
                   {freeFeatures.map((f, i) => (
-                    <li key={i} className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <li key={i} className="flex items-center gap-3 text-xs sm:text-sm text-muted-foreground">
                       <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
                         <f.icon className="w-3 h-3 text-primary" />
                       </div>
@@ -131,7 +142,7 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0 }: Pl
                 </ul>
                 
                 <Button 
-                  className="w-full h-11 md:h-12 bg-white/10 hover:bg-white/20 text-white text-sm"
+                  className="w-full h-10 sm:h-12 bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm"
                   disabled={isLimitReached}
                   onClick={() => {
                     setOpen(false);
@@ -148,18 +159,18 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0 }: Pl
               <div className="absolute top-0 right-0 p-2">
                 <Badge className="bg-accent text-accent-foreground font-bold">PRO</Badge>
               </div>
-              <CardContent className="p-5 md:p-6 flex-1 flex flex-col">
-                <div className="mb-4 md:mb-6">
+              <CardContent className="p-4 sm:p-6 flex-1 flex flex-col">
+                <div className="mb-4">
                   <Badge variant="outline" className="mb-2 border-accent/30 text-accent">Real-time Collab</Badge>
-                  <h3 className="text-xl md:text-2xl font-bold flex items-center gap-2">
-                    Premium <Crown className="w-5 h-5 text-accent" />
+                  <h3 className="text-lg sm:text-xl font-bold flex items-center gap-2">
+                    Premium <Crown className="w-4 h-4 text-accent" />
                   </h3>
-                  <p className="text-2xl md:text-3xl font-headline font-bold mt-2">₹2,999<span className="text-xs font-normal text-muted-foreground">/yr</span></p>
+                  <p className="text-xl sm:text-2xl font-headline font-bold mt-1">₹2,999<span className="text-[10px] sm:text-xs font-normal text-muted-foreground">/yr</span></p>
                 </div>
                 
-                <ul className="space-y-3 mb-6 flex-1">
+                <ul className="space-y-2 mb-4 flex-1">
                   {premiumFeatures.map((f, i) => (
-                    <li key={i} className="flex items-center gap-3 text-sm font-medium">
+                    <li key={i} className="flex items-center gap-3 text-xs sm:text-sm font-medium">
                       <div className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
                         <f.icon className="w-3 h-3 text-accent" />
                       </div>
@@ -168,18 +179,19 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0 }: Pl
                   ))}
                 </ul>
 
-                <div className="space-y-2 mt-4">
-                  <Label htmlFor="promo" className="text-[10px] uppercase font-bold text-muted-foreground">Enter Upgrade Code</Label>
+                <div className="space-y-2 pt-2 border-t border-white/10">
+                  <Label htmlFor="promo" className="text-[9px] uppercase font-bold text-muted-foreground">Upgrade Secret Code</Label>
                   <div className="flex gap-2">
                     <Input 
                       id="promo"
                       placeholder="e.g. coet" 
-                      className="h-10 bg-white/10 border-white/10 text-xs"
+                      className="h-9 sm:h-10 bg-white/10 border-white/10 text-xs"
                       value={promoCode}
                       onChange={(e) => setPromoCode(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleUpgrade()}
                     />
                     <Button 
-                      className="h-10 bg-accent text-accent-foreground hover:bg-accent/90 px-4 text-xs font-bold"
+                      className="h-9 sm:h-10 bg-accent text-accent-foreground hover:bg-accent/90 px-3 sm:px-4 text-[10px] sm:text-xs font-bold shrink-0"
                       onClick={handleUpgrade}
                       disabled={isUpgrading}
                     >
