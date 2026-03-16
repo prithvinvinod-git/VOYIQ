@@ -10,7 +10,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { googleAI } from '@genkit-ai/google-genai';
 
 // Define schemas
 const ChatMessageSchema = z.object({
@@ -85,9 +84,8 @@ const aiChatPrompt = ai.definePrompt({
   name: 'aiChatPrompt',
   input: { schema: AIChatInputSchema },
   output: { schema: AIChatOutputSchema },
-  // Note: The app proposal requested Claude API, but due to Genkit initialization constraints
-  // to only use googleAI models as configured in genkit.ts, we are using gemini-2.5-flash as a proxy.
-  model: googleAI.model('gemini-2.5-flash'),
+  // Use the model registered in the ai instance
+  model: 'googleai/gemini-2.5-flash',
   prompt: `You are VOYIQ's expert AI chat companion, your AI Travel Brain. Your role is to provide instant, relevant recommendations and information throughout the user's journey, always considering their trip context.
 
 Current Date: {{{currentDate}}}
