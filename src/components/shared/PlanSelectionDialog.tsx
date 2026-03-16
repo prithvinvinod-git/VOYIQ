@@ -14,7 +14,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Check, Sparkles, Zap, Crown, Users, Wallet, MessageSquare, AlertTriangle, Loader2 } from "lucide-react";
+import { 
+  Check, 
+  Sparkles, 
+  Zap, 
+  Crown, 
+  Users, 
+  Wallet, 
+  MessageSquare, 
+  AlertTriangle, 
+  Loader2,
+  Navigation,
+  Mic,
+  Languages,
+  Clock
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore } from "@/firebase";
 import { doc, setDoc } from "firebase/firestore";
@@ -44,10 +58,11 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0 }: Pl
   ];
 
   const premiumFeatures = [
-    { icon: Users, text: "Real-time Collab Rooms" },
-    { icon: Zap, text: "Unlimited Itineraries" },
-    { icon: Crown, text: "Priority AI Brain" },
-    { icon: Check, text: "Exclusive Pro Perks" },
+    { icon: Users, text: "Real-time Collab Rooms", status: "active" },
+    { icon: Zap, text: "Unlimited Itineraries", status: "active" },
+    { icon: Navigation, text: "AR Navigation", status: "upcoming" },
+    { icon: Mic, text: "AI Voice Travel Assistant", status: "upcoming" },
+    { icon: Languages, text: "Live Voice Translation", status: "upcoming" },
   ];
 
   const handleUpgrade = async () => {
@@ -73,7 +88,6 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0 }: Pl
 
     setIsUpgrading(true);
     try {
-      // Use setDoc with merge: true to ensure the document exists
       const userRef = doc(firestore, "users", user.uid);
       await setDoc(userRef, {
         isPremium: true,
@@ -106,35 +120,35 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0 }: Pl
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className="max-w-[95vw] sm:max-w-[700px] glass-card border-white/10 p-0 overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[90vh]">
-        <DialogHeader className="p-4 sm:p-8 pb-2 text-center shrink-0">
-          <DialogTitle className="text-xl sm:text-3xl font-headline font-bold mb-1">Explorer Tiers</DialogTitle>
-          <DialogDescription className="text-muted-foreground text-xs sm:text-sm">
-            Unlock the future of collaborative travel.
+      <DialogContent className="max-w-[95vw] sm:max-w-[750px] glass-card border-white/10 p-0 overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[90vh]">
+        <DialogHeader className="p-6 sm:p-10 pb-4 text-center shrink-0">
+          <DialogTitle className="text-2xl sm:text-4xl font-headline font-bold mb-2">Explorer Tiers</DialogTitle>
+          <DialogDescription className="text-muted-foreground text-sm sm:text-base">
+            Choose the best way to power your adventures.
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex-1 overflow-y-auto px-4 sm:px-8 pb-6 sm:pb-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+        <div className="flex-1 overflow-y-auto px-6 sm:px-10 pb-8 sm:pb-12 custom-scrollbar">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Free Plan */}
             <Card className={`bg-white/5 border-white/10 hover:border-primary/50 transition-all flex flex-col ${isLimitReached ? 'ring-2 ring-destructive/50' : ''}`}>
-              <CardContent className="p-4 sm:p-6 flex-1 flex flex-col">
-                <div className="mb-4">
-                  <Badge variant="outline" className="mb-2 border-primary/30 text-primary">Standard</Badge>
-                  <h3 className="text-lg sm:text-xl font-bold">Explorer</h3>
-                  <p className="text-xl sm:text-2xl font-headline font-bold mt-1">Free</p>
+              <CardContent className="p-6 flex-1 flex flex-col">
+                <div className="mb-6">
+                  <Badge variant="outline" className="mb-3 border-primary/30 text-primary px-3 py-1">Standard</Badge>
+                  <h3 className="text-xl font-bold">Free Explorer</h3>
+                  <p className="text-2xl font-headline font-bold mt-2 text-white">₹0</p>
                   {isLimitReached && (
-                    <div className="mt-2 flex items-center gap-2 text-destructive text-[10px] font-bold uppercase">
-                      <AlertTriangle className="w-3 h-3" /> Limit Reached ({tripCount}/4)
+                    <div className="mt-3 flex items-center gap-2 text-destructive text-[10px] font-bold uppercase bg-destructive/10 p-2 rounded-lg">
+                      <AlertTriangle className="w-4 h-4" /> Trip Limit Reached ({tripCount}/4)
                     </div>
                   )}
                 </div>
                 
-                <ul className="space-y-2 mb-6 flex-1">
+                <ul className="space-y-4 mb-8 flex-1">
                   {freeFeatures.map((f, i) => (
-                    <li key={i} className="flex items-center gap-3 text-xs sm:text-sm text-muted-foreground">
-                      <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                        <f.icon className="w-3 h-3 text-primary" />
+                    <li key={i} className="flex items-center gap-3 text-sm text-muted-foreground">
+                      <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                        <f.icon className="w-3.5 h-3.5 text-primary" />
                       </div>
                       {f.text}
                     </li>
@@ -142,7 +156,7 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0 }: Pl
                 </ul>
                 
                 <Button 
-                  className="w-full h-10 sm:h-12 bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm"
+                  className="w-full h-12 bg-white/10 hover:bg-white/20 text-white font-bold"
                   disabled={isLimitReached}
                   onClick={() => {
                     setOpen(false);
@@ -155,47 +169,50 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0 }: Pl
             </Card>
 
             {/* Premium Plan */}
-            <Card className="relative overflow-hidden border-accent/50 bg-gradient-to-br from-primary/10 to-accent/10 flex flex-col">
-              <div className="absolute top-0 right-0 p-2">
-                <Badge className="bg-accent text-accent-foreground font-bold">PRO</Badge>
+            <Card className="relative overflow-hidden border-accent/50 bg-gradient-to-br from-primary/10 to-accent/10 flex flex-col shadow-2xl">
+              <div className="absolute top-0 right-0 p-3">
+                <Badge className="bg-accent text-accent-foreground font-bold shadow-lg">PREMIUM</Badge>
               </div>
-              <CardContent className="p-4 sm:p-6 flex-1 flex flex-col">
-                <div className="mb-4">
-                  <Badge variant="outline" className="mb-2 border-accent/30 text-accent">Real-time Collab</Badge>
-                  <h3 className="text-lg sm:text-xl font-bold flex items-center gap-2">
-                    Premium <Crown className="w-4 h-4 text-accent" />
+              <CardContent className="p-6 flex-1 flex flex-col">
+                <div className="mb-6">
+                  <Badge variant="outline" className="mb-3 border-accent/30 text-accent px-3 py-1">Unlimited Potential</Badge>
+                  <h3 className="text-xl font-bold flex items-center gap-2">
+                    Pro Voyager <Crown className="w-5 h-5 text-accent" />
                   </h3>
-                  <p className="text-xl sm:text-2xl font-headline font-bold mt-1">₹2,999<span className="text-[10px] sm:text-xs font-normal text-muted-foreground">/yr</span></p>
+                  <p className="text-2xl font-headline font-bold mt-2 text-white">₹2,999<span className="text-xs font-normal text-muted-foreground ml-1">/year</span></p>
                 </div>
                 
-                <ul className="space-y-2 mb-4 flex-1">
+                <ul className="space-y-4 mb-6 flex-1">
                   {premiumFeatures.map((f, i) => (
-                    <li key={i} className="flex items-center gap-3 text-xs sm:text-sm font-medium">
-                      <div className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
-                        <f.icon className="w-3 h-3 text-accent" />
+                    <li key={i} className={`flex items-center gap-3 text-sm ${f.status === 'upcoming' ? 'text-muted-foreground italic' : 'font-semibold text-white'}`}>
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${f.status === 'upcoming' ? 'bg-white/5' : 'bg-accent/20'}`}>
+                        {f.status === 'upcoming' ? <Clock className="w-3.5 h-3.5 opacity-50" /> : <f.icon className="w-3.5 h-3.5 text-accent" />}
                       </div>
-                      {f.text}
+                      <div className="flex flex-col">
+                        <span>{f.text}</span>
+                        {f.status === 'upcoming' && <span className="text-[10px] uppercase font-bold text-accent/60 not-italic">Coming Soon</span>}
+                      </div>
                     </li>
                   ))}
                 </ul>
 
-                <div className="space-y-2 pt-2 border-t border-white/10">
-                  <Label htmlFor="promo" className="text-[9px] uppercase font-bold text-muted-foreground">Upgrade Secret Code</Label>
+                <div className="space-y-3 pt-6 border-t border-white/10 mt-auto">
+                  <Label htmlFor="promo" className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Upgrade Access Code</Label>
                   <div className="flex gap-2">
                     <Input 
                       id="promo"
-                      placeholder="e.g. coet" 
-                      className="h-9 sm:h-10 bg-white/10 border-white/10 text-xs"
+                      placeholder="" 
+                      className="h-11 bg-white/10 border-white/10 text-center font-mono tracking-widest focus:ring-accent"
                       value={promoCode}
                       onChange={(e) => setPromoCode(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleUpgrade()}
                     />
                     <Button 
-                      className="h-9 sm:h-10 bg-accent text-accent-foreground hover:bg-accent/90 px-3 sm:px-4 text-[10px] sm:text-xs font-bold shrink-0"
+                      className="h-11 bg-accent text-accent-foreground hover:bg-accent/90 px-6 font-bold shrink-0 shadow-lg shadow-accent/20"
                       onClick={handleUpgrade}
                       disabled={isUpgrading}
                     >
-                      {isUpgrading ? <Loader2 className="w-4 h-4 animate-spin" /> : "UPGRADE"}
+                      {isUpgrading ? <Loader2 className="w-5 h-5 animate-spin" /> : "UPGRADE"}
                     </Button>
                   </div>
                 </div>
