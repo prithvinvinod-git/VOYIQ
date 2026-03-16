@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -41,14 +42,11 @@ export default function AuthPage() {
   const [configError, setConfigError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Initialize ReCAPTCHA verifier for phone auth
     if (typeof window !== "undefined" && auth && !recaptchaVerifier) {
       try {
         const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
           size: 'invisible',
-          callback: () => {
-            // reCAPTCHA solved, allow signInWithPhoneNumber.
-          }
+          callback: () => {}
         });
         setRecaptchaVerifier(verifier);
       } catch (e) {
