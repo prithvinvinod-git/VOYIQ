@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -366,6 +367,7 @@
   },
   "auth": {
     "providers": [
+      "google.com",
       "password",
       "anonymous"
     ]
@@ -489,6 +491,6 @@
         }
       }
     ],
-    "reasoning": "This Firestore structure is designed following the core principles of Authorization Independence, Clarity of Intent, DBAC, QAPs, and Invariants to ensure a secure, scalable, and debuggable system for VOYIQ.\n\n**Authorization Independence:**\nThe critical aspect of this design is the strategic denormalization of authorization context. Access to Trip related subcollections (ItineraryDay, ItinerarySlot, Expense, ChatMessage) inherently depends on the parent Trip's owner and collaborators. To eliminate expensive and rule-breaking get() calls in security rules, each document in these subcollections (/trips/{tripId}/itineraryDays/{itineraryDayId}, /trips/{tripId}/itineraryDays/{itineraryDayId}/itinerarySlots/{itinerarySlotId}, /trips/{tripId}/expenses/{expenseId}, and /trips/{tripId}/chatMessages/{messageId}) will include denormalized fields:\n*   tripOwnerId: A copy of the ownerId from the parent Trip.\n*   tripAuthorizedUserIds: A copy of the authorizedUserIds array from the parent Trip (which includes both the ownerId and all collaboratorIds).\nThis ensures that security rules can evaluate access for any document in these nested collections by only inspecting that document's own fields and request.auth.uid, making rules simple, atomic, and efficient.\n\n**QAPs (Queries as Authorization Predicates):**\nTo support secure and efficient list operations, particularly for users to retrieve all trips they own or collaborate on, the Trip collection (/trips/{tripId}) includes an authorizedUserIds array. This array explicitly lists the ownerId and all collaboratorIds. Frontend queries can then use where('authorizedUserIds', 'array-contains', request.auth.uid). Firebase security rules can validate this query by simply checking request.auth.uid against the authorizedUserIds field in the document, without needing to traverse document hierarchies or perform additional get() calls. This structural decision ensures that rules are not used as filters but as validators for already predicate-enforced queries.\n\n**Structural Segregation & Access Modeling:**\n*   /users/{userId}: This collection stores private user profiles. Ownership is naturally path-based (request.auth.uid == userId), providing simple and robust access control for personal data.\n*   /trips/{tripId}: This is a top-level collection for collaborative trips. The ownerId and the denormalized authorizedUserIds array handle access for both owners and collaborators. This top-level approach is chosen over /users/{userId}/trips/{tripId} to better accommodate the N:N relationship with collaborators and avoid complex rule logic for shared access.\n*   Subcollections (itineraryDays, itinerarySlots, expenses, chatMessages): These are structured as subcollections under /trips/{tripId}. All documents within these subcollections inherit the authorization posture of their parent Trip through the denormalized tripOwnerId and tripAuthorizedUserIds fields, ensuring homogeneous security within each collection.\n\nThis design emphasizes explicit authorization fields within each document, simplifying security rules, enabling robust list queries, and minimizing debugging complexity."
+    "reasoning": "This Firestore structure is designed following the core principles of Authorization Independence, Clarity of Intent, DBAC, QAPs, and Invariants to ensure a secure, scalable, and debuggable system for VOYIQ."
   }
 }

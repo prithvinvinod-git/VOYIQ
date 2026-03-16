@@ -4,16 +4,17 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogIn, Compass } from "lucide-react";
+import { Compass } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { auth } from "@/lib/firebase";
+import { useAuth } from "@/firebase";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AuthPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const auth = useAuth();
 
   const handleGoogleSignIn = async () => {
     try {
@@ -25,10 +26,11 @@ export default function AuthPage() {
       });
       router.push("/dashboard");
     } catch (error: any) {
+      console.error(error);
       toast({
         variant: "destructive",
         title: "Sign in failed",
-        description: error.message || "Something went wrong.",
+        description: error.message || "Something went wrong. Please ensure Google Auth is enabled in the Firebase Console.",
       });
     }
   };
