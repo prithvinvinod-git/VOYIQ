@@ -82,7 +82,10 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
               
               {isPremium ? (
                 <Link href="/collab">
-                  <Button variant="ghost" className="gap-2 text-[10px] font-bold uppercase tracking-widest text-accent hover:bg-accent hover:text-accent-foreground transition-colors h-9">
+                  <Button 
+                    variant="ghost" 
+                    className="gap-2 text-[10px] font-bold uppercase tracking-widest text-accent hover:bg-accent hover:text-background transition-colors h-9"
+                  >
                     <Users className="w-3.5 h-3.5" /> Collab Hub
                   </Button>
                 </Link>
@@ -129,9 +132,11 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
               <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/plan/new")}>
                 <Plane className="mr-2 w-4 h-4" /> Plan New Trip
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer" onClick={() => isPremium ? router.push("/collab") : null}>
-                <Users className="mr-2 w-4 h-4" /> Collab {isPremium ? "" : "🔒"}
-              </DropdownMenuItem>
+              {isPremium && (
+                <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/collab")}>
+                  <Users className="mr-2 w-4 h-4" /> Collab Hub
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator className="bg-white/5" />
               <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive" onClick={handleLogout}>
                 <LogOut className="mr-2 w-4 h-4" /> Sign Out

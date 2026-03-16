@@ -104,10 +104,10 @@ export default function Dashboard() {
       <main className="container mx-auto px-4 pt-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div className="w-full max-w-full overflow-hidden">
-            <h1 className="text-2xl sm:text-3xl md:text-5xl font-headline font-bold mb-2 break-words text-white leading-tight">
+            <h1 className="text-xl sm:text-2xl md:text-5xl font-headline font-bold mb-2 break-words text-white leading-tight">
               Welcome back, {user?.displayName?.split(' ')[0] || userData?.name?.split(' ')[0] || "Explorer"}!
             </h1>
-            <p className="text-muted-foreground text-xs sm:text-base">You have {trips.length} adventures tracked.</p>
+            <p className="text-muted-foreground text-[10px] sm:text-base">You have {trips.length} adventures tracked.</p>
           </div>
           
           <Button 
@@ -128,8 +128,8 @@ export default function Dashboard() {
 
         <div className="space-y-6 mb-12">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl sm:text-2xl font-headline font-bold">Active Journeys</h2>
-            <Button variant="link" className="text-primary hover:text-primary/80 text-sm">View History</Button>
+            <h2 className="text-lg sm:text-2xl font-headline font-bold">Active Journeys</h2>
+            <Button variant="link" className="text-primary hover:text-primary/80 text-xs">View History</Button>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -149,12 +149,12 @@ export default function Dashboard() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between mb-2">
-                          <h3 className="text-lg sm:text-xl font-bold truncate pr-4">{trip.destination}</h3>
-                          <Badge variant={trip.health > 80 ? "default" : "secondary"} className={trip.health > 80 ? "bg-primary/20 text-primary border-none text-[10px] sm:text-xs" : "text-[10px] sm:text-xs"}>
+                          <h3 className="text-base sm:text-xl font-bold truncate pr-4">{trip.destination}</h3>
+                          <Badge variant={trip.health > 80 ? "default" : "secondary"} className={trip.health > 80 ? "bg-primary/20 text-primary border-none text-[8px] sm:text-xs" : "text-[8px] sm:text-xs"}>
                             {Math.round(trip.health || 0)}%
                           </Badge>
                         </div>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground mb-4">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-muted-foreground mb-4">
                           <div className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" /> 
                             <span>{new Date(trip.startDate).toLocaleDateString()}</span>
@@ -165,7 +165,7 @@ export default function Dashboard() {
                           </div>
                         </div>
                         <div className="space-y-1">
-                          <div className="flex justify-between text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                          <div className="flex justify-between text-[8px] font-medium uppercase tracking-wider text-muted-foreground">
                             <span>Itinerary Progress</span>
                             <span>{Math.round(trip.health || 0)}%</span>
                           </div>
@@ -192,14 +192,14 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <Card className="glass-card border-none bg-gradient-to-br from-card to-primary/5">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Level {stats.currentLevel} Explorer</CardTitle>
+              <CardTitle className="text-xs font-medium text-muted-foreground">Level {stats.currentLevel} Explorer</CardTitle>
               <Star className="w-4 h-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.explorationScore} XP</div>
+              <div className="text-xl font-bold">{stats.explorationScore} XP</div>
               <div className="mt-2 space-y-1">
-                <div className="flex justify-between text-[10px] text-muted-foreground uppercase font-bold">
-                  <span>{stats.xpRemaining} Level {stats.currentLevel + 1}</span>
+                <div className="flex justify-between text-[8px] text-muted-foreground uppercase font-bold">
+                  <span>{stats.xpRemaining} to Level {stats.currentLevel + 1}</span>
                   <span>{Math.round(stats.levelProgress)}%</span>
                 </div>
                 <Progress value={stats.levelProgress} className="h-1 bg-white/5" />
@@ -209,23 +209,23 @@ export default function Dashboard() {
           
           <Card className="glass-card border-none bg-gradient-to-br from-card to-accent/5">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Travel Streak</CardTitle>
+              <CardTitle className="text-xs font-medium text-muted-foreground">Travel Streak</CardTitle>
               <Zap className="w-4 h-4 text-accent" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.streakDays} Days</div>
-              <p className="text-xs text-muted-foreground mt-1">Activities completed recently!</p>
+              <div className="text-xl font-bold">{stats.streakDays} Days</div>
+              <p className="text-[10px] text-muted-foreground mt-1">Activities completed recently!</p>
             </CardContent>
           </Card>
 
           <Card className="glass-card border-none bg-gradient-to-br from-card to-primary/5">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Cities Visited</CardTitle>
+              <CardTitle className="text-xs font-medium text-muted-foreground">Cities Visited</CardTitle>
               <MapPin className="w-4 h-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{trips.length}</div>
-              <p className="text-xs text-muted-foreground mt-1">Across 1 Continent</p>
+              <div className="text-xl font-bold">{trips.length}</div>
+              <p className="text-[10px] text-muted-foreground mt-1">Across global destinations</p>
             </CardContent>
           </Card>
         </div>
