@@ -12,7 +12,12 @@ import {
   RefreshCw, 
   Clock, 
   Sparkles,
-  CheckCircle2
+  CheckCircle2,
+  ExternalLink,
+  TrendingDown,
+  AlertCircle,
+  Loader2,
+  Coins
 } from "lucide-react";
 import { useDoc, useCollection, useFirestore, useMemoFirebase, useUser, updateDocumentNonBlocking } from "@/firebase";
 import { doc, collection, query, orderBy } from "firebase/firestore";
@@ -22,6 +27,7 @@ import { UserHeader } from "@/components/layout/UserHeader";
 import { BudgetBreakdown } from "@/components/trip/BudgetBreakdown";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
+import { suggestBudgetAlternatives, type SuggestBudgetAlternativesOutput } from "@/ai/flows/suggest-budget-alternatives-flow";
 import dynamic from "next/dynamic";
 
 const TripMap = dynamic(() => import("@/components/trip/TripMap"), { ssr: false });
@@ -41,6 +47,8 @@ export default function TripDetail() {
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const [activeDay, setActiveDay] = useState(1);
+  const [aiSuggestions, setAiSuggestions] = useState<SuggestBudgetAlternativesOutput | null>(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
 
   const tripRef = useMemoFirebase(() => {
     if (!firestore || !tripId) return null;
@@ -96,12 +104,12 @@ export default function TripDetail() {
     const categories = ["Food", "Transport", "Activities", "Stay", "Misc"];
     
     return categories.map(cat => {
-      const plannedINR = itinerary.reduce((sum, day) => {
+      const plannedLocal = itinerary.reduce((sum, day) => {
         const slotsCost = (day.slots || [])
           .filter((s: any) => (s.category || "").toLowerCase() === cat.toLowerCase())
           .reduce((sSum: number, s: any) => sSum + (s.estimatedCostINR || 0), 0);
         return sum + slotsCost;
-      }, 0);
+      }, 0) * rate;
 
       const actual = (extraExpenses || [])
         .filter((e: any) => (e.category || "").toLowerCase() === cat.toLowerCase())
@@ -109,11 +117,42 @@ export default function TripDetail() {
 
       return {
         category: cat,
-        planned: plannedINR * rate,
+        planned: plannedLocal,
         actual: actual
       };
     });
   }, [itinerary, trip, extraExpenses]);
+
+  const overBudgetInfo = useMemo(() => {
+    const over = budgetData.filter(d => d.actual > d.planned);
+    if (over.length === 0) return null;
+    return over.sort((a, b) => (b.actual - b.planned) - (a.actual - a.planned))[0];
+  }, [budgetData]);
+
+  const fetchAiSuggestions = async () => {
+    if (!overBudgetInfo || !trip) return;
+    setIsAiLoading(true);
+    try {
+      const result = await suggestBudgetAlternatives({
+        tripContext: {
+          destination: trip.destination,
+          travelStyle: trip.travelStyle || [],
+          pace: trip.pace || "Balanced",
+          dietPref: trip.dietaryPreferences?.[0] || "No preference",
+          numTravelers: trip.numTravelers || 1
+        },
+        overBudgetCategory: overBudgetInfo.category,
+        budgetLimit: overBudgetInfo.planned,
+        amountSpent: overBudgetInfo.actual,
+        currency: trip.currency
+      });
+      setAiSuggestions(result);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
 
   const handleToggleSlot = (day: any, slotIdx: number) => {
     if (!firestore || !tripId || !itinerary) return;
@@ -125,11 +164,9 @@ export default function TripDetail() {
       completed: newStatus 
     };
 
-    // Update the specific day document
     const dayRef = doc(firestore, `trips/${tripId}/itineraryDays`, day.id);
     updateDocumentNonBlocking(dayRef, { slots: updatedSlots });
 
-    // Calculate overall trip progress across all days
     let total = 0;
     let completed = 0;
     itinerary.forEach(d => {
@@ -141,10 +178,26 @@ export default function TripDetail() {
     });
 
     const newProgress = total > 0 ? Math.round((completed / total) * 100) : 0;
-
-    // Update the parent trip document's health field (which represents progress)
     const tripDocRef = doc(firestore, "trips", tripId as string);
     updateDocumentNonBlocking(tripDocRef, { health: newProgress });
+  };
+
+  const openInGoogleMaps = () => {
+    if (!currentDay || !currentDay.slots || currentDay.slots.length === 0) return;
+    
+    const slots = currentDay.slots;
+    const origin = `${slots[0].lat},${slots[0].lng}`;
+    const destination = `${slots[slots.length - 1].lat},${slots[slots.length - 1].lng}`;
+    
+    let waypoints = "";
+    if (slots.length > 2) {
+      waypoints = slots.slice(1, -1)
+        .map((s: any) => `${s.lat},${s.lng}`)
+        .join("|");
+    }
+    
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}${waypoints ? `&waypoints=${encodeURIComponent(waypoints)}` : ""}&travelmode=driving`;
+    window.open(url, '_blank');
   };
 
   if (isTripLoading || isItineraryLoading || isUserLoading) {
@@ -281,30 +334,45 @@ export default function TripDetail() {
               <TabsList className="bg-white/5 border border-white/10 rounded-xl">
                 <TabsTrigger value="map" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Map View</TabsTrigger>
                 <TabsTrigger value="budget" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">BudgetSync</TabsTrigger>
+                <TabsTrigger value="ai" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">AI Insights</TabsTrigger>
               </TabsList>
             </div>
             
-            <TabsContent value="map" className="flex-1 relative mt-0">
+            <TabsContent value="map" className="flex-1 relative mt-0 flex flex-col">
+              <div className="absolute top-4 right-4 z-10">
+                <Button onClick={openInGoogleMaps} variant="secondary" className="bg-white text-black hover:bg-white/90 shadow-xl rounded-full gap-2">
+                  <ExternalLink className="w-4 h-4" /> Navigate Route
+                </Button>
+              </div>
               <TripMap locations={currentDay?.slots || []} />
             </TabsContent>
 
             <TabsContent value="budget" className="flex-1 p-6 space-y-6 mt-0 overflow-y-auto">
               <div className="text-center space-y-2 mb-8">
-                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-widest">Planned Trip Budget</h3>
+                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-widest">Total Trip Budget</h3>
                 <div className="text-4xl font-headline font-bold">{trip.totalBudget} {trip.currency}</div>
                 <p className="text-xs text-muted-foreground">Tracking live with VOYIQ AI</p>
               </div>
 
               <BudgetBreakdown data={budgetData} currency={trip.currency} />
 
-              <Card className="glass-card border-accent/20 bg-accent/5 p-4 rounded-xl">
+              <Card className={`glass-card p-4 rounded-xl border-none ${overBudgetInfo ? "bg-destructive/10 border-destructive/20" : "bg-accent/5 border-accent/20"}`}>
                 <div className="flex items-start gap-3">
-                  <Sparkles className="text-accent w-5 h-5 flex-shrink-0 mt-1" />
+                  {overBudgetInfo ? <AlertCircle className="text-destructive w-5 h-5 flex-shrink-0 mt-1" /> : <Sparkles className="text-accent w-5 h-5 flex-shrink-0 mt-1" />}
                   <div className="space-y-2">
-                    <h4 className="text-sm font-bold">AI Budget Insights</h4>
+                    <h4 className="text-sm font-bold">
+                      {overBudgetInfo ? `Attention: Over budget in ${overBudgetInfo.category}` : "AI Budget Insights"}
+                    </h4>
                     <p className="text-xs text-muted-foreground">
-                      Based on current rates, you have saved approximately 12% on transportation. Consider upgrading your dinner tonight!
+                      {overBudgetInfo 
+                        ? `You've spent ${overBudgetInfo.actual.toFixed(2)} ${trip.currency} in ${overBudgetInfo.category}, exceeding planned ${overBudgetInfo.planned.toFixed(2)} ${trip.currency}.` 
+                        : "Your spending is currently within the healthy range. Great job maintaining your budget!"}
                     </p>
+                    {overBudgetInfo && (
+                      <Button variant="link" onClick={() => setActiveDay(1)} className="p-0 h-auto text-xs text-primary">
+                        View AI Suggestions
+                      </Button>
+                    )}
                   </div>
                 </div>
               </Card>
@@ -312,6 +380,71 @@ export default function TripDetail() {
               <Button className="w-full h-12 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10">
                 Log Manual Expense
               </Button>
+            </TabsContent>
+
+            <TabsContent value="ai" className="flex-1 p-6 space-y-6 mt-0 overflow-y-auto">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-headline font-bold flex items-center gap-2">
+                    <Sparkles className="text-primary w-5 h-5" /> AI Budget Optimizer
+                  </h3>
+                  {overBudgetInfo && (
+                    <Button 
+                      size="sm" 
+                      onClick={fetchAiSuggestions} 
+                      disabled={isAiLoading}
+                      className="bg-primary text-primary-foreground rounded-full"
+                    >
+                      {isAiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Refresh Suggestions"}
+                    </Button>
+                  )}
+                </div>
+
+                {!overBudgetInfo ? (
+                  <div className="text-center py-20 space-y-4">
+                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                      <TrendingDown className="text-primary w-8 h-8" />
+                    </div>
+                    <p className="text-muted-foreground font-medium">All categories are within budget!</p>
+                    <p className="text-xs text-muted-foreground">We'll provide suggestions if you start trending over budget.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {!aiSuggestions && !isAiLoading && (
+                      <div className="glass-card p-10 text-center rounded-2xl border-dashed border-white/10">
+                        <Coins className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                        <h4 className="font-bold mb-2">Optimize your {overBudgetInfo.category} spending</h4>
+                        <p className="text-xs text-muted-foreground mb-6">Let our AI find cheaper alternatives tailored to your destination.</p>
+                        <Button onClick={fetchAiSuggestions} className="bg-primary text-primary-foreground">
+                          Get AI Suggestions
+                        </Button>
+                      </div>
+                    )}
+
+                    {isAiLoading && (
+                      <div className="space-y-4">
+                        {[1, 2, 3].map(i => (
+                          <div key={i} className="h-32 rounded-2xl bg-white/5 animate-pulse" />
+                        ))}
+                      </div>
+                    )}
+
+                    {aiSuggestions?.alternatives.map((alt, i) => (
+                      <Card key={i} className="glass-card border-none bg-gradient-to-br from-white/5 to-primary/5 hover:bg-white/10 transition-all p-4">
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <Badge className="bg-primary/20 text-primary border-none text-[10px] uppercase font-bold">
+                              {alt.category}
+                            </Badge>
+                            <span className="text-xs font-bold text-accent">Save ~{alt.estimatedSavings} {trip.currency}</span>
+                          </div>
+                          <p className="text-sm font-medium leading-relaxed">{alt.suggestion}</p>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
             </TabsContent>
           </Tabs>
         </div>
