@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from "react";
@@ -59,6 +60,7 @@ export default function AuthPage() {
       router.push("/dashboard");
     } catch (error: any) {
       console.error("Google Auth Error:", error);
+      // Silently handle popup closed error
       if (error.code === "auth/popup-closed-by-user") {
         setLoading(false);
         return; 
