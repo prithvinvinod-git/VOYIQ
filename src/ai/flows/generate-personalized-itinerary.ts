@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview This file implements a Genkit flow for generating personalized travel itineraries.
@@ -60,6 +59,13 @@ const itineraryGenerationPrompt = ai.definePrompt({
   output: { schema: GeneratePersonalizedItineraryOutputSchema },
   prompt: `You are VOYIQ's expert travel planner. Generate a hyper-personalized day-by-day
 itinerary based on the provided trip details.
+
+IMPORTANT BUDGET ALLOCATION:
+The user has a total budget of {{{totalBudget}}} {{{currency}}}. 
+You MUST attempt to distribute this entire budget across the itinerary slots. 
+The sum of 'estimatedCostINR' across ALL slots in the ENTIRE itinerary should be approximately equal to the total budget provided (convert to INR if needed, e.g., 1 USD = 83 INR).
+Do not generate tiny costs (like 0 or 100 INR) unless the activity is truly free. 
+Ensure the 'estimatedCostINR' values reflect realistic costs for the destination and travel style (e.g., Luxury travel should have much higher costs).
 
 Trip Details:
 From: {{{origin}}}

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -18,7 +17,8 @@ import {
   Navigation,
   Brain,
   TrendingDown,
-  AlertTriangle
+  AlertTriangle,
+  Wallet
 } from "lucide-react";
 import { useDoc, useCollection, useFirestore, useMemoFirebase, useUser, updateDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase";
 import { doc, collection, query, orderBy, serverTimestamp } from "firebase/firestore";
@@ -51,6 +51,14 @@ import { useToast } from "@/hooks/use-toast";
 const TripMap = dynamic(() => import("@/components/trip/TripMap"), { ssr: false });
 
 const CATEGORIES = ["Food", "Transport", "Stay", "Activities", "Misc"];
+
+const LOCAL_PHRASES: Record<string, string[]> = {
+  Food: ["Check, please!", "Is this vegetarian?", "Water, please.", "Delicious!"],
+  Transport: ["Where is the station?", "How much to the center?", "Next stop, please.", "Ticket for one."],
+  Activities: ["What time do you close?", "Is there a student discount?", "Can I take photos?", "Where is the exit?"],
+  Stay: ["What is the WiFi password?", "Can I have extra towels?", "What time is checkout?", "Where is breakfast?"],
+  Misc: ["Hello!", "Thank you!", "Where is the restroom?", "Excuse me."]
+};
 
 export default function TripDetail() {
   const { tripId } = useParams();
@@ -88,7 +96,11 @@ export default function TripDetail() {
 
   const { data: extraExpenses } = useCollection<any>(expensesQuery);
 
-  // Aggregate Budget Data
+  const currentDay = useMemo(() => {
+    return itinerary?.find(d => d.dayNumber === activeDay) || itinerary?.[0];
+  }, [itinerary, activeDay]);
+
+  // Aggregate Budget Data for the Chart (Entire Trip for context)
   const budgetStats = useMemo(() => {
     const stats: Record<string, { planned: number; actual: number }> = {
       Food: { planned: 0, actual: 0 },
@@ -117,6 +129,20 @@ export default function TripDetail() {
       ...values,
     }));
   }, [itinerary, extraExpenses]);
+
+  // Calculate Remaining Budget for Progress Bar
+  const budgetProgress = useMemo(() => {
+    if (!trip) return { total: 0, spent: 0, remaining: 0, percent: 0 };
+    const totalSpent = extraExpenses?.reduce((acc, exp) => acc + (exp.amount || 0), 0) || 0;
+    const remaining = Math.max(0, trip.totalBudget - totalSpent);
+    const percent = trip.totalBudget > 0 ? (totalSpent / trip.totalBudget) * 100 : 0;
+    return {
+      total: trip.totalBudget,
+      spent: totalSpent,
+      remaining,
+      percent
+    };
+  }, [trip, extraExpenses]);
 
   const { totalSlots, completedSlots, progressValue } = useMemo(() => {
     if (!itinerary) return { totalSlots: 0, completedSlots: 0, progressValue: 0 };
@@ -220,7 +246,6 @@ export default function TripDetail() {
   if (!trip) return null;
 
   const days = itinerary || [];
-  const currentDay = days.find(d => d.dayNumber === activeDay) || days[0];
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -283,7 +308,18 @@ export default function TripDetail() {
                       <Clock className="w-3 h-3" /> {slot.time}
                     </div>
                     <h4 className={`font-bold ${slot.completed ? "line-through" : ""}`}>{slot.activity}</h4>
-                    <p className="text-xs text-muted-foreground">{slot.description}</p>
+                    <p className="text-xs text-muted-foreground mb-2">{slot.description}</p>
+                    
+                    {/* Local Phrases */}
+                    <div className="bg-white/5 rounded-lg p-2 mb-2">
+                       <p className="text-[9px] uppercase font-bold text-muted-foreground mb-1">Local Phrases</p>
+                       <div className="flex flex-wrap gap-2">
+                         {(LOCAL_PHRASES[slot.category] || LOCAL_PHRASES.Misc).map((phrase, i) => (
+                           <span key={i} className="text-[10px] bg-white/10 px-2 py-0.5 rounded italic">"{phrase}"</span>
+                         ))}
+                       </div>
+                    </div>
+
                     <div className="flex items-center gap-2 mt-2">
                       <Badge variant="outline" className="text-[9px] border-white/10">{slot.category}</Badge>
                       <span className="text-[10px] text-muted-foreground">{slot.location}</span>
@@ -309,8 +345,8 @@ export default function TripDetail() {
             <TabsContent value="map" className="flex-1 mt-0 relative">
                <div className="absolute top-4 right-4 z-10 flex gap-2">
                  <Button size="sm" variant="secondary" className="bg-white text-black shadow-lg" onClick={() => {
-                   const stops = currentDay?.slots?.map((s: any) => s.location).join('/') || "";
-                   window.open(`https://www.google.com/maps/dir/${trip.origin}/${stops}/${trip.destination}`, '_blank');
+                   const stops = currentDay?.slots?.map((s: any) => encodeURIComponent(s.location)).join('/') || "";
+                   window.open(`https://www.google.com/maps/dir/${encodeURIComponent(trip.origin)}/${stops}/${encodeURIComponent(trip.destination)}`, '_blank');
                  }}>
                    <Navigation className="w-4 h-4 mr-2" /> Navigate Route
                  </Button>
@@ -318,9 +354,28 @@ export default function TripDetail() {
                <TripMap locations={currentDay?.slots || []} />
             </TabsContent>
 
-            <TabsContent value="budget" className="flex-1 mt-0 p-6 overflow-y-auto">
+            <TabsContent value="budget" className="flex-1 mt-0 p-6 overflow-y-auto space-y-6">
                <BudgetBreakdown data={budgetStats} currency={trip.currency} />
-               <Button className="w-full mt-6" variant="outline" onClick={() => setIsExpenseDialogOpen(true)}>
+               
+               {/* Remaining Budget Progress */}
+               <Card className="glass-card border-none bg-primary/5">
+                 <CardContent className="p-4 space-y-4">
+                   <div className="flex items-center justify-between">
+                     <div className="flex items-center gap-2">
+                       <Wallet className="w-4 h-4 text-primary" />
+                       <span className="text-sm font-bold">Remaining Budget</span>
+                     </div>
+                     <span className="text-xs font-medium">{trip.currency} {budgetProgress.remaining.toFixed(0)}</span>
+                   </div>
+                   <Progress value={budgetProgress.percent} className="h-2" />
+                   <div className="flex justify-between text-[10px] text-muted-foreground font-bold uppercase">
+                     <span>Spent: {trip.currency} {budgetProgress.spent.toFixed(0)}</span>
+                     <span>Total: {trip.currency} {budgetProgress.total.toFixed(0)}</span>
+                   </div>
+                 </CardContent>
+               </Card>
+
+               <Button className="w-full" variant="outline" onClick={() => setIsExpenseDialogOpen(true)}>
                  <Plus className="w-4 h-4 mr-2" /> Log Manual Expense
                </Button>
                

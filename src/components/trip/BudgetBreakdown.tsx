@@ -9,7 +9,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Cell,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -23,15 +22,18 @@ interface BudgetBreakdownProps {
 }
 
 export function BudgetBreakdown({ data, currency }: BudgetBreakdownProps) {
+  const totalPlanned = data.reduce((acc, curr) => acc + curr.planned, 0);
+  const totalActual = data.reduce((acc, curr) => acc + curr.actual, 0);
+
   return (
     <Card className="glass-card border-none overflow-hidden">
       <CardHeader>
         <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-          Planned vs. Actual Spending
+          Trip Budget Comparison
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="h-[300px] w-full p-4">
+        <div className="h-[250px] w-full p-4">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff10" />
@@ -63,16 +65,16 @@ export function BudgetBreakdown({ data, currency }: BudgetBreakdownProps) {
         </div>
         <div className="p-4 bg-white/5 flex justify-around text-center">
           <div>
-            <span className="text-[10px] text-muted-foreground uppercase block">Planned</span>
+            <span className="text-[10px] text-muted-foreground uppercase block">Total Planned</span>
             <span className="text-sm font-bold text-primary">
-              {currency} {data.reduce((acc, curr) => acc + curr.planned, 0).toFixed(0)}
+              {currency} {totalPlanned.toFixed(0)}
             </span>
           </div>
           <div className="w-px bg-white/10" />
           <div>
-            <span className="text-[10px] text-muted-foreground uppercase block">Spent</span>
+            <span className="text-[10px] text-muted-foreground uppercase block">Total Spent</span>
             <span className="text-sm font-bold text-accent">
-              {currency} {data.reduce((acc, curr) => acc + curr.actual, 0).toFixed(0)}
+              {currency} {totalActual.toFixed(0)}
             </span>
           </div>
         </div>
