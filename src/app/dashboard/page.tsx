@@ -47,7 +47,7 @@ export default function Dashboard() {
   const { data: tripsData, isLoading: isTripsLoading } = useCollection<Trip>(tripsQuery);
 
   const stats = useMemo(() => {
-    if (!tripsData) return { explorationScore: 0, currentLevel: 1, levelProgress: 0, streakDays: 0, completedCount: 0 };
+    if (!tripsData) return { explorationScore: 0, currentLevel: 1, levelProgress: 0, streakDays: 0, completedCount: 0, xpRemaining: 200 };
     
     // XP calculation: 50 XP per completed slot
     const totalCompleted = tripsData.reduce((acc, t) => acc + (t.totalCompletedSlots || 0), 0);
@@ -55,7 +55,9 @@ export default function Dashboard() {
     
     // Leveling: every 200 XP increases level
     const level = Math.floor(totalXP / 200) + 1;
-    const progress = (totalXP % 200) / 2; // progress towards next 200 XP, mapped to 0-100%
+    const progressInCurrentLevel = totalXP % 200;
+    const levelProgressPercent = (progressInCurrentLevel / 200) * 100;
+    const xpRemaining = 200 - progressInCurrentLevel;
 
     // Streak logic: if any activity completed in any trip, count it as a simple active status for now
     const streak = tripsData.some(t => (t.totalCompletedSlots || 0) > 0) ? 4 : 0;
@@ -63,7 +65,8 @@ export default function Dashboard() {
     return {
       explorationScore: totalXP,
       currentLevel: level,
-      levelProgress: progress,
+      levelProgress: levelProgressPercent,
+      xpRemaining: xpRemaining,
       streakDays: streak,
       completedCount: totalCompleted
     };
@@ -173,7 +176,7 @@ export default function Dashboard() {
               <div className="text-2xl font-bold">{stats.explorationScore} XP</div>
               <div className="mt-2 space-y-1">
                 <div className="flex justify-between text-[10px] text-muted-foreground uppercase font-bold">
-                  <span>To Level {stats.currentLevel + 1}</span>
+                  <span>{stats.xpRemaining} XP to Level {stats.currentLevel + 1}</span>
                   <span>{Math.round(stats.levelProgress)}%</span>
                 </div>
                 <Progress value={stats.levelProgress} className="h-1 bg-white/5" />
