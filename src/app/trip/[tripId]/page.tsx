@@ -15,7 +15,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { useDoc, useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
-import { doc, collection, query, orderBy, where } from "firebase/firestore";
+import { doc, collection, query, orderBy } from "firebase/firestore";
 import { ChatCompanion } from "@/components/chat/ChatCompanion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import dynamic from "next/dynamic";
@@ -38,9 +38,9 @@ export default function TripDetail() {
 
   const itineraryQuery = useMemoFirebase(() => {
     if (!firestore || !tripId || !user) return null;
+    // We rely on parent trip security rules, so a simple collection query is enough
     return query(
       collection(firestore, `trips/${tripId}/itineraryDays`), 
-      where("tripAuthorizedUserIds", "array-contains", user.uid),
       orderBy("dayNumber")
     );
   }, [firestore, tripId, user]);

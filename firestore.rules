@@ -3,26 +3,11 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * VOYIQ SECURITY RULES DOCUMENTATION
+     * VOYIQ SECURITY RULES
      *
      * CORE PHILOSOPHY:
      * This ruleset enforces a hybrid security model: strict path-based ownership for personal user
-     * profiles and a shared-access collaborator model for travel trips. To ensure high performance 
-     * and rule simplicity, authorization data is denormalized across the hierarchy.
-     *
-     * DATA STRUCTURE:
-     * - /users/{userId}: Private user profiles and preferences.
-     * - /trips/{tripId}: Collaborative trip plans.
-     * - /trips/{tripId}/...: Subcollections (itinerary, expenses, chat) inherit security from the trip.
-     *
-     * KEY SECURITY DECISIONS:
-     * 1. Authorization Independence: Subcollection documents (e.g., expenses) contain denormalized 
-     *    'tripAuthorizedUserIds' to allow rules to verify access without performing costly get() calls 
-     *    to parent documents.
-     * 2. Fallback Authorization: As a safety measure for data consistency, rules can fall back 
-     *    to checking the parent Trip document's 'authorizedUserIds'.
-     * 3. Collaborator Model: Trips use an 'authorizedUserIds' array (containing owner and collaborators).
-     *    Access is granted if the authenticated user's UID is present in this list.
+     * profiles and a shared-access collaborator model for travel trips.
      */
 
     // --- HELPER FUNCTIONS ---
@@ -44,7 +29,8 @@ service cloud.firestore {
 
     /** @description Helper to check parent trip authorization via a document fetch. */
     function isParentTripAuthorized(tripId) {
-      return isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/trips/$(tripId)).data.authorizedUserIds;
+      return isSignedIn() && exists(/databases/$(database)/documents/trips/$(tripId)) && 
+             request.auth.uid in get(/databases/$(database)/documents/trips/$(tripId)).data.authorizedUserIds;
     }
 
     // --- COLLECTION RULES ---
@@ -70,43 +56,37 @@ service cloud.firestore {
     }
 
     /**
-     * @description Rules for ItineraryDays. Inherits trip authorization via denormalized fields or parent check.
+     * @description Rules for ItineraryDays. Access controlled by parent trip authorization.
      */
     match /trips/{tripId}/itineraryDays/{itineraryDayId} {
-      allow get, list: if isAuthorized(resource.data.tripAuthorizedUserIds) || isParentTripAuthorized(tripId);
-      allow create: if (isAuthorized(request.resource.data.tripAuthorizedUserIds) || isParentTripAuthorized(tripId)) && request.resource.data.tripId == tripId;
-      allow update: if (isAuthorized(resource.data.tripAuthorizedUserIds) || isParentTripAuthorized(tripId)) && request.resource.data.tripId == resource.data.tripId;
-      allow delete: if (isAuthorized(resource.data.tripAuthorizedUserIds) || isParentTripAuthorized(tripId));
+      allow get, list: if isParentTripAuthorized(tripId);
+      allow create, update, delete: if isParentTripAuthorized(tripId) && (request.resource == null || request.resource.data.tripId == tripId);
     }
 
     /**
-     * @description Rules for ItinerarySlots (activities). Inherits trip authorization.
+     * @description Rules for ItinerarySlots (activities).
      */
     match /trips/{tripId}/itineraryDays/{itineraryDayId}/itinerarySlots/{itinerarySlotId} {
-      allow get, list: if isAuthorized(resource.data.tripAuthorizedUserIds) || isParentTripAuthorized(tripId);
-      allow create: if (isAuthorized(request.resource.data.tripAuthorizedUserIds) || isParentTripAuthorized(tripId)) && request.resource.data.tripId == tripId;
-      allow update: if (isAuthorized(resource.data.tripAuthorizedUserIds) || isParentTripAuthorized(tripId)) && request.resource.data.tripId == resource.data.tripId;
-      allow delete: if (isAuthorized(resource.data.tripAuthorizedUserIds) || isParentTripAuthorized(tripId));
+      allow get, list: if isParentTripAuthorized(tripId);
+      allow create, update, delete: if isParentTripAuthorized(tripId);
     }
 
     /**
      * @description Rules for Expenses.
      */
     match /trips/{tripId}/expenses/{expenseId} {
-      allow get, list: if isAuthorized(resource.data.tripAuthorizedUserIds) || isParentTripAuthorized(tripId);
-      allow create: if (isAuthorized(request.resource.data.tripAuthorizedUserIds) || isParentTripAuthorized(tripId)) && request.resource.data.loggedByUserId == request.auth.uid && request.resource.data.tripId == tripId;
-      allow update: if (isAuthorized(resource.data.tripAuthorizedUserIds) || isParentTripAuthorized(tripId)) && request.resource.data.loggedByUserId == resource.data.loggedByUserId;
-      allow delete: if (isAuthorized(resource.data.tripAuthorizedUserIds) || isParentTripAuthorized(tripId));
+      allow get, list: if isParentTripAuthorized(tripId);
+      allow create: if isParentTripAuthorized(tripId) && request.resource.data.loggedByUserId == request.auth.uid;
+      allow update, delete: if isParentTripAuthorized(tripId);
     }
 
     /**
      * @description Rules for AI Chat Messages.
      */
     match /trips/{tripId}/chatMessages/{messageId} {
-      allow get, list: if isAuthorized(resource.data.tripAuthorizedUserIds) || isParentTripAuthorized(tripId);
-      allow create: if (isAuthorized(request.resource.data.tripAuthorizedUserIds) || isParentTripAuthorized(tripId)) && request.resource.data.tripId == tripId;
-      allow update: if (isAuthorized(resource.data.tripAuthorizedUserIds) || isParentTripAuthorized(tripId)) && request.resource.data.tripId == resource.data.tripId;
-      allow delete: if (isAuthorized(resource.data.tripAuthorizedUserIds) || isParentTripAuthorized(tripId));
+      allow get, list: if isParentTripAuthorized(tripId);
+      allow create: if isParentTripAuthorized(tripId);
+      allow update, delete: if isParentTripAuthorized(tripId);
     }
 
   }
