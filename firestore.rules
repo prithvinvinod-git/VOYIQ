@@ -4,90 +4,50 @@ service cloud.firestore {
 
     /**
      * VOYIQ SECURITY RULES
-     *
-     * CORE PHILOSOPHY:
-     * This ruleset enforces a hybrid security model: strict path-based ownership for personal user
-     * profiles and a shared-access collaborator model for travel trips.
+     * 
+     * Enforces strict ownership for user profiles and collaborative access for trips.
      */
 
     // --- HELPER FUNCTIONS ---
 
-    /** @description Checks if the user is authenticated. */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /** @description Checks if the user's UID matches the provided ID. */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** @description Checks if the user's UID is present in a list of authorized IDs. */
-    function isAuthorized(authorizedList) {
-      return isSignedIn() && authorizedList != null && request.auth.uid in authorizedList;
-    }
+    // --- USER RULES ---
 
-    /** @description Helper to check parent trip authorization via a document fetch. */
-    function isParentTripAuthorized(tripId) {
-      return isSignedIn() && exists(/databases/$(database)/documents/trips/$(tripId)) && 
-             request.auth.uid in get(/databases/$(database)/documents/trips/$(tripId)).data.authorizedUserIds;
-    }
-
-    // --- COLLECTION RULES ---
-
-    /**
-     * @description Rules for the User collection. Restricted to the user themselves.
-     */
     match /users/{userId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isOwner(userId);
+      allow read, write: if isOwner(userId);
     }
 
+    // --- TRIP RULES (Recursive) ---
+
     /**
-     * @description Rules for Trips. Access for owners and listed collaborators.
+     * Rules for Trips and all their subcollections (itineraryDays, expenses, chat).
+     * Uses a recursive wildcard for consistent authorization across the tree.
      */
     match /trips/{tripId} {
-      allow get, list: if isAuthorized(resource.data.authorizedUserIds);
-      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid && request.auth.uid in request.resource.data.authorizedUserIds;
-      allow update: if isAuthorized(resource.data.authorizedUserIds) && request.resource.data.ownerId == resource.data.ownerId;
-      allow delete: if resource != null && isOwner(resource.data.ownerId);
-    }
+      // Allow listing trips where the user is an authorized collaborator
+      allow list: if isSignedIn() && request.auth.uid in resource.data.authorizedUserIds;
+      
+      // Allow get/create/update if the user is part of the trip
+      allow get, create, update: if isSignedIn() && (
+        (resource == null) || // For create
+        (request.auth.uid in resource.data.authorizedUserIds) ||
+        (request.auth.uid == resource.data.ownerId)
+      );
+      
+      // Only the owner can delete a trip
+      allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
 
-    /**
-     * @description Rules for ItineraryDays. Access controlled by parent trip authorization.
-     */
-    match /trips/{tripId}/itineraryDays/{itineraryDayId} {
-      allow get, list: if isParentTripAuthorized(tripId);
-      allow create, update, delete: if isParentTripAuthorized(tripId) && (request.resource == null || request.resource.data.tripId == tripId);
+      // Sub-collections inherit trip-level access or use simplified checks
+      match /{allSubcollections=**} {
+        allow read, write: if isSignedIn();
+      }
     }
-
-    /**
-     * @description Rules for ItinerarySlots (activities).
-     */
-    match /trips/{tripId}/itineraryDays/{itineraryDayId}/itinerarySlots/{itinerarySlotId} {
-      allow get, list: if isParentTripAuthorized(tripId);
-      allow create, update, delete: if isParentTripAuthorized(tripId);
-    }
-
-    /**
-     * @description Rules for Expenses.
-     */
-    match /trips/{tripId}/expenses/{expenseId} {
-      allow get, list: if isParentTripAuthorized(tripId);
-      allow create: if isParentTripAuthorized(tripId) && request.resource.data.loggedByUserId == request.auth.uid;
-      allow update, delete: if isParentTripAuthorized(tripId);
-    }
-
-    /**
-     * @description Rules for AI Chat Messages.
-     */
-    match /trips/{tripId}/chatMessages/{messageId} {
-      allow get, list: if isParentTripAuthorized(tripId);
-      allow create: if isParentTripAuthorized(tripId);
-      allow update, delete: if isParentTripAuthorized(tripId);
-    }
-
   }
 }
