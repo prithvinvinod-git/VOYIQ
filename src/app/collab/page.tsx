@@ -42,6 +42,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { RoomChat } from "@/components/collab/RoomChat";
 
 export default function CollabPage() {
   const { user, isUserLoading } = useUser();
@@ -200,35 +201,38 @@ export default function CollabPage() {
   const displayCode = userData?.activeCollabRoomId || activeRoom?.id || "---";
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
       <UserHeader showBack backHref="/dashboard" title="Collaboration Hub" />
       
       {userData?.activeCollabRoomId && (
-        <div className="fixed top-20 right-4 z-50 flex flex-col items-end gap-2 animate-fade-in">
-          <button 
-            onClick={() => setIsMemberListOpen(true)}
-            className="hover:scale-105 transition-transform active:scale-95"
-          >
-            <Card className="glass-card border-accent/20 bg-accent/5 p-2 rounded-2xl shadow-2xl flex items-center gap-2 cursor-pointer">
-              <div className="flex -space-x-2 mr-2">
-                {members?.slice(0, 5).map((m) => (
-                  <div key={m.id} className="w-8 h-8 rounded-full border-2 border-background overflow-hidden bg-primary/20" title={m.name}>
-                    {m.photoURL ? <Image src={m.photoURL} alt={m.name} width={32} height={32} /> : <span className="text-[10px] flex items-center justify-center h-full font-bold">{m.name?.[0]}</span>}
-                  </div>
-                ))}
-                {(members?.length || 0) > 5 && (
-                  <div className="w-8 h-8 rounded-full border-2 border-background bg-secondary flex items-center justify-center text-[10px] font-bold">
-                    +{members!.length - 5}
-                  </div>
-                )}
-              </div>
-              <div className="text-right">
-                <p className="text-[10px] font-bold text-accent uppercase tracking-widest leading-none">Live Room</p>
-                <p className="text-xs font-headline font-bold">{displayCode}</p>
-              </div>
-            </Card>
-          </button>
-        </div>
+        <>
+          <div className="fixed top-20 right-4 z-40 flex flex-col items-end gap-2 animate-fade-in">
+            <button 
+              onClick={() => setIsMemberListOpen(true)}
+              className="hover:scale-105 transition-transform active:scale-95"
+            >
+              <Card className="glass-card border-accent/20 bg-accent/5 p-2 rounded-2xl shadow-2xl flex items-center gap-2 cursor-pointer">
+                <div className="flex -space-x-2 mr-2">
+                  {members?.slice(0, 5).map((m) => (
+                    <div key={m.id} className="w-8 h-8 rounded-full border-2 border-background overflow-hidden bg-primary/20" title={m.name}>
+                      {m.photoURL ? <Image src={m.photoURL} alt={m.name} width={32} height={32} /> : <span className="text-[10px] flex items-center justify-center h-full font-bold">{m.name?.[0]}</span>}
+                    </div>
+                  ))}
+                  {(members?.length || 0) > 5 && (
+                    <div className="w-8 h-8 rounded-full border-2 border-background bg-secondary flex items-center justify-center text-[10px] font-bold">
+                      +{members!.length - 5}
+                    </div>
+                  )}
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-bold text-accent uppercase tracking-widest leading-none">Live Room</p>
+                  <p className="text-xs font-headline font-bold">{displayCode}</p>
+                </div>
+              </Card>
+            </button>
+          </div>
+          <RoomChat roomId={userData.activeCollabRoomId} />
+        </>
       )}
 
       <Dialog open={isMemberListOpen} onOpenChange={setIsMemberListOpen}>
@@ -376,7 +380,7 @@ export default function CollabPage() {
                                   <MapPin className="w-3 h-3" /> {trip.destination}
                                 </div>
                                 <div className="flex items-center gap-1">
-                                  <MessageSquare className="w-3 h-3" /> AI Plan Ready
+                                  <Sparkles className="w-3 h-3" /> AI Plan Ready
                                 </div>
                               </div>
                             </CardContent>
