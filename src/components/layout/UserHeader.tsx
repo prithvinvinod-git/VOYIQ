@@ -82,7 +82,7 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
               
               {isPremium ? (
                 <Link href="/collab">
-                  <Button variant="ghost" className="gap-2 text-[10px] font-bold uppercase tracking-widest text-accent hover:bg-accent hover:text-black transition-colors h-9">
+                  <Button variant="ghost" className="gap-2 text-[10px] font-bold uppercase tracking-widest text-accent hover:bg-accent hover:text-accent-foreground transition-colors h-9">
                     <Users className="w-3.5 h-3.5" /> Collab Hub
                   </Button>
                 </Link>

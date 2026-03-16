@@ -261,9 +261,9 @@ export default function CollabPage() {
                       {m.name}
                       {m.id === user?.uid && <Badge variant="outline" className="text-[8px] py-0 px-1 border-primary/30 text-primary">You</Badge>}
                     </div>
-                    <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <div className="text-[10px] text-muted-foreground flex items-center gap-1">
                       <Clock className="w-3 h-3" /> Joined {new Date(m.joinedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
+                    </div>
                   </div>
                 </div>
                 <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_hsl(var(--primary))]" />
