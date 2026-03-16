@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,17 +10,14 @@ import { Label } from "@/components/ui/label";
 import { 
   MapPin, 
   Calendar as CalendarIcon, 
-  Users, 
   Wallet, 
-  CheckCircle2, 
   ChevronRight, 
   ChevronLeft,
   Sparkles,
-  Search,
   Check
 } from "lucide-react";
-import { db, auth } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { useFirestore, useUser } from "@/firebase";
+import { collection, doc, writeBatch } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { generatePersonalizedItinerary } from "@/ai/flows/generate-personalized-itinerary";
 import { Progress } from "@/components/ui/progress";
@@ -35,11 +32,11 @@ export default function TripWizard() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const router = useRouter();
   const { toast } = useToast();
+  const firestore = useFirestore();
+  const { user, isUserLoading } = useUser();
 
   const [formData, setFormData] = useState({
     destination: "",
-    lat: 0,
-    lng: 0,
     startDate: "",
     endDate: "",
     numTravelers: 1,
@@ -54,6 +51,12 @@ export default function TripWizard() {
     mustAvoid: ""
   });
 
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push("/auth");
+    }
+  }, [user, isUserLoading, router]);
+
   const searchDestination = async (val: string) => {
     setQuery(val);
     if (val.length < 3) return;
@@ -67,7 +70,7 @@ export default function TripWizard() {
   };
 
   const selectDestination = (item: any) => {
-    setFormData({ ...formData, destination: item.display_name, lat: parseFloat(item.lat), lng: parseFloat(item.lon) });
+    setFormData({ ...formData, destination: item.display_name });
     setQuery(item.display_name);
     setSearchResults([]);
   };
@@ -85,12 +88,9 @@ export default function TripWizard() {
   };
 
   const handleSubmit = async () => {
+    if (!user || !firestore) return;
     setLoading(true);
     try {
-      const user = auth.currentUser;
-      if (!user) throw new Error("Please sign in first.");
-
-      // 1. Generate AI Itinerary
       const aiResponse = await generatePersonalizedItinerary({
         destination: formData.destination,
         startDate: formData.startDate,
@@ -107,19 +107,33 @@ export default function TripWizard() {
         mustAvoid: formData.mustAvoid
       });
 
-      // 2. Save to Firestore
-      const tripRef = await addDoc(collection(db, "trips"), {
+      const batch = writeBatch(firestore);
+      const tripRef = doc(collection(firestore, "trips"));
+      
+      const tripData = {
+        id: tripRef.id,
         ownerId: user.uid,
+        authorizedUserIds: [user.uid],
         ...formData,
-        createdAt: serverTimestamp(),
         status: "active",
-        health: 100
-      });
+        health: 100,
+        createdAt: new Date().toISOString()
+      };
 
-      // Save each day as a sub-collection
+      batch.set(tripRef, tripData);
+
       for (const day of aiResponse.days) {
-        await addDoc(collection(db, `trips/${tripRef.id}/itinerary`), day);
+        const dayRef = doc(collection(firestore, `trips/${tripRef.id}/itineraryDays`));
+        batch.set(dayRef, {
+          ...day,
+          id: dayRef.id,
+          tripId: tripRef.id,
+          tripOwnerId: user.uid,
+          tripAuthorizedUserIds: [user.uid]
+        });
       }
+
+      await batch.commit();
 
       toast({ title: "Itinerary Generated!", description: "Taking you to your new trip." });
       router.push(`/trip/${tripRef.id}`);
@@ -135,7 +149,6 @@ export default function TripWizard() {
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.1),transparent_70%)]" />
       
       <div className="w-full max-w-4xl space-y-8">
-        {/* Progress Header */}
         <div className="space-y-4">
           <div className="flex items-center justify-between text-sm font-medium">
             <span className="text-muted-foreground">Step {step} of 4</span>
@@ -249,7 +262,7 @@ export default function TripWizard() {
                           placeholder="Amount"
                           className="pl-10 h-12 bg-white/5 border-white/10"
                           value={formData.totalBudget}
-                          onChange={(e) => setFormData({...formData, totalBudget: parseInt(e.target.value)})}
+                          onChange={(e) => setFormData({...formData, totalBudget: parseInt(e.target.value) || 0})}
                         />
                       </div>
                     </div>
@@ -383,8 +396,8 @@ export default function TripWizard() {
                     <div className="space-y-4 w-full flex flex-col items-center">
                       <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
                       <div className="text-center">
-                        <p className="font-bold text-lg animate-pulse-subtle">Generating Your Itinerary...</p>
-                        <p className="text-sm text-muted-foreground">Claude AI is hand-picking activities for you.</p>
+                        <p className="font-bold text-lg">Generating Your Itinerary...</p>
+                        <p className="text-sm text-muted-foreground">Our AI is hand-picking activities for you.</p>
                       </div>
                     </div>
                   ) : (
@@ -400,7 +413,6 @@ export default function TripWizard() {
               </div>
             )}
 
-            {/* Navigation Buttons */}
             {!loading && (
               <div className="mt-12 flex justify-between">
                 <Button 

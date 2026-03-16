@@ -1,15 +1,15 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, MapPin, Calendar, Wallet, Progress as ProgressIcon, LogOut, Search } from "lucide-react";
 import Link from "next/link";
-import { auth, db } from "@/lib/firebase";
-import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { useUser, useCollection, useFirestore, useAuth, useMemoFirebase } from "@/firebase";
+import { collection, query, where } from "firebase/firestore";
+import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { Progress } from "@/components/ui/progress";
 import Image from "next/image";
@@ -19,61 +19,38 @@ interface Trip {
   destination: string;
   startDate: string;
   endDate: string;
-  budget: { total: number; currency: string };
-  health: number; // 0-100
+  totalBudget: number;
+  currency: string;
+  health: number;
 }
 
 export default function Dashboard() {
-  const [user, setUser] = useState<any>(null);
-  const [trips, setTrips] = useState<Trip[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
+  const auth = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (u) => {
-      if (u) {
-        setUser(u);
-        fetchTrips(u.uid);
-      } else {
-        router.push("/auth");
-      }
-    });
-    return () => unsubscribe();
-  }, [router]);
-
-  const fetchTrips = async (uid: string) => {
-    try {
-      const q = query(collection(db, "trips"), where("ownerId", "==", uid));
-      const querySnapshot = await getDocs(q);
-      const fetchedTrips = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Trip[];
-      
-      // Mock health for now if not present
-      const formattedTrips = fetchedTrips.map(t => ({
-        ...t,
-        health: t.health || Math.floor(Math.random() * 40) + 60
-      }));
-      
-      setTrips(formattedTrips);
-    } catch (e) {
-      console.error(e);
-      // Mock trips for demo if none exist
-      setTrips([
-        { id: "1", destination: "Paris, France", startDate: "2024-06-12", endDate: "2024-06-18", budget: { total: 1500, currency: "USD" }, health: 85 },
-        { id: "2", destination: "Tokyo, Japan", startDate: "2024-10-05", endDate: "2024-10-15", budget: { total: 3000, currency: "USD" }, health: 92 },
-      ]);
-    } finally {
-      setLoading(false);
+    if (!isUserLoading && !user) {
+      router.push("/auth");
     }
-  };
+  }, [user, isUserLoading, router]);
+
+  const tripsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(
+      collection(firestore, "trips"),
+      where("ownerId", "==", user.uid)
+    );
+  }, [firestore, user]);
+
+  const { data: tripsData, isLoading: isTripsLoading } = useCollection<Trip>(tripsQuery);
 
   const handleLogout = () => {
     signOut(auth).then(() => router.push("/"));
   };
 
-  if (loading) {
+  if (isUserLoading || isTripsLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
@@ -81,9 +58,13 @@ export default function Dashboard() {
     );
   }
 
+  const trips = (tripsData || []).map(t => ({
+    ...t,
+    health: t.health || 85 // Fallback if not generated
+  }));
+
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Navbar */}
       <nav className="border-b border-white/5 bg-card/30 backdrop-blur-md sticky top-0 z-40">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -93,13 +74,6 @@ export default function Dashboard() {
             <span className="font-headline font-bold tracking-tight text-lg">VOYIQ</span>
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/10 rounded-full mr-4 hidden md:flex">
-              <Search className="w-4 h-4 text-muted-foreground" />
-              <input 
-                placeholder="Search trips..." 
-                className="bg-transparent border-none outline-none text-xs w-32"
-              />
-            </div>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
                 {user?.photoURL ? (
@@ -117,7 +91,6 @@ export default function Dashboard() {
       </nav>
 
       <main className="container mx-auto px-4 pt-10">
-        {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
             <h1 className="text-4xl font-headline font-bold mb-2">Hello, {user?.displayName?.split(' ')[0] || "Traveler"}!</h1>
@@ -130,7 +103,6 @@ export default function Dashboard() {
           </Link>
         </div>
 
-        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <Card className="glass-card border-none">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -139,32 +111,31 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{trips.length}</div>
-              <p className="text-xs text-muted-foreground mt-1">+1 from last month</p>
+              <p className="text-xs text-muted-foreground mt-1">Managed by AI</p>
             </CardContent>
           </Card>
           <Card className="glass-card border-none">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Budget Score</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Budget Health</CardTitle>
               <Wallet className="w-4 h-4 text-accent" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">94%</div>
-              <p className="text-xs text-muted-foreground mt-1">Excellent adherence</p>
+              <div className="text-2xl font-bold">Excellent</div>
+              <p className="text-xs text-muted-foreground mt-1">94% score</p>
             </CardContent>
           </Card>
           <Card className="glass-card border-none">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Countries Visited</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Exploration Rank</CardTitle>
               <ProgressIcon className="w-4 h-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">12</div>
-              <p className="text-xs text-muted-foreground mt-1">Goal: 20 this year</p>
+              <div className="text-2xl font-bold">Explorer</div>
+              <p className="text-xs text-muted-foreground mt-1">Level 4</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Trip List */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-headline font-bold">Your Journeys</h2>
@@ -200,12 +171,12 @@ export default function Dashboard() {
                           </div>
                           <div className="flex items-center gap-1">
                             <Wallet className="w-3 h-3" />
-                            <span>{trip.budget.total} {trip.budget.currency}</span>
+                            <span>{trip.totalBudget} {trip.currency}</span>
                           </div>
                         </div>
                         <div className="space-y-1">
                           <div className="flex justify-between text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                            <span>Itinerary Completion</span>
+                            <span>Itinerary Health</span>
                             <span>{trip.health}%</span>
                           </div>
                           <Progress value={trip.health} className="h-1.5" />
