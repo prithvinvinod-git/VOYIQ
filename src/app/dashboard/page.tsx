@@ -40,7 +40,7 @@ export default function Dashboard() {
     if (!firestore || !user) return null;
     return query(
       collection(firestore, "trips"),
-      where("ownerId", "==", user.uid)
+      where("authorizedUserIds", "array-contains", user.uid)
     );
   }, [firestore, user]);
 
