@@ -27,8 +27,9 @@ service cloud.firestore {
     // --- COLLAB ROOM RULES ---
 
     match /collabRooms/{roomId} {
-      // Allow any signed-in user to get a room (to verify codes) or create one
-      allow get, create: if isSignedIn();
+      // Allow any signed-in user to read (get/list) rooms and create/update them
+      // Update is required for setDoc operations to function reliably
+      allow read, create, update: if isSignedIn();
       
       // Only the creator can delete the room
       allow delete: if isSignedIn() && resource.data.createdBy == request.auth.uid;
@@ -51,7 +52,7 @@ service cloud.firestore {
     match /trips/{tripId} {
       // Allow reading specific trips if owner, collaborator, or part of a collab session
       allow get: if isSignedIn() && (
-        (request.auth.uid in resource.data.authorizedUserIds) ||
+        (request.auth.uid in (resource.data.authorizedUserIds || [])) ||
         (request.auth.uid == resource.data.ownerId) ||
         (resource.data.collabRoomId != null)
       );
@@ -64,7 +65,7 @@ service cloud.firestore {
 
       // Allow updating if owner or authorized collaborator
       allow update: if isSignedIn() && (
-        (request.auth.uid in resource.data.authorizedUserIds) ||
+        (request.auth.uid in (resource.data.authorizedUserIds || [])) ||
         (request.auth.uid == resource.data.ownerId) ||
         (resource.data.collabRoomId != null)
       );
