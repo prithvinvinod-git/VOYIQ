@@ -142,10 +142,11 @@ const provideAIChatAssistanceFlow = ai.defineFlow(
   },
   async (input) => {
     // Format chat history for the AI model's messages array
+    // Genkit 1.x message format uses 'content' property which is an array of parts
     const messages = input.chatHistory.map(msg => ({
-      role: msg.role === 'model' ? 'model' : 'user', // Ensure role is 'user' or 'model'
-      parts: [{ text: msg.content }],
-    }));
+      role: msg.role === 'model' ? 'model' : 'user',
+      content: [{ text: msg.content }],
+    })) as any[];
 
     const { output } = await aiChatPrompt(input, {
         messages: messages,
