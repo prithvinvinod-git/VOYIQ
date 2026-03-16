@@ -59,10 +59,10 @@ export default function TripWizard() {
     destination: "",
     startDate: "",
     endDate: "",
-    numTravelers: 1,
+    numTravelers: "" as unknown as number,
     groupType: "solo" as any,
     totalBudget: 0,
-    currency: "",
+    currency: "USD",
     travelStyle: [] as string[],
     pace: "Balanced" as any,
     dietaryPreferences: ["No preference"] as any[],
@@ -118,6 +118,10 @@ export default function TripWizard() {
 
   const handleSubmit = async () => {
     if (!user || !firestore) return;
+    if (!formData.numTravelers || formData.numTravelers < 1) {
+      toast({ variant: "destructive", title: "Error", description: "Please enter a valid number of travelers." });
+      return;
+    }
     setLoading(true);
     try {
       const aiResponse = await generatePersonalizedItinerary({
@@ -253,7 +257,14 @@ export default function TripWizard() {
                       <Label>Number of People</Label>
                       <div className="relative">
                         <UsersIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input type="number" min="1" className="pl-10 h-12 bg-white/5 border-white/10" value={formData.numTravelers} onChange={(e) => setFormData({...formData, numTravelers: parseInt(e.target.value) || 1})}/>
+                        <Input 
+                          type="number" 
+                          min="1" 
+                          placeholder="How many people?"
+                          className="pl-10 h-12 bg-white/5 border-white/10" 
+                          value={formData.numTravelers || ""} 
+                          onChange={(e) => setFormData({...formData, numTravelers: parseInt(e.target.value) || "" as any})}
+                        />
                       </div>
                     </div>
                     <div className="space-y-2">
@@ -327,8 +338,8 @@ export default function TripWizard() {
                 <div className="space-y-8 animate-fade-in text-center">
                   <h2 className="text-3xl font-headline font-bold">Ready to Fly?</h2>
                   <div className="glass-card p-6 text-left rounded-2xl bg-primary/5 border-primary/20">
-                    <p><strong>From:</strong> {formData.origin}</p>
-                    <p><strong>To:</strong> {formData.destination}</p>
+                    <p><strong>From:</strong> {formData.origin || "Not set"}</p>
+                    <p><strong>To:</strong> {formData.destination || "Not set"}</p>
                     <p><strong>Dates:</strong> {formData.startDate} to {formData.endDate}</p>
                     <p><strong>Travelers:</strong> {formData.numTravelers} ({formData.groupType})</p>
                   </div>

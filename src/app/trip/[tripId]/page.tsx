@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -100,7 +101,7 @@ export default function TripDetail() {
     return itinerary?.find(d => d.dayNumber === activeDay) || itinerary?.[0];
   }, [itinerary, activeDay]);
 
-  // Aggregate Budget Data for the Chart (Entire Trip for context)
+  // Aggregate Budget Data for the Chart - focus on selected day vs manual expenses
   const budgetStats = useMemo(() => {
     const stats: Record<string, { planned: number; actual: number }> = {
       Food: { planned: 0, actual: 0 },
@@ -110,14 +111,14 @@ export default function TripDetail() {
       Misc: { planned: 0, actual: 0 },
     };
 
-    itinerary?.forEach(day => {
-      (day.slots || []).forEach((slot: any) => {
-        const cat = slot.category || "Misc";
-        const key = CATEGORIES.includes(cat) ? cat : "Misc";
-        stats[key].planned += slot.estimatedCostINR || 0;
-      });
+    // Planned cost for the SELECTED DAY ONLY
+    (currentDay?.slots || []).forEach((slot: any) => {
+      const cat = slot.category || "Misc";
+      const key = CATEGORIES.includes(cat) ? cat : "Misc";
+      stats[key].planned += slot.estimatedCostINR || 0;
     });
 
+    // Actual manual expenses logged for the entire trip (or filtered by date if preferred)
     extraExpenses?.forEach(exp => {
       const cat = exp.category || "Misc";
       const key = CATEGORIES.includes(cat) ? cat : "Misc";
@@ -128,7 +129,7 @@ export default function TripDetail() {
       category,
       ...values,
     }));
-  }, [itinerary, extraExpenses]);
+  }, [currentDay, extraExpenses]);
 
   // Calculate Remaining Budget for Progress Bar
   const budgetProgress = useMemo(() => {

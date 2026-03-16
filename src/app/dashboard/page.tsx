@@ -99,7 +99,7 @@ export default function Dashboard() {
           </Link>
         </div>
 
-        {/* Current Itineraries Section - Now at the top */}
+        {/* Active Journeys Section - prioritized at top */}
         <div className="space-y-6 mb-12">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-headline font-bold">Active Journeys</h2>
@@ -165,7 +165,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Stats Cards - Now below journeys */}
+        {/* Stats Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <Card className="glass-card border-none bg-gradient-to-br from-card to-primary/5">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -176,7 +176,7 @@ export default function Dashboard() {
               <div className="text-2xl font-bold">{stats.explorationScore} XP</div>
               <div className="mt-2 space-y-1">
                 <div className="flex justify-between text-[10px] text-muted-foreground uppercase font-bold">
-                  <span>{stats.xpRemaining} XP to Level {stats.currentLevel + 1}</span>
+                  <span>{stats.xpRemaining} Level {stats.currentLevel + 1}</span>
                   <span>{Math.round(stats.levelProgress)}%</span>
                 </div>
                 <Progress value={stats.levelProgress} className="h-1 bg-white/5" />
