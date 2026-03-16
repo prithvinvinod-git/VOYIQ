@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,9 +20,15 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { PlanSelectionDialog } from "@/components/shared/PlanSelectionDialog";
 
 export default function LandingPage() {
+  const router = useRouter();
   const heroImg = PlaceHolderImages.find(img => img.id === "hero-travel");
+
+  const handleProceed = (destination: string) => {
+    router.push(destination);
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -42,11 +49,10 @@ export default function LandingPage() {
             <Link href="/auth">
               <Button variant="ghost" className="hidden sm:inline-flex">Sign In</Button>
             </Link>
-            <Link href="/auth">
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6">
-                Get Started
-              </Button>
-            </Link>
+            <PlanSelectionDialog 
+              trigger={<Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6">Get Started</Button>}
+              onSelectFree={() => handleProceed("/auth")}
+            />
           </div>
         </div>
       </header>
@@ -59,23 +65,29 @@ export default function LandingPage() {
             <Sparkles className="w-4 h-4 text-primary" />
             <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Meet Your AI Travel Brain</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-headline font-extrabold mb-8 tracking-tighter animate-fade-in leading-tight lg:leading-[1.1]" style={{ animationDelay: '0.1s' }}>
+          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-headline font-extrabold mb-8 tracking-tighter animate-fade-in leading-tight" style={{ animationDelay: '0.1s' }}>
             ROAM SMART.<br/><span className="gradient-text">PLAN EFFORTLESS.</span>
           </h1>
           <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto mb-12 animate-fade-in leading-relaxed" style={{ animationDelay: '0.2s' }}>
             Ditch the spreadsheets. VOYIQ uses AI to build hyper-personalized itineraries and track your budget in real-time. 
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-            <Link href="/plan/new">
-              <Button size="lg" className="h-16 px-10 text-lg bg-primary hover:bg-primary/90 rounded-full shadow-2xl shadow-primary/20">
-                Create My First Trip <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-            </Link>
-            <Link href="/auth">
-              <Button variant="outline" size="lg" className="h-16 px-10 text-lg border-white/10 hover:bg-white/5 rounded-full backdrop-blur-sm">
-                Join for Free
-              </Button>
-            </Link>
+            <PlanSelectionDialog 
+              trigger={
+                <Button size="lg" className="h-16 px-10 text-lg bg-primary hover:bg-primary/90 rounded-full shadow-2xl shadow-primary/20">
+                  Create My First Trip <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              }
+              onSelectFree={() => handleProceed("/plan/new")}
+            />
+            <PlanSelectionDialog 
+              trigger={
+                <Button variant="outline" size="lg" className="h-16 px-10 text-lg border-white/10 hover:bg-white/5 rounded-full backdrop-blur-sm">
+                  Join for Free
+                </Button>
+              }
+              onSelectFree={() => handleProceed("/auth")}
+            />
           </div>
         </div>
 
@@ -193,11 +205,14 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl md:text-6xl font-headline font-bold mb-8">Ready to start roamin'?</h2>
           <p className="text-xl text-muted-foreground mb-12 max-w-xl mx-auto">Join the future of travel planning today. No hidden fees, just pure exploration.</p>
-          <Link href="/auth">
-            <Button size="lg" className="h-16 px-12 text-xl bg-accent text-accent-foreground hover:bg-accent/90 rounded-full shadow-2xl shadow-accent/20">
-              Get Started Free
-            </Button>
-          </Link>
+          <PlanSelectionDialog 
+            trigger={
+              <Button size="lg" className="h-16 px-12 text-xl bg-accent text-accent-foreground hover:bg-accent/90 rounded-full shadow-2xl shadow-accent/20">
+                Get Started Free
+              </Button>
+            }
+            onSelectFree={() => handleProceed("/auth")}
+          />
         </div>
       </section>
 

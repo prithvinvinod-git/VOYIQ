@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useMemo } from "react";
@@ -13,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { Progress } from "@/components/ui/progress";
 import Image from "next/image";
 import { UserHeader } from "@/components/layout/UserHeader";
+import { PlanSelectionDialog } from "@/components/shared/PlanSelectionDialog";
 
 interface Trip {
   id: string;
@@ -49,17 +49,14 @@ export default function Dashboard() {
   const stats = useMemo(() => {
     if (!tripsData) return { explorationScore: 0, currentLevel: 1, levelProgress: 0, streakDays: 0, completedCount: 0, xpRemaining: 200 };
     
-    // XP calculation: 50 XP per completed slot
     const totalCompleted = tripsData.reduce((acc, t) => acc + (t.totalCompletedSlots || 0), 0);
     const totalXP = totalCompleted * 50;
     
-    // Leveling: every 200 XP increases level
     const level = Math.floor(totalXP / 200) + 1;
     const progressInCurrentLevel = totalXP % 200;
     const levelProgressPercent = (progressInCurrentLevel / 200) * 100;
     const xpRemaining = 200 - progressInCurrentLevel;
 
-    // Streak logic: if any activity completed in any trip, count it as a simple active status for now
     const streak = tripsData.some(t => (t.totalCompletedSlots || 0) > 0) ? 4 : 0;
 
     return {
@@ -92,14 +89,17 @@ export default function Dashboard() {
             <h1 className="text-4xl font-headline font-bold mb-2">Welcome back, {user?.displayName?.split(' ')[0] || "Explorer"}!</h1>
             <p className="text-muted-foreground">You have {trips.length} adventures tracked.</p>
           </div>
-          <Link href="/plan/new">
-            <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl px-8 h-12 shadow-lg shadow-primary/20">
-              <Plus className="mr-2 w-5 h-5" /> Plan New Adventure
-            </Button>
-          </Link>
+          <PlanSelectionDialog 
+            trigger={
+              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl px-8 h-12 shadow-lg shadow-primary/20">
+                <Plus className="mr-2 w-5 h-5" /> Plan New Adventure
+              </Button>
+            }
+            onSelectFree={() => router.push("/plan/new")}
+          />
         </div>
 
-        {/* Active Journeys Section - prioritized at top */}
+        {/* Active Journeys Section */}
         <div className="space-y-6 mb-12">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-headline font-bold">Active Journeys</h2>
@@ -157,9 +157,10 @@ export default function Dashboard() {
                 </div>
                 <h3 className="text-xl font-bold mb-2">No trips yet</h3>
                 <p className="text-muted-foreground mb-6">Start your first adventure today with VOYIQ AI.</p>
-                <Link href="/plan/new">
-                  <Button variant="outline" className="border-primary text-primary hover:bg-primary/10">Plan a New Trip</Button>
-                </Link>
+                <PlanSelectionDialog 
+                  trigger={<Button variant="outline" className="border-primary text-primary hover:bg-primary/10">Plan a New Trip</Button>}
+                  onSelectFree={() => router.push("/plan/new")}
+                />
               </div>
             )}
           </div>
