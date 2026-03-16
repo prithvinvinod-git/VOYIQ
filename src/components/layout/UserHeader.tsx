@@ -3,7 +3,16 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { LogOut, ChevronLeft, Compass, Users, Lock, Plane, LayoutDashboard, Plus } from "lucide-react";
+import { 
+  LogOut, 
+  ChevronLeft, 
+  Compass, 
+  Users, 
+  Lock, 
+  Plane, 
+  LayoutDashboard, 
+  Plus 
+} from "lucide-react";
 import Link from "next/link";
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { signOut } from "firebase/auth";
@@ -73,7 +82,7 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
               
               {isPremium ? (
                 <Link href="/collab">
-                  <Button variant="ghost" className="gap-2 text-[10px] font-bold uppercase tracking-widest text-accent hover:bg-accent hover:text-background h-9">
+                  <Button variant="ghost" className="gap-2 text-[10px] font-bold uppercase tracking-widest text-accent hover:bg-accent hover:text-primary-foreground h-9">
                     <Users className="w-3.5 h-3.5" /> Collab Hub
                   </Button>
                 </Link>
@@ -99,7 +108,7 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
                   {user?.photoURL ? (
                     <Image src={user.photoURL} alt="Avatar" width={28} height={28} />
                   ) : (
-                    <span className="text-[10px] font-bold text-white">{user?.displayName?.[0] || "U"}</span>
+                    <span className="text-[10px] font-bold text-white uppercase">{user?.displayName?.[0] || "U"}</span>
                   )}
                 </div>
                 <div className="flex flex-col">
