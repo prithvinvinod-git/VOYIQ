@@ -54,7 +54,7 @@ export default function Dashboard() {
 
   const trips = (tripsData || []).map(t => ({
     ...t,
-    health: t.health || 85 
+    health: t.health || 0 
   }));
 
   const explorationScore = trips.length * 250 + (trips.length > 0 ? 120 : 0);
@@ -143,7 +143,7 @@ export default function Dashboard() {
                         <div className="flex items-start justify-between mb-2">
                           <h3 className="text-xl font-bold truncate pr-4">{trip.destination}</h3>
                           <Badge variant={trip.health > 80 ? "default" : "secondary"} className={trip.health > 80 ? "bg-primary/20 text-primary border-none" : ""}>
-                            {trip.health}% Score
+                            {trip.health}% Complete
                           </Badge>
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
@@ -158,7 +158,7 @@ export default function Dashboard() {
                         </div>
                         <div className="space-y-1">
                           <div className="flex justify-between text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                            <span>Itinerary Health</span>
+                            <span>Itinerary Progress</span>
                             <span>{trip.health}%</span>
                           </div>
                           <Progress value={trip.health} className="h-1.5" />
