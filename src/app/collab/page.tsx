@@ -7,13 +7,41 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Users, Plus, LogOut, Loader2, Copy, Check, MessageSquare, MapPin, Sparkles } from "lucide-react";
-import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase, updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
+import { 
+  Users, 
+  Plus, 
+  LogOut, 
+  Loader2, 
+  Copy, 
+  Check, 
+  MessageSquare, 
+  MapPin, 
+  Sparkles,
+  X,
+  Clock
+} from "lucide-react";
+import { 
+  useUser, 
+  useFirestore, 
+  useCollection, 
+  useDoc, 
+  useMemoFirebase, 
+  updateDocumentNonBlocking, 
+  setDocumentNonBlocking, 
+  deleteDocumentNonBlocking 
+} from "@/firebase";
 import { collection, doc, query, where, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import Link from "next/link";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 export default function CollabPage() {
   const { user, isUserLoading } = useUser();
@@ -24,6 +52,7 @@ export default function CollabPage() {
   const [roomCode, setRoomCode] = useState("");
   const [isJoining, setIsJoining] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isMemberListOpen, setIsMemberListOpen] = useState(false);
 
   // Fetch full user data to check premium
   const userRef = useMemoFirebase(() => {
@@ -178,26 +207,82 @@ export default function CollabPage() {
       {/* Active Members Div - Top Right */}
       {userData?.activeCollabRoomId && (
         <div className="fixed top-20 right-4 z-50 flex flex-col items-end gap-2 animate-fade-in">
-          <Card className="glass-card border-accent/20 bg-accent/5 p-2 rounded-2xl shadow-2xl flex items-center gap-2">
-            <div className="flex -space-x-2 mr-2">
-              {members?.slice(0, 5).map((m) => (
-                <div key={m.id} className="w-8 h-8 rounded-full border-2 border-background overflow-hidden bg-primary/20" title={m.name}>
-                  {m.photoURL ? <Image src={m.photoURL} alt={m.name} width={32} height={32} /> : <span className="text-[10px] flex items-center justify-center h-full font-bold">{m.name?.[0]}</span>}
-                </div>
-              ))}
-              {(members?.length || 0) > 5 && (
-                <div className="w-8 h-8 rounded-full border-2 border-background bg-secondary flex items-center justify-center text-[10px] font-bold">
-                  +{members!.length - 5}
-                </div>
-              )}
-            </div>
-            <div className="text-right">
-              <p className="text-[10px] font-bold text-accent uppercase tracking-widest leading-none">Live Room</p>
-              <p className="text-xs font-headline font-bold">{displayCode}</p>
-            </div>
-          </Card>
+          <button 
+            onClick={() => setIsMemberListOpen(true)}
+            className="hover:scale-105 transition-transform active:scale-95"
+          >
+            <Card className="glass-card border-accent/20 bg-accent/5 p-2 rounded-2xl shadow-2xl flex items-center gap-2 cursor-pointer">
+              <div className="flex -space-x-2 mr-2">
+                {members?.slice(0, 5).map((m) => (
+                  <div key={m.id} className="w-8 h-8 rounded-full border-2 border-background overflow-hidden bg-primary/20" title={m.name}>
+                    {m.photoURL ? <Image src={m.photoURL} alt={m.name} width={32} height={32} /> : <span className="text-[10px] flex items-center justify-center h-full font-bold">{m.name?.[0]}</span>}
+                  </div>
+                ))}
+                {(members?.length || 0) > 5 && (
+                  <div className="w-8 h-8 rounded-full border-2 border-background bg-secondary flex items-center justify-center text-[10px] font-bold">
+                    +{members!.length - 5}
+                  </div>
+                )}
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] font-bold text-accent uppercase tracking-widest leading-none">Live Room</p>
+                <p className="text-xs font-headline font-bold">{displayCode}</p>
+              </div>
+            </Card>
+          </button>
         </div>
       )}
+
+      {/* Member List Detailed Dialog */}
+      <Dialog open={isMemberListOpen} onOpenChange={setIsMemberListOpen}>
+        <DialogContent className="glass-card border-accent/20 sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-2xl font-headline font-bold flex items-center gap-2">
+                <Users className="w-6 h-6 text-primary" /> Room Members
+              </DialogTitle>
+            </div>
+            <DialogDescription className="text-muted-foreground">
+              Current explorers in room <span className="font-bold text-accent">{displayCode}</span>
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar py-4">
+            {members?.map((m) => (
+              <div key={m.id} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors group">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full border border-white/10 overflow-hidden bg-primary/20 flex-shrink-0">
+                    {m.photoURL ? (
+                      <Image src={m.photoURL} alt={m.name} width={40} height={40} className="object-cover" />
+                    ) : (
+                      <span className="text-xs flex items-center justify-center h-full font-bold">{m.name?.[0] || 'U'}</span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm flex items-center gap-2">
+                      {m.name}
+                      {m.id === user?.uid && <Badge variant="outline" className="text-[8px] py-0 px-1 border-primary/30 text-primary">You</Badge>}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                      <Clock className="w-3 h-3" /> Joined {new Date(m.joinedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                </div>
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_hsl(var(--primary))]" />
+              </div>
+            ))}
+          </div>
+
+          <div className="flex gap-3 mt-4">
+            <Button className="flex-1 bg-white/5 hover:bg-white/10 text-white" variant="outline" onClick={() => setIsMemberListOpen(false)}>
+              Close
+            </Button>
+            <Button className="bg-primary text-primary-foreground" onClick={copyCode}>
+              <Copy className="w-4 h-4 mr-2" /> Copy Code
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <main className="container mx-auto px-4 pt-10 pb-20">
         {!userData?.activeCollabRoomId ? (
