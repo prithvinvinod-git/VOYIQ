@@ -160,7 +160,7 @@ function TripWizardContent() {
       const batch = writeBatch(firestore);
       const tripRef = doc(collection(firestore, "trips"));
       
-      // Only attach to collab room if accessed via the collab link
+      // Only attach to collab room if explicitly set in the Wizard via URL param
       const collabId = isCollabMode ? userData?.activeCollabRoomId : null;
 
       const tripData = {

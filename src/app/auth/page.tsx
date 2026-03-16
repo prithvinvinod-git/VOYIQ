@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Compass, Mail, Phone, Lock, ArrowRight, Loader2, AlertCircle, ChevronLeft, User } from "lucide-react";
+import { Compass, Mail, Lock, ArrowRight, Loader2, AlertCircle, ChevronLeft, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth, useFirestore } from "@/firebase";
@@ -16,9 +16,6 @@ import {
   signInWithPopup, 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
-  signInWithPhoneNumber,
-  RecaptchaVerifier,
-  ConfirmationResult,
   updateProfile
 } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
@@ -35,31 +32,7 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [verificationCode, setVerificationCode] = useState("");
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
-  const [recaptchaVerifier, setRecaptchaVerifier] = useState<RecaptchaVerifier | null>(null);
   const [configError, setConfigError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && auth && !recaptchaVerifier) {
-      try {
-        const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-          size: 'invisible',
-          callback: () => {}
-        });
-        setRecaptchaVerifier(verifier);
-      } catch (e) {
-        console.error("Recaptcha init failed:", e);
-      }
-    }
-    
-    return () => {
-      if (recaptchaVerifier) {
-        recaptchaVerifier.clear();
-      }
-    };
-  }, [auth, recaptchaVerifier]);
 
   const syncUserToFirestore = async (user: any, displayName?: string) => {
     if (!firestore) return;
@@ -136,42 +109,9 @@ export default function AuthPage() {
     }
   };
 
-  const handlePhoneSignIn = async () => {
-    if (!phoneNumber) {
-      toast({ variant: "destructive", title: "Error", description: "Enter a valid phone number." });
-      return;
-    }
-    setLoading(true);
-    try {
-      const result = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier!);
-      setConfirmationResult(result);
-      toast({ title: "Code sent!", description: "Check your phone." });
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "Phone auth failed", description: error.message });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyCode = async () => {
-    if (!verificationCode || !confirmationResult) return;
-    setLoading(true);
-    try {
-      const result = await confirmationResult.confirm(verificationCode);
-      await syncUserToFirestore(result.user);
-      toast({ title: "Success!", description: "Phone verified successfully." });
-      router.push("/dashboard");
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "Verification failed", description: "Invalid code." });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-background">
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_30%_30%,hsl(var(--primary)/0.1),transparent_50%)]" />
-      <div id="recaptcha-container"></div>
 
       <div className="w-full max-w-md space-y-4">
         <Link href="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-white transition-colors mb-2">
@@ -202,10 +142,9 @@ export default function AuthPage() {
           
           <CardContent className="pt-6">
             <Tabs defaultValue="google" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 mb-8 bg-white/5 border border-white/10 p-1">
+              <TabsList className="grid w-full grid-cols-2 mb-8 bg-white/5 border border-white/10 p-1">
                 <TabsTrigger value="google">Google</TabsTrigger>
                 <TabsTrigger value="email">Email</TabsTrigger>
-                <TabsTrigger value="phone">Phone</TabsTrigger>
               </TabsList>
 
               <TabsContent value="google" className="space-y-4 animate-fade-in">
@@ -291,47 +230,6 @@ export default function AuthPage() {
                     </Button>
                   </TabsContent>
                 </Tabs>
-              </TabsContent>
-
-              <TabsContent value="phone" className="space-y-4 animate-fade-in">
-                {!confirmationResult ? (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number</Label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input 
-                          id="phone" 
-                          type="tel" 
-                          placeholder="+1 234 567 8900" 
-                          className="pl-10 h-12 bg-white/5 border-white/10"
-                          value={phoneNumber}
-                          onChange={(e) => setPhoneNumber(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                    <Button className="w-full h-12 bg-primary text-primary-foreground" onClick={handlePhoneSignIn} disabled={loading}>
-                      {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <ArrowRight className="w-4 h-4 mr-2" />}
-                      Send OTP
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="code">Verification Code</Label>
-                      <Input 
-                        id="code" 
-                        placeholder="6-digit code" 
-                        className="h-12 bg-white/5 border-white/10 text-center text-lg tracking-widest"
-                        value={verificationCode}
-                        onChange={(e) => setVerificationCode(e.target.value)}
-                      />
-                    </div>
-                    <Button className="w-full h-12 bg-primary text-primary-foreground" onClick={handleVerifyCode} disabled={loading}>
-                      {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : "Verify & Continue"}
-                    </Button>
-                  </div>
-                )}
               </TabsContent>
             </Tabs>
           </CardContent>
