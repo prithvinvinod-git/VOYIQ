@@ -1,14 +1,15 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Compass, Mail, Lock, ArrowRight, Loader2, AlertCircle, ChevronLeft, User } from "lucide-react";
-import Link from "next/link";
+import { Compass, Mail, Lock, Loader2, AlertCircle, ChevronLeft, User } from "lucide-react";
+import Link from "lucide-react";
+import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth, useFirestore } from "@/firebase";
 import { 
@@ -114,10 +115,10 @@ export default function AuthPage() {
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_30%_30%,hsl(var(--primary)/0.1),transparent_50%)]" />
 
       <div className="w-full max-w-md space-y-4">
-        <Link href="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-white transition-colors mb-2">
+        <NextLink href="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-white transition-colors mb-2">
           <ChevronLeft className="w-4 h-4" />
           Back to home
-        </Link>
+        </NextLink>
 
         {configError && (
           <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive shadow-lg">
@@ -129,11 +130,11 @@ export default function AuthPage() {
 
         <Card className="glass-card border-none">
           <CardHeader className="text-center">
-            <Link href="/" className="flex justify-center mb-6">
+            <div className="flex justify-center mb-6">
               <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
                 <Compass className="text-primary-foreground w-8 h-8" />
               </div>
-            </Link>
+            </div>
             <CardTitle className="text-3xl font-headline font-bold">Get Started</CardTitle>
             <CardDescription className="text-muted-foreground mt-2">
               Sign in or create an account to start your journey.
