@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -18,7 +19,7 @@ import {
   Users as UsersIcon,
   AlertCircle
 } from "lucide-react";
-import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
+import { useFirestore, useUser, useCollection, useMemoFirebase, useDoc } from "@/firebase";
 import { collection, doc, writeBatch, query, where } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { generatePersonalizedItinerary } from "@/ai/flows/generate-personalized-itinerary";
@@ -72,15 +73,23 @@ export default function TripWizard() {
     mustAvoid: ""
   });
 
+  // Fetch full user data to check premium and collab room
+  const userRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "users", user.uid);
+  }, [firestore, user]);
+  const { data: userData } = useDoc<any>(userRef);
+
   // Trip count check for Free Tier
   const tripsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
-    return query(collection(firestore, "trips"), where("authorizedUserIds", "array-contains", user.uid));
+    return query(collection(firestore, "trips"), where("ownerId", "==", user.uid));
   }, [firestore, user]);
   
   const { data: tripsData } = useCollection(tripsQuery);
   const tripCount = tripsData?.length || 0;
-  const isLimitReached = tripCount >= 4;
+  const isPremium = userData?.isPremium || false;
+  const isLimitReached = !isPremium && tripCount >= 4;
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -158,6 +167,7 @@ export default function TripWizard() {
         id: tripRef.id,
         ownerId: user.uid,
         authorizedUserIds: [user.uid],
+        collabRoomId: userData?.activeCollabRoomId || null,
         ...formData,
         status: "active",
         health: 0,
@@ -217,7 +227,7 @@ export default function TripWizard() {
                 <div className="mb-8 p-4 bg-destructive/10 border border-destructive/20 rounded-xl flex items-center gap-3">
                   <AlertCircle className="text-destructive w-5 h-5" />
                   <div className="flex-1">
-                    <p className="text-sm font-bold">You've reached your free trip limit.</p>
+                    <p className="text-sm font-bold">You&apos;ve reached your free trip limit.</p>
                     <p className="text-xs text-muted-foreground">Upgrade to Premium to plan more than 4 adventures.</p>
                   </div>
                   <PlanSelectionDialog 
@@ -225,6 +235,13 @@ export default function TripWizard() {
                     trigger={<Button size="sm" variant="destructive">Upgrade</Button>}
                     onSelectFree={() => {}}
                   />
+                </div>
+              )}
+
+              {userData?.activeCollabRoomId && (
+                <div className="mb-8 p-3 bg-accent/10 border border-accent/20 rounded-xl flex items-center gap-2">
+                  <UsersIcon className="text-accent w-4 h-4" />
+                  <p className="text-xs font-bold text-accent uppercase">Adding trip to Collab Room: {userData.activeCollabRoomId}</p>
                 </div>
               )}
 
@@ -382,6 +399,9 @@ export default function TripWizard() {
                     <p><strong>To:</strong> {formData.destination || "Not set"}</p>
                     <p><strong>Dates:</strong> {formData.startDate} to {formData.endDate}</p>
                     <p><strong>Travelers:</strong> {formData.numTravelers} ({formData.groupType})</p>
+                    {userData?.activeCollabRoomId && (
+                       <p className="mt-2 text-accent font-bold">Sharing with Collab Room: {userData.activeCollabRoomId}</p>
+                    )}
                   </div>
                   <Button 
                     size="lg" 

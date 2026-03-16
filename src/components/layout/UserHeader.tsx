@@ -1,13 +1,15 @@
+
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { LogOut, ChevronLeft, Menu, Compass } from "lucide-react";
+import { LogOut, ChevronLeft, Menu, Compass, Users, Lock } from "lucide-react";
 import Link from "next/link";
-import { useUser, useAuth } from "@/firebase";
+import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { doc } from "firebase/firestore";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +17,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { PlanSelectionDialog } from "@/components/shared/PlanSelectionDialog";
 
 interface UserHeaderProps {
   showBack?: boolean;
@@ -25,7 +28,16 @@ interface UserHeaderProps {
 export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
   const { user } = useUser();
   const auth = useAuth();
+  const firestore = useFirestore();
   const router = useRouter();
+
+  const userRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "users", user.uid);
+  }, [firestore, user]);
+
+  const { data: userData } = useDoc<any>(userRef);
+  const isPremium = userData?.isPremium || false;
 
   const handleLogout = () => {
     signOut(auth).then(() => router.push("/"));
@@ -42,15 +54,35 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
               </Button>
             </Link>
           )}
-          <div className="flex items-center gap-2">
-            {!showBack && (
+          <div className="flex items-center gap-4">
+            <Link href="/dashboard" className="flex items-center gap-2">
               <div className="w-8 h-8 bg-primary rounded flex items-center justify-center">
                 <Compass className="text-primary-foreground w-5 h-5" />
               </div>
-            )}
-            <span className="font-headline font-bold tracking-tight text-lg hidden sm:block">
-              {title || "VOYIQ"}
-            </span>
+              <span className="font-headline font-bold tracking-tight text-lg hidden sm:block">
+                {title || "VOYIQ"}
+              </span>
+            </Link>
+            
+            {/* Collab Menu Option */}
+            <div className="hidden md:flex items-center gap-2 ml-4">
+              {isPremium ? (
+                <Link href="/collab">
+                  <Button variant="ghost" className="gap-2 text-xs font-bold uppercase tracking-widest hover:text-primary">
+                    <Users className="w-4 h-4" /> Collab
+                  </Button>
+                </Link>
+              ) : (
+                <PlanSelectionDialog 
+                  trigger={
+                    <Button variant="ghost" className="gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-white">
+                      <Users className="w-4 h-4 opacity-50" /> Collab <Lock className="w-3 h-3 ml-1" />
+                    </Button>
+                  }
+                  onSelectFree={() => {}}
+                />
+              )}
+            </div>
           </div>
         </div>
 
@@ -65,9 +97,12 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
                     <span className="text-[10px] font-bold">{user?.displayName?.[0] || "U"}</span>
                   )}
                 </div>
-                <span className="text-xs font-medium max-w-[100px] truncate">
-                  {user?.displayName || "Explorer"}
-                </span>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-medium max-w-[80px] truncate leading-tight">
+                    {user?.displayName || "Explorer"}
+                  </span>
+                  {isPremium && <span className="text-[8px] text-accent font-bold uppercase">Premium</span>}
+                </div>
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 glass-card border-white/10">
@@ -76,6 +111,9 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
               </div>
               <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/dashboard")}>
                 Dashboard
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer md:hidden" onClick={() => isPremium ? router.push("/collab") : null}>
+                Collab {isPremium ? "" : "🔒"}
               </DropdownMenuItem>
               <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/plan/new")}>
                 Plan New Trip

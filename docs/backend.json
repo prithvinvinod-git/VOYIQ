@@ -5,54 +5,27 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
       "type": "object",
-      "description": "Represents a user of the VOYIQ application, storing their profile information and default preferences.",
+      "description": "Represents a user of the VOYIQ application.",
       "properties": {
         "id": {
-          "type": "string",
-          "description": "Unique identifier for the User entity."
+          "type": "string"
         },
         "name": {
-          "type": "string",
-          "description": "The user's display name."
+          "type": "string"
         },
         "email": {
-          "type": "string",
-          "description": "The user's email address.",
-          "format": "email"
+          "type": "string"
         },
         "photoURL": {
+          "type": "string"
+        },
+        "isPremium": {
+          "type": "boolean",
+          "description": "Whether the user has a premium subscription."
+        },
+        "activeCollabRoomId": {
           "type": "string",
-          "description": "URL to the user's profile picture.",
-          "format": "uri"
-        },
-        "defaultDietPreference": {
-          "type": "string",
-          "description": "The user's default dietary preference (e.g., Vegetarian, Vegan, Non-veg, Halal, No preference)."
-        },
-        "defaultPacePreference": {
-          "type": "string",
-          "description": "The user's default travel pace preference (e.g., Relaxed, Balanced, Packed)."
-        },
-        "defaultTravelStyleIds": {
-          "type": "array",
-          "description": "An array of the user's default travel style preferences (e.g., Adventure, Culture, Food, Nature, Luxury, Budget).",
-          "items": {
-            "type": "string"
-          }
-        },
-        "tripsCreatedIds": {
-          "type": "array",
-          "description": "References to trips created and owned by this user. (Relationship: User 1:N Trip)",
-          "items": {
-            "type": "string"
-          }
-        },
-        "collaboratingTripIds": {
-          "type": "array",
-          "description": "References to trips where this user is a collaborator. (Relationship: User N:N Trip)",
-          "items": {
-            "type": "string"
-          }
+          "description": "The ID of the collab room the user is currently in."
         }
       },
       "required": [
@@ -61,314 +34,69 @@
         "email"
       ]
     },
+    "CollabRoom": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CollabRoom",
+      "type": "object",
+      "description": "A collaborative room where users can plan trips together.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The random join code (e.g., A7B2X)."
+        },
+        "createdBy": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
     "Trip": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Trip",
       "type": "object",
-      "description": "Represents a single travel plan created by a user, including destination, dates, budget, and preferences.",
+      "description": "Represents a travel plan.",
       "properties": {
         "id": {
-          "type": "string",
-          "description": "Unique identifier for the Trip entity."
+          "type": "string"
         },
         "ownerId": {
-          "type": "string",
-          "description": "Reference to the User who created and owns this trip. (Relationship: User 1:N Trip)"
+          "type": "string"
         },
-        "origin": {
+        "collabRoomId": {
           "type": "string",
-          "description": "The starting city or airport for the traveler."
+          "description": "Optional reference to a collab room if this trip was created within one."
         },
         "destination": {
-          "type": "string",
-          "description": "The primary destination city or region for the trip."
+          "type": "string"
         },
         "startDate": {
-          "type": "string",
-          "description": "The start date of the trip.",
-          "format": "date"
+          "type": "string"
         },
         "endDate": {
-          "type": "string",
-          "description": "The end date of the trip.",
-          "format": "date"
-        },
-        "groupType": {
-          "type": "string",
-          "description": "The type of group traveling (e.g., solo, couple, family, friends)."
-        },
-        "numTravelers": {
-          "type": "number",
-          "description": "The total number of travelers for this trip."
+          "type": "string"
         },
         "budgetTotal": {
-          "type": "number",
-          "description": "The total budget allocated for the entire trip."
-        },
-        "budgetCurrency": {
-          "type": "string",
-          "description": "The currency of the budget (e.g., INR)."
-        },
-        "travelStyleIds": {
-          "type": "array",
-          "description": "An array of chosen travel styles for this trip (e.g., Adventure, Culture, Food, Nature, Luxury, Budget).",
-          "items": {
-            "type": "string"
-          }
-        },
-        "pace": {
-          "type": "string",
-          "description": "The preferred travel pace for this trip (e.g., Relaxed, Balanced, Packed)."
-        },
-        "dietPreference": {
-          "type": "string",
-          "description": "The dietary preference for this trip (e.g., Vegetarian, Vegan, Non-veg, Halal, No preference)."
-        },
-        "mobilityNeeds": {
-          "type": "boolean",
-          "description": "Indicates if there are any specific mobility needs for the travelers."
-        },
-        "mustIncludePlaces": {
-          "type": "string",
-          "description": "Free text field for places or activities that must be included in the itinerary."
-        },
-        "mustAvoidPlaces": {
-          "type": "string",
-          "description": "Free text field for places or activities that must be avoided in the itinerary."
-        },
-        "collaboratorIds": {
-          "type": "array",
-          "description": "References to Users who are collaborators on this trip. (Relationship: Trip N:N User)",
-          "items": {
-            "type": "string"
-          }
+          "type": "number"
         },
         "status": {
-          "type": "string",
-          "description": "The current status of the trip (e.g., draft, active, completed)."
-        },
-        "health": {
-          "type": "number",
-          "description": "Completion percentage of the itinerary."
-        },
-        "totalCompletedSlots": {
-          "type": "number",
-          "description": "Total number of checked-off activities across all days."
+          "type": "string"
         }
       },
       "required": [
         "id",
         "ownerId",
         "destination",
-        "startDate",
-        "endDate",
-        "budgetTotal",
-        "budgetCurrency",
         "status"
-      ]
-    },
-    "ItineraryDay": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "ItineraryDay",
-      "type": "object",
-      "description": "Represents a single day within a trip's generated itinerary, including daily details and weather.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the ItineraryDay entity."
-        },
-        "tripId": {
-          "type": "string",
-          "description": "Reference to the Trip this itinerary day belongs to. (Relationship: Trip 1:N ItineraryDay)"
-        },
-        "dayNumber": {
-          "type": "number",
-          "description": "The sequential number of the day within the trip (e.g., 1 for day one)."
-        },
-        "date": {
-          "type": "string",
-          "description": "The specific date for this itinerary day.",
-          "format": "date"
-        },
-        "theme": {
-          "type": "string",
-          "description": "A brief theme or summary generated by AI for the day's activities."
-        },
-        "weatherCondition": {
-          "type": "string",
-          "description": "A summary of the weather condition for the day (e.g., 'clear sky', 'rain')."
-        },
-        "weatherTempHigh": {
-          "type": "number",
-          "description": "The estimated high temperature for the day in Celsius."
-        },
-        "weatherTempLow": {
-          "type": "number",
-          "description": "The estimated low temperature for the day in Celsius."
-        }
-      },
-      "required": [
-        "id",
-        "tripId",
-        "dayNumber",
-        "date"
-      ]
-    },
-    "ItinerarySlot": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "ItinerarySlot",
-      "type": "object",
-      "description": "Represents a single activity or event within an itinerary day's timeline.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the ItinerarySlot entity."
-        },
-        "itineraryDayId": {
-          "type": "string",
-          "description": "Reference to the ItineraryDay this slot belongs to. (Relationship: ItineraryDay 1:N ItinerarySlot)"
-        },
-        "time": {
-          "type": "string",
-          "description": "The time of day or specific hour for the activity (e.g., 'morning', '10:00 AM')."
-        },
-        "activity": {
-          "type": "string",
-          "description": "The name or title of the planned activity."
-        },
-        "description": {
-          "type": "string",
-          "description": "A detailed description of the activity."
-        },
-        "location": {
-          "type": "string",
-          "description": "The name of the location for the activity."
-        },
-        "latitude": {
-          "type": "number",
-          "description": "The geographical latitude of the activity location."
-        },
-        "longitude": {
-          "type": "number",
-          "description": "The geographical longitude of the activity location."
-        },
-        "estimatedCostINR": {
-          "type": "number",
-          "description": "The estimated cost of the activity in INR."
-        },
-        "durationMinutes": {
-          "type": "number",
-          "description": "The estimated duration of the activity in minutes."
-        },
-        "category": {
-          "type": "string",
-          "description": "The category of the activity (e.g., Food, Transport, Stay, Activities, Misc)."
-        },
-        "tips": {
-          "type": "string",
-          "description": "Helpful tips or notes related to the activity."
-        },
-        "completed": {
-          "type": "boolean",
-          "description": "Whether the user has finished this activity."
-        }
-      },
-      "required": [
-        "id",
-        "itineraryDayId",
-        "time",
-        "activity",
-        "location"
-      ]
-    },
-    "Expense": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Expense",
-      "type": "object",
-      "description": "Represents a single financial expense logged by a user against a specific trip's budget.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Expense entity."
-        },
-        "tripId": {
-          "type": "string",
-          "description": "Reference to the Trip this expense belongs to. (Relationship: Trip 1:N Expense)"
-        },
-        "category": {
-          "type": "string",
-          "description": "The category of the expense (e.g., Food, Transport, Stay, Activities, Misc)."
-        },
-        "amount": {
-          "type": "number",
-          "description": "The monetary amount of the expense."
-        },
-        "note": {
-          "type": "string",
-          "description": "An optional note or description for the expense."
-        },
-        "loggedByUserId": {
-          "type": "string",
-          "description": "Reference to the User who logged this expense. (Relationship: User 1:N Expense)"
-        },
-        "loggedAt": {
-          "type": "string",
-          "description": "The timestamp when the expense was logged.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "tripId",
-        "category",
-        "amount",
-        "loggedByUserId",
-        "loggedAt"
-      ]
-    },
-    "ChatMessage": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "ChatMessage",
-      "type": "object",
-      "description": "Represents a single message within the AI chat companion for a specific trip.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the ChatMessage entity."
-        },
-        "tripId": {
-          "type": "string",
-          "description": "Reference to the Trip this chat message belongs to. (Relationship: Trip 1:N ChatMessage)"
-        },
-        "role": {
-          "type": "string",
-          "description": "The role of the sender (e.g., 'user' or 'assistant')."
-        },
-        "content": {
-          "type": "string",
-          "description": "The actual text content of the message."
-        },
-        "timestamp": {
-          "type": "string",
-          "description": "The timestamp when the message was sent or received.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "tripId",
-        "role",
-        "content",
-        "timestamp"
       ]
     }
   },
   "auth": {
     "providers": [
       "google.com",
-      "password",
-      "phone",
-      "anonymous"
+      "password"
     ]
   },
   "firestore": {
@@ -379,14 +107,23 @@
           "entityName": "User",
           "schema": {
             "$ref": "#/backend/entities/User"
-          },
-          "description": "Stores personal user profiles.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique ID of the user."
-            }
-          ]
+          }
+        }
+      },
+      {
+        "path": "/collabRooms/{roomId}",
+        "definition": {
+          "entityName": "CollabRoom",
+          "schema": {
+            "$ref": "#/backend/entities/CollabRoom"
+          }
+        }
+      },
+      {
+        "path": "/collabRooms/{roomId}/members/{userId}",
+        "definition": {
+          "entityName": "User",
+          "description": "Users currently active in the room."
         }
       },
       {
@@ -395,17 +132,9 @@
           "entityName": "Trip",
           "schema": {
             "$ref": "#/backend/entities/Trip"
-          },
-          "description": "Represents a travel plan.",
-          "params": [
-            {
-              "name": "tripId",
-              "description": "The unique ID of the trip."
-            }
-          ]
+          }
         }
       }
-    ],
-    "reasoning": "Standard structure for VOYIQ app."
+    ]
   }
 }
