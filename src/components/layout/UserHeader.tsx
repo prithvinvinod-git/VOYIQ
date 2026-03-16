@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from "react";
@@ -131,11 +132,22 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
               <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/plan/new")}>
                 <Plane className="mr-2 w-4 h-4" /> Plan New Trip
               </DropdownMenuItem>
-              {isPremium && (
+              
+              {isPremium ? (
                 <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/collab")}>
                   <Users className="mr-2 w-4 h-4" /> Collab Hub
                 </DropdownMenuItem>
+              ) : (
+                <PlanSelectionDialog 
+                  trigger={
+                    <DropdownMenuItem className="cursor-pointer">
+                      <Users className="mr-2 w-4 h-4" /> Collab Hub <Lock className="w-3 h-3 ml-auto opacity-50" />
+                    </DropdownMenuItem>
+                  }
+                  onSelectFree={() => {}}
+                />
               )}
+              
               <DropdownMenuSeparator className="bg-white/5" />
               <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive" onClick={handleLogout}>
                 <LogOut className="mr-2 w-4 h-4" /> Sign Out
