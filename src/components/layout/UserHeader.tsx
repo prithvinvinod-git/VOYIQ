@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from "react";
@@ -82,7 +81,7 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
               
               {isPremium ? (
                 <Link href="/collab">
-                  <Button variant="ghost" className="gap-2 text-[10px] font-bold uppercase tracking-widest text-accent hover:bg-accent hover:text-primary-foreground h-9">
+                  <Button variant="ghost" className="gap-2 text-[10px] font-bold uppercase tracking-widest text-accent hover:bg-accent hover:text-black transition-colors h-9">
                     <Users className="w-3.5 h-3.5" /> Collab Hub
                   </Button>
                 </Link>
@@ -108,12 +107,12 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
                   {user?.photoURL ? (
                     <Image src={user.photoURL} alt="Avatar" width={28} height={28} />
                   ) : (
-                    <span className="text-[10px] font-bold text-white uppercase">{user?.displayName?.[0] || "U"}</span>
+                    <span className="text-[10px] font-bold text-white uppercase">{user?.displayName?.[0] || userData?.name?.[0] || "U"}</span>
                   )}
                 </div>
                 <div className="flex flex-col">
                   <span className="text-[10px] font-medium max-w-[80px] truncate leading-tight text-white">
-                    {user?.displayName || "Explorer"}
+                    {user?.displayName || userData?.name || "Explorer"}
                   </span>
                   {isPremium && <span className="text-[8px] text-accent font-bold uppercase">Premium</span>}
                 </div>

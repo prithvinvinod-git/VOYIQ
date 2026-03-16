@@ -95,10 +95,6 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0, open
       const userRef = doc(firestore, "users", user.uid);
       await setDoc(userRef, {
         isPremium: true,
-        id: user.uid,
-        email: user.email,
-        name: user.displayName,
-        photoURL: user.photoURL,
         updatedAt: new Date().toISOString()
       }, { merge: true });
 
@@ -112,7 +108,7 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0, open
       toast({
         variant: "destructive",
         title: "Upgrade Failed",
-        description: e.message || "Could not process upgrade. Please try again."
+        description: e.message || "Could not process upgrade."
       });
     } finally {
       setIsUpgrading(false);

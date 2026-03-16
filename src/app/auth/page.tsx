@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Compass, Mail, Phone, Lock, ArrowRight, Loader2, AlertCircle, ChevronLeft, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/firebase";
+import { useAuth, useFirestore } from "@/firebase";
 import { 
   GoogleAuthProvider, 
   signInWithPopup, 
@@ -20,6 +20,7 @@ import {
   ConfirmationResult,
   updateProfile
 } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -27,6 +28,7 @@ export default function AuthPage() {
   const router = useRouter();
   const { toast } = useToast();
   const auth = useAuth();
+  const firestore = useFirestore();
   
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -61,12 +63,25 @@ export default function AuthPage() {
     };
   }, [auth, recaptchaVerifier]);
 
+  const syncUserToFirestore = async (user: any, displayName?: string) => {
+    if (!firestore) return;
+    const userRef = doc(firestore, "users", user.uid);
+    await setDoc(userRef, {
+      id: user.uid,
+      name: displayName || user.displayName || "Explorer",
+      email: user.email,
+      photoURL: user.photoURL,
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+  };
+
   const handleGoogleSignIn = async () => {
     setLoading(true);
     setConfigError(null);
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      await syncUserToFirestore(result.user);
       toast({
         title: "Welcome aboard!",
         description: "You've successfully signed in with Google.",
@@ -74,21 +89,18 @@ export default function AuthPage() {
       router.push("/dashboard");
     } catch (error: any) {
       console.error("Google Auth Error:", error);
-      // Handle the case where the user simply closes the popup
       if (error.code === "auth/popup-closed-by-user") {
         setLoading(false);
         return; 
       }
       
       if (error.code === "auth/operation-not-allowed") {
-        setConfigError("Google sign-in is not enabled in your Firebase Console. Please enable it under Authentication > Sign-in method.");
-      } else if (error.code === "auth/unauthorized-domain") {
-        setConfigError(`This domain is not authorized. Please go to Firebase Console > Authentication > Settings > Authorized domains and add your current domain.`);
+        setConfigError("Google sign-in is not enabled in your Firebase Console.");
       } else {
         toast({
           variant: "destructive",
           title: "Sign in failed",
-          description: error.message || "An unexpected error occurred during Google sign-in.",
+          description: error.message,
         });
       }
     } finally {
@@ -107,22 +119,20 @@ export default function AuthPage() {
       if (isSignUp) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(userCredential.user, { displayName: name });
+        await syncUserToFirestore(userCredential.user, name);
         toast({ title: "Account created!", description: "Welcome to VOYIQ." });
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        const result = await signInWithEmailAndPassword(auth, email, password);
+        await syncUserToFirestore(result.user);
         toast({ title: "Welcome back!", description: "Successfully signed in." });
       }
       router.push("/dashboard");
     } catch (error: any) {
-      if (error.code === "auth/operation-not-allowed") {
-        setConfigError("Email/Password sign-in is not enabled in your Firebase Console.");
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Auth failed",
-          description: error.message,
-        });
-      }
+      toast({
+        variant: "destructive",
+        title: "Auth failed",
+        description: error.message,
+      });
     } finally {
       setLoading(false);
     }
@@ -130,29 +140,16 @@ export default function AuthPage() {
 
   const handlePhoneSignIn = async () => {
     if (!phoneNumber) {
-      toast({ variant: "destructive", title: "Error", description: "Enter a valid phone number with country code (e.g., +1...)." });
+      toast({ variant: "destructive", title: "Error", description: "Enter a valid phone number." });
       return;
     }
-    if (!recaptchaVerifier) {
-      toast({ variant: "destructive", title: "Error", description: "Recaptcha not initialized. Please refresh." });
-      return;
-    }
-
     setLoading(true);
-    setConfigError(null);
     try {
-      const result = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier);
+      const result = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier!);
       setConfirmationResult(result);
-      toast({ title: "Code sent!", description: "Check your phone for the verification code." });
+      toast({ title: "Code sent!", description: "Check your phone." });
     } catch (error: any) {
-      console.error("Phone Auth Error:", error);
-      if (error.code === "auth/operation-not-allowed") {
-        setConfigError("Phone sign-in is not enabled in your Firebase Console.");
-      } else if (error.code === "auth/unauthorized-domain") {
-        setConfigError(`This domain is not authorized for phone sign-in. Add your current domain to Authorized Domains in Firebase Console.`);
-      } else {
-        toast({ variant: "destructive", title: "Phone auth failed", description: error.message });
-      }
+      toast({ variant: "destructive", title: "Phone auth failed", description: error.message });
     } finally {
       setLoading(false);
     }
@@ -162,11 +159,12 @@ export default function AuthPage() {
     if (!verificationCode || !confirmationResult) return;
     setLoading(true);
     try {
-      await confirmationResult.confirm(verificationCode);
+      const result = await confirmationResult.confirm(verificationCode);
+      await syncUserToFirestore(result.user);
       toast({ title: "Success!", description: "Phone verified successfully." });
       router.push("/dashboard");
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Verification failed", description: "Invalid code. Please try again." });
+      toast({ variant: "destructive", title: "Verification failed", description: "Invalid code." });
     } finally {
       setLoading(false);
     }
@@ -175,9 +173,6 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-background">
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_30%_30%,hsl(var(--primary)/0.1),transparent_50%)]" />
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_70%_70%,hsl(var(--accent)/0.05),transparent_50%)]" />
-
-      {/* Invisible ReCAPTCHA container */}
       <div id="recaptcha-container"></div>
 
       <div className="w-full max-w-md space-y-4">
@@ -187,12 +182,10 @@ export default function AuthPage() {
         </Link>
 
         {configError && (
-          <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive animate-fade-in shadow-lg">
+          <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive shadow-lg">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Configuration Required</AlertTitle>
-            <AlertDescription className="text-xs">
-              {configError}
-            </AlertDescription>
+            <AlertDescription className="text-xs">{configError}</AlertDescription>
           </Alert>
         )}
 
@@ -339,9 +332,6 @@ export default function AuthPage() {
                     <Button className="w-full h-12 bg-primary text-primary-foreground" onClick={handleVerifyCode} disabled={loading}>
                       {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : "Verify & Continue"}
                     </Button>
-                    <Button variant="ghost" className="w-full text-xs text-muted-foreground" onClick={() => setConfirmationResult(null)}>
-                      Try a different number
-                    </Button>
                   </div>
                 )}
               </TabsContent>
@@ -350,7 +340,7 @@ export default function AuthPage() {
 
           <CardFooter className="flex flex-col gap-4 text-center">
             <p className="text-xs text-muted-foreground px-6">
-              By continuing, you agree to VOYIQ's <Link href="#" className="underline">Terms of Service</Link> and <Link href="#" className="underline">Privacy Policy</Link>.
+              By continuing, you agree to VOYIQ's Terms of Service and Privacy Policy.
             </p>
           </CardFooter>
         </Card>
