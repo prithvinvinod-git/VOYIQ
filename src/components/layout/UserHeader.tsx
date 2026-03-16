@@ -1,14 +1,15 @@
+
 "use client";
 
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { LogOut, ChevronLeft, Compass, Users, Lock, Plane, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
-import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
+import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { doc, collection, query, where } from "firebase/firestore";
+import { doc } from "firebase/firestore";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,14 +39,6 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
   const { data: userData } = useDoc<any>(userRef);
   const isPremium = userData?.isPremium || false;
 
-  const tripsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, "trips"), where("ownerId", "==", user.uid));
-  }, [firestore, user]);
-  
-  const { data: tripsData } = useCollection(tripsQuery);
-  const tripCount = tripsData?.length || 0;
-
   const handleLogout = () => {
     signOut(auth).then(() => router.push("/"));
   };
@@ -66,31 +59,29 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
               <div className="w-8 h-8 bg-primary rounded flex items-center justify-center">
                 <Compass className="text-primary-foreground w-5 h-5" />
               </div>
-              <span className="font-headline font-bold tracking-tight text-lg hidden sm:block">
+              <span className="font-headline font-bold tracking-tight text-lg hidden sm:block text-white">
                 {title || "VOYIQ"}
               </span>
             </Link>
             
-            {/* Primary Navigation */}
             <div className="hidden md:flex items-center gap-1 ml-4">
               <Link href="/plan/new">
                 <Button variant="ghost" className="gap-2 text-[10px] font-bold uppercase tracking-widest hover:text-primary h-9">
-                  <Plane className="w-3.5 h-3.5" /> New Trip
+                  <Plus className="w-3.5 h-3.5" /> New Trip
                 </Button>
               </Link>
               
               {isPremium ? (
                 <Link href="/collab">
                   <Button variant="ghost" className="gap-2 text-[10px] font-bold uppercase tracking-widest text-accent hover:bg-accent hover:text-accent-foreground h-9">
-                    <Users className="w-3.5 h-3.5" /> Collab
+                    <Users className="w-3.5 h-3.5" /> Collab Hub
                   </Button>
                 </Link>
               ) : (
                 <PlanSelectionDialog 
-                  tripCount={tripCount}
                   trigger={
                     <Button variant="ghost" className="gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:bg-white/10 hover:text-white h-9">
-                      <Users className="w-3.5 h-3.5 opacity-50" /> Collab <Lock className="w-2.5 h-2.5 ml-0.5" />
+                      <Users className="w-3.5 h-3.5 opacity-50" /> Collab Hub <Lock className="w-2.5 h-2.5 ml-0.5" />
                     </Button>
                   }
                   onSelectFree={() => {}}
@@ -112,7 +103,7 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
                   )}
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-medium max-w-[80px] truncate leading-tight">
+                  <span className="text-[10px] font-medium max-w-[80px] truncate leading-tight text-white">
                     {user?.displayName || "Explorer"}
                   </span>
                   {isPremium && <span className="text-[8px] text-accent font-bold uppercase">Premium</span>}

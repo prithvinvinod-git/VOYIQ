@@ -1,13 +1,14 @@
+
 "use client";
 
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, MapPin, Calendar, Wallet, Star, Zap, Plane } from "lucide-react";
+import { Plus, MapPin, Calendar, Wallet, Star, Zap } from "lucide-react";
 import Link from "next/link";
-import { useUser, useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection, query, where } from "firebase/firestore";
+import { useUser, useCollection, useFirestore, useMemoFirebase, useDoc } from "@/firebase";
+import { collection, query, where, doc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { Progress } from "@/components/ui/progress";
 import Image from "next/image";
@@ -29,12 +30,19 @@ export default function Dashboard() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
+  const [isPlanDialogOpen, setIsPlanDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push("/auth");
     }
   }, [user, isUserLoading, router]);
+
+  const userRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "users", user.uid);
+  }, [firestore, user]);
+  const { data: userData } = useDoc<any>(userRef);
 
   const tripsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -78,6 +86,16 @@ export default function Dashboard() {
   }
 
   const trips = tripsData || [];
+  const isPremium = userData?.isPremium || false;
+  const isLimitReached = !isPremium && trips.length >= 4;
+
+  const handleNewTripClick = () => {
+    if (isLimitReached) {
+      setIsPlanDialogOpen(true);
+    } else {
+      router.push("/plan/new");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -86,23 +104,28 @@ export default function Dashboard() {
       <main className="container mx-auto px-4 pt-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div className="max-w-full">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-2 break-words">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-2 break-words text-white">
               Welcome back, {user?.displayName?.split(' ')[0] || "Explorer"}!
             </h1>
             <p className="text-muted-foreground text-sm sm:text-base">You have {trips.length} adventures tracked.</p>
           </div>
+          
+          <Button 
+            size="lg" 
+            className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl px-8 h-12 shadow-lg shadow-primary/20 w-full md:w-auto"
+            onClick={handleNewTripClick}
+          >
+            <Plus className="mr-2 w-5 h-5" /> Plan New Adventure
+          </Button>
+
           <PlanSelectionDialog 
+            open={isPlanDialogOpen}
+            onOpenChange={setIsPlanDialogOpen}
             tripCount={trips.length}
-            trigger={
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl px-8 h-12 shadow-lg shadow-primary/20 w-full md:w-auto">
-                <Plus className="mr-2 w-5 h-5" /> Plan New Adventure
-              </Button>
-            }
             onSelectFree={() => router.push("/plan/new")}
           />
         </div>
 
-        {/* Active Journeys Section */}
         <div className="space-y-6 mb-12">
           <div className="flex items-center justify-between">
             <h2 className="text-xl sm:text-2xl font-headline font-bold">Active Journeys</h2>
@@ -160,17 +183,12 @@ export default function Dashboard() {
                 </div>
                 <h3 className="text-xl font-bold mb-2">No trips yet</h3>
                 <p className="text-muted-foreground mb-6">Start your first adventure today with VOYIQ AI.</p>
-                <PlanSelectionDialog 
-                  tripCount={trips.length}
-                  trigger={<Button variant="outline" className="border-primary text-primary hover:bg-primary/10">Plan a New Trip</Button>}
-                  onSelectFree={() => router.push("/plan/new")}
-                />
+                <Button variant="outline" className="border-primary text-primary hover:bg-primary/10" onClick={handleNewTripClick}>Plan a New Trip</Button>
               </div>
             )}
           </div>
         </div>
 
-        {/* Stats Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <Card className="glass-card border-none bg-gradient-to-br from-card to-primary/5">
             <CardHeader className="flex flex-row items-center justify-between pb-2">

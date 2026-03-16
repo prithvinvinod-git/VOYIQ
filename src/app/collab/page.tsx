@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -41,7 +42,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogClose,
 } from "@/components/ui/dialog";
 
 export default function CollabPage() {
@@ -188,7 +188,6 @@ export default function CollabPage() {
     });
   };
 
-  // Group trips by user
   const groupedTrips = useMemo(() => {
     if (!roomTrips) return {};
     return roomTrips.reduce((acc: any, trip: any) => {
@@ -205,7 +204,6 @@ export default function CollabPage() {
     <div className="min-h-screen bg-background">
       <UserHeader showBack backHref="/dashboard" title="Collaboration Hub" />
       
-      {/* Active Members Div - Top Right */}
       {userData?.activeCollabRoomId && (
         <div className="fixed top-20 right-4 z-50 flex flex-col items-end gap-2 animate-fade-in">
           <button 
@@ -234,7 +232,6 @@ export default function CollabPage() {
         </div>
       )}
 
-      {/* Member List Detailed Dialog */}
       <Dialog open={isMemberListOpen} onOpenChange={setIsMemberListOpen}>
         <DialogContent className="glass-card border-accent/20 sm:max-w-md">
           <DialogHeader>
@@ -259,7 +256,7 @@ export default function CollabPage() {
                       <span className="text-xs flex items-center justify-center h-full font-bold">{m.name?.[0] || 'U'}</span>
                     )}
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <div className="font-bold text-sm flex items-center gap-2">
                       {m.name}
                       {m.id === user?.uid && <Badge variant="outline" className="text-[8px] py-0 px-1 border-primary/30 text-primary">You</Badge>}
@@ -345,7 +342,7 @@ export default function CollabPage() {
                 </div>
               </div>
               <div className="flex gap-4">
-                <Link href="/plan/new">
+                <Link href="/plan/new?collab=true">
                   <Button className="bg-primary text-primary-foreground gap-2">
                     <Plus className="w-4 h-4" /> Add Room Trip
                   </Button>
@@ -356,7 +353,6 @@ export default function CollabPage() {
               </div>
             </div>
 
-            {/* Collaborative Trips Sorted by User */}
             <div className="space-y-12">
               {Object.keys(groupedTrips).length > 0 ? (
                 Object.entries(groupedTrips).map(([userName, trips]: [string, any]) => (
@@ -396,7 +392,7 @@ export default function CollabPage() {
                   <Sparkles className="text-muted-foreground w-12 h-12 mx-auto mb-4 opacity-20" />
                   <h3 className="text-xl font-bold mb-2">No Room Trips Yet</h3>
                   <p className="text-muted-foreground mb-6">Any trip you create while in this room will show up here for everyone!</p>
-                  <Link href="/plan/new">
+                  <Link href="/plan/new?collab=true">
                     <Button variant="outline" className="border-primary text-primary">Create Room Idea</Button>
                   </Link>
                 </div>

@@ -1,21 +1,17 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { 
   MapPin, 
-  Calendar as CalendarIcon, 
-  Wallet, 
   ChevronRight, 
   ChevronLeft,
   Sparkles,
-  Check,
-  Globe,
   Users as UsersIcon,
   AlertCircle
 } from "lucide-react";
@@ -44,7 +40,7 @@ const COMMON_CURRENCIES = [
   { code: "GBP", name: "British Pound", symbol: "£" },
 ];
 
-export default function TripWizard() {
+function TripWizardContent() {
   const [step, setStep] = useState<Step>(1);
   const [loading, setLoading] = useState(false);
   const [queryVal, setQueryVal] = useState("");
@@ -52,9 +48,12 @@ export default function TripWizard() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [originResults, setOriginResults] = useState<any[]>([]);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
+
+  const isCollabMode = searchParams.get('collab') === 'true';
 
   const [formData, setFormData] = useState({
     origin: "",
@@ -73,14 +72,12 @@ export default function TripWizard() {
     mustAvoid: ""
   });
 
-  // Fetch full user data to check premium and collab room
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return doc(firestore, "users", user.uid);
   }, [firestore, user]);
   const { data: userData } = useDoc<any>(userRef);
 
-  // Trip count check for Free Tier
   const tripsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return query(collection(firestore, "trips"), where("ownerId", "==", user.uid));
@@ -163,11 +160,14 @@ export default function TripWizard() {
       const batch = writeBatch(firestore);
       const tripRef = doc(collection(firestore, "trips"));
       
+      // Only attach to collab room if accessed via the collab link
+      const collabId = isCollabMode ? userData?.activeCollabRoomId : null;
+
       const tripData = {
         id: tripRef.id,
         ownerId: user.uid,
         authorizedUserIds: [user.uid],
-        collabRoomId: userData?.activeCollabRoomId || null,
+        collabRoomId: collabId || null,
         ...formData,
         status: "active",
         health: 0,
@@ -199,7 +199,7 @@ export default function TripWizard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <UserHeader showBack backHref="/dashboard" title="New Adventure" />
+      <UserHeader showBack backHref={isCollabMode ? "/collab" : "/dashboard"} title={isCollabMode ? "Room Adventure" : "New Adventure"} />
       
       <div className="p-4 md:p-8 flex items-center justify-center relative min-h-[calc(100vh-64px)]">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.1),transparent_70%)]" />
@@ -238,7 +238,7 @@ export default function TripWizard() {
                 </div>
               )}
 
-              {userData?.activeCollabRoomId && (
+              {isCollabMode && userData?.activeCollabRoomId && (
                 <div className="mb-8 p-3 bg-accent/10 border border-accent/20 rounded-xl flex items-center gap-2">
                   <UsersIcon className="text-accent w-4 h-4" />
                   <p className="text-xs font-bold text-accent uppercase">Adding trip to Collab Room: {userData.activeCollabRoomId}</p>
@@ -399,7 +399,7 @@ export default function TripWizard() {
                     <p><strong>To:</strong> {formData.destination || "Not set"}</p>
                     <p><strong>Dates:</strong> {formData.startDate} to {formData.endDate}</p>
                     <p><strong>Travelers:</strong> {formData.numTravelers} ({formData.groupType})</p>
-                    {userData?.activeCollabRoomId && (
+                    {isCollabMode && userData?.activeCollabRoomId && (
                        <p className="mt-2 text-accent font-bold">Sharing with Collab Room: {userData.activeCollabRoomId}</p>
                     )}
                   </div>
@@ -431,5 +431,13 @@ export default function TripWizard() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function TripWizard() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Sparkles className="animate-spin text-primary" /></div>}>
+      <TripWizardContent />
+    </Suspense>
   );
 }

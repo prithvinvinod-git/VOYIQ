@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from "react";
@@ -34,18 +35,23 @@ import { doc, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 
 interface PlanSelectionDialogProps {
-  trigger: React.ReactNode;
+  trigger?: React.ReactNode;
   onSelectFree: () => void;
   tripCount?: number;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0 }: PlanSelectionDialogProps) {
-  const [open, setOpen] = useState(false);
+export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0, open: openProp, onOpenChange }: PlanSelectionDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
   const [promoCode, setPromoCode] = useState("");
   const [isUpgrading, setIsUpgrading] = useState(false);
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
+  
+  const isOpen = openProp !== undefined ? openProp : internalOpen;
+  const setOpen = onOpenChange !== undefined ? onOpenChange : setInternalOpen;
   
   const isLimitReached = tripCount >= 4;
 
@@ -115,10 +121,8 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0 }: Pl
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger}
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={setOpen}>
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent className="max-w-[95vw] sm:max-w-[750px] glass-card border-white/10 p-0 overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[90vh]">
         <DialogHeader className="p-6 sm:p-10 pb-4 text-center shrink-0">
           <DialogTitle className="text-2xl sm:text-4xl font-headline font-bold mb-2">Explorer Tiers</DialogTitle>
@@ -129,7 +133,6 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0 }: Pl
         
         <div className="flex-1 overflow-y-auto px-6 sm:px-10 pb-8 sm:pb-12 custom-scrollbar">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Free Plan */}
             <Card className={`bg-white/5 border-white/10 hover:border-primary/50 transition-all flex flex-col ${isLimitReached ? 'ring-2 ring-destructive/50' : ''}`}>
               <CardContent className="p-6 flex-1 flex flex-col">
                 <div className="mb-6">
@@ -167,7 +170,6 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0 }: Pl
               </CardContent>
             </Card>
 
-            {/* Premium Plan */}
             <Card className="relative overflow-hidden border-accent/50 bg-gradient-to-br from-primary/10 to-accent/10 flex flex-col shadow-2xl">
               <div className="absolute top-0 right-0 p-3">
                 <Badge className="bg-accent text-accent-foreground font-bold shadow-lg">PREMIUM</Badge>
@@ -200,7 +202,7 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0 }: Pl
                   <div className="flex gap-2">
                     <Input 
                       id="promo"
-                      placeholder="use code: coet" 
+                      placeholder="upgrade code" 
                       className="h-11 bg-white/10 border-white/10 text-center font-mono tracking-widest focus:ring-accent"
                       value={promoCode}
                       onChange={(e) => setPromoCode(e.target.value)}

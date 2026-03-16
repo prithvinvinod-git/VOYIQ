@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -22,20 +22,46 @@ import {
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { PlanSelectionDialog } from "@/components/shared/PlanSelectionDialog";
-import { useUser } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
+import { collection, query, where, doc } from "firebase/firestore";
 
 export default function LandingPage() {
   const router = useRouter();
   const { user } = useUser();
+  const firestore = useFirestore();
+  const [isPlanDialogOpen, setIsPlanDialogOpen] = useState(false);
   const heroImg = PlaceHolderImages.find(img => img.id === "hero-travel");
 
-  const handleProceed = (destination: string) => {
-    router.push(destination);
+  const userRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "users", user.uid);
+  }, [firestore, user]);
+  const { data: userData } = useDoc<any>(userRef);
+
+  const tripsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(collection(firestore, "trips"), where("ownerId", "==", user.uid));
+  }, [firestore, user]);
+  const { data: tripsData } = useCollection(tripsQuery);
+
+  const tripCount = tripsData?.length || 0;
+  const isPremium = userData?.isPremium || false;
+  const isLimitReached = !isPremium && tripCount >= 4;
+
+  const handleProceed = () => {
+    if (!user) {
+      router.push("/auth");
+      return;
+    }
+    if (isLimitReached) {
+      setIsPlanDialogOpen(true);
+    } else {
+      router.push("/plan/new");
+    }
   };
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Header */}
       <header className="fixed top-0 w-full z-50 border-b border-white/10 bg-background/80 backdrop-blur-md">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
@@ -49,24 +75,16 @@ export default function LandingPage() {
             <Link href="#benefits" className="hover:text-primary transition-colors">Why VOYIQ</Link>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/auth">
-              <Button variant="ghost" className="hidden sm:inline-flex">Sign In</Button>
+            <Link href={user ? "/dashboard" : "/auth"}>
+              <Button variant="ghost" className="hidden sm:inline-flex">{user ? "Dashboard" : "Sign In"}</Button>
             </Link>
-            {user ? (
-              <PlanSelectionDialog 
-                trigger={<Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6">Get Started</Button>}
-                onSelectFree={() => handleProceed("/plan/new")}
-              />
-            ) : (
-              <Link href="/auth">
-                <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6">Get Started</Button>
-              </Link>
-            )}
+            <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6" onClick={handleProceed}>
+              {user ? "Plan Adventure" : "Get Started"}
+            </Button>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
       <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_-20%,hsl(var(--primary)/0.15),transparent_70%)]" />
         <div className="container mx-auto px-4 text-center">
@@ -81,22 +99,9 @@ export default function LandingPage() {
             Ditch the spreadsheets. VOYIQ uses AI to build hyper-personalized itineraries and track your budget in real-time. 
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-            {user ? (
-              <PlanSelectionDialog 
-                trigger={
-                  <Button size="lg" className="h-16 px-10 text-lg bg-primary hover:bg-primary/90 rounded-full shadow-2xl shadow-primary/20">
-                    Create My First Trip <ArrowRight className="ml-2 w-5 h-5" />
-                  </Button>
-                }
-                onSelectFree={() => handleProceed("/plan/new")}
-              />
-            ) : (
-              <Link href="/auth">
-                <Button size="lg" className="h-16 px-10 text-lg bg-primary hover:bg-primary/90 rounded-full shadow-2xl shadow-primary/20">
-                  Create My First Trip <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-              </Link>
-            )}
+            <Button size="lg" className="h-16 px-10 text-lg bg-primary hover:bg-primary/90 rounded-full shadow-2xl shadow-primary/20" onClick={handleProceed}>
+              {user ? "Create My Next Trip" : "Create My First Trip"} <ArrowRight className="ml-2 w-5 h-5" />
+            </Button>
             
             <Link href="/auth">
               <Button variant="outline" size="lg" className="h-16 px-10 text-lg border-white/10 hover:bg-white/5 rounded-full backdrop-blur-sm">
@@ -106,7 +111,6 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Hero Visual */}
         <div className="container mx-auto px-4 mt-20 animate-fade-in" style={{ animationDelay: '0.4s' }}>
           <div className="relative max-w-6xl mx-auto rounded-[2rem] overflow-hidden border border-white/10 shadow-[0_0_100px_rgba(0,212,184,0.1)]">
             <Image 
@@ -127,7 +131,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Feature Highlights */}
       <section id="features" className="py-32 bg-white/[0.01] relative overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
         <div className="container mx-auto px-4">
@@ -157,7 +160,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Benefits / Social Proof */}
       <section id="benefits" className="py-32 bg-background">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
@@ -215,31 +217,16 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA Footer Section */}
       <section className="py-24 border-t border-white/5 bg-gradient-to-b from-transparent to-primary/5">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl md:text-6xl font-headline font-bold mb-8">Ready to start roamin'?</h2>
           <p className="text-xl text-muted-foreground mb-12 max-w-xl mx-auto">Join the future of travel planning today. No hidden fees, just pure exploration.</p>
-          {user ? (
-            <PlanSelectionDialog 
-              trigger={
-                <Button size="lg" className="h-16 px-12 text-xl bg-accent text-accent-foreground hover:bg-accent/90 rounded-full shadow-2xl shadow-accent/20">
-                  Get Started Free
-                </Button>
-              }
-              onSelectFree={() => handleProceed("/plan/new")}
-            />
-          ) : (
-            <Link href="/auth">
-              <Button size="lg" className="h-16 px-12 text-xl bg-accent text-accent-foreground hover:bg-accent/90 rounded-full shadow-2xl shadow-accent/20">
-                Get Started Free
-              </Button>
-            </Link>
-          )}
+          <Button size="lg" className="h-16 px-12 text-xl bg-accent text-accent-foreground hover:bg-accent/90 rounded-full shadow-2xl shadow-accent/20" onClick={handleProceed}>
+            {user ? "Get Started" : "Get Started Free"}
+          </Button>
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="py-12 border-t border-white/5 bg-card">
         <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-8">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
@@ -258,6 +245,13 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      <PlanSelectionDialog 
+        open={isPlanDialogOpen}
+        onOpenChange={setIsPlanDialogOpen}
+        tripCount={tripCount}
+        onSelectFree={() => router.push("/plan/new")}
+      />
     </div>
   );
 }
