@@ -1,18 +1,17 @@
-
 "use client";
 
 import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, MapPin, Calendar, Wallet, Activity as ProgressIcon, LogOut, Search } from "lucide-react";
+import { Plus, MapPin, Calendar, Wallet, Activity as ProgressIcon, Star, Zap } from "lucide-react";
 import Link from "next/link";
-import { useUser, useCollection, useFirestore, useAuth, useMemoFirebase } from "@/firebase";
+import { useUser, useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
-import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { Progress } from "@/components/ui/progress";
 import Image from "next/image";
+import { UserHeader } from "@/components/layout/UserHeader";
 
 interface Trip {
   id: string;
@@ -27,7 +26,6 @@ interface Trip {
 export default function Dashboard() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
-  const auth = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -46,10 +44,6 @@ export default function Dashboard() {
 
   const { data: tripsData, isLoading: isTripsLoading } = useCollection<Trip>(tripsQuery);
 
-  const handleLogout = () => {
-    signOut(auth).then(() => router.push("/"));
-  };
-
   if (isUserLoading || isTripsLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -60,86 +54,74 @@ export default function Dashboard() {
 
   const trips = (tripsData || []).map(t => ({
     ...t,
-    health: t.health || 85 // Fallback if not generated
+    health: t.health || 85 
   }));
+
+  const explorationScore = trips.length * 250 + (trips.length > 0 ? 120 : 0);
+  const streakDays = trips.length > 0 ? 4 : 0;
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <nav className="border-b border-white/5 bg-card/30 backdrop-blur-md sticky top-0 z-40">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded flex items-center justify-center">
-              <span className="text-primary-foreground font-headline font-bold">V</span>
-            </div>
-            <span className="font-headline font-bold tracking-tight text-lg">VOYIQ</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
-                {user?.photoURL ? (
-                  <Image src={user.photoURL} alt="Avatar" width={32} height={32} />
-                ) : (
-                  <span className="text-xs font-bold">{user?.displayName?.[0] || "U"}</span>
-                )}
-              </div>
-              <Button variant="ghost" size="icon" onClick={handleLogout} className="text-muted-foreground hover:text-white">
-                <LogOut className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <UserHeader />
 
       <main className="container mx-auto px-4 pt-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
-            <h1 className="text-4xl font-headline font-bold mb-2">Hello, {user?.displayName?.split(' ')[0] || "Traveler"}!</h1>
-            <p className="text-muted-foreground">Ready for your next adventure?</p>
+            <h1 className="text-4xl font-headline font-bold mb-2">Welcome back, {user?.displayName?.split(' ')[0] || "Explorer"}!</h1>
+            <p className="text-muted-foreground">You have {trips.length} active adventures waiting for you.</p>
           </div>
           <Link href="/plan/new">
             <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl px-8 h-12 shadow-lg shadow-primary/20">
-              <Plus className="mr-2 w-5 h-5" /> New Trip
+              <Plus className="mr-2 w-5 h-5" /> Plan New Adventure
             </Button>
           </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <Card className="glass-card border-none">
+          <Card className="glass-card border-none bg-gradient-to-br from-card to-primary/5">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Active Trips</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Level 4 Explorer</CardTitle>
+              <Star className="w-4 h-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{explorationScore} XP</div>
+              <div className="mt-2 space-y-1">
+                <div className="flex justify-between text-[10px] text-muted-foreground uppercase font-bold">
+                  <span>To Level 5</span>
+                  <span>75%</span>
+                </div>
+                <Progress value={75} className="h-1 bg-white/5" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="glass-card border-none bg-gradient-to-br from-card to-accent/5">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Travel Streak</CardTitle>
+              <Zap className="w-4 h-4 text-accent" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{streakDays} Days</div>
+              <p className="text-xs text-muted-foreground mt-1">Consistency is key!</p>
+            </CardContent>
+          </Card>
+
+          <Card className="glass-card border-none bg-gradient-to-br from-card to-primary/5">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Cities Visited</CardTitle>
               <MapPin className="w-4 h-4 text-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{trips.length}</div>
-              <p className="text-xs text-muted-foreground mt-1">Managed by AI</p>
-            </CardContent>
-          </Card>
-          <Card className="glass-card border-none">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Budget Health</CardTitle>
-              <Wallet className="w-4 h-4 text-accent" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">Excellent</div>
-              <p className="text-xs text-muted-foreground mt-1">94% score</p>
-            </CardContent>
-          </Card>
-          <Card className="glass-card border-none">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Exploration Rank</CardTitle>
-              <ProgressIcon className="w-4 h-4 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">Explorer</div>
-              <p className="text-xs text-muted-foreground mt-1">Level 4</p>
+              <p className="text-xs text-muted-foreground mt-1">Across 1 Continent</p>
             </CardContent>
           </Card>
         </div>
 
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-headline font-bold">Your Journeys</h2>
-            <Button variant="link" className="text-primary hover:text-primary/80">View Archive</Button>
+            <h2 className="text-2xl font-headline font-bold">Current Itineraries</h2>
+            <Button variant="link" className="text-primary hover:text-primary/80">View History</Button>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

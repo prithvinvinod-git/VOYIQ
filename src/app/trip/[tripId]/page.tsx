@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,16 +11,28 @@ import {
   Share2, 
   RefreshCw, 
   Clock, 
-  ArrowLeft,
-  Sparkles
+  Sparkles,
+  Wallet,
+  ArrowRight
 } from "lucide-react";
 import { useDoc, useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
-import { doc, collection, query, orderBy } from "firebase/firestore";
+import { doc, collection, query, orderBy, where } from "firebase/firestore";
 import { ChatCompanion } from "@/components/chat/ChatCompanion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UserHeader } from "@/components/layout/UserHeader";
+import { BudgetBreakdown } from "@/components/trip/BudgetBreakdown";
 import dynamic from "next/dynamic";
 
 const TripMap = dynamic(() => import("@/components/trip/TripMap"), { ssr: false });
+
+// Mock conversion rates for demo (INR to others)
+const CONVERSION_RATES: Record<string, number> = {
+  "USD": 1 / 83,
+  "EUR": 1 / 88,
+  "GBP": 1 / 105,
+  "JPY": 1.8,
+  "INR": 1,
+};
 
 export default function TripDetail() {
   const { tripId } = useParams();
@@ -38,7 +50,6 @@ export default function TripDetail() {
 
   const itineraryQuery = useMemoFirebase(() => {
     if (!firestore || !tripId || !user) return null;
-    // We rely on parent trip security rules, so a simple collection query is enough
     return query(
       collection(firestore, `trips/${tripId}/itineraryDays`), 
       orderBy("dayNumber")
@@ -47,11 +58,46 @@ export default function TripDetail() {
 
   const { data: itinerary, isLoading: isItineraryLoading } = useCollection<any>(itineraryQuery);
 
+  const expensesQuery = useMemoFirebase(() => {
+    if (!firestore || !tripId) return null;
+    return collection(firestore, `trips/${tripId}/expenses`);
+  }, [firestore, tripId]);
+
+  const { data: extraExpenses } = useCollection<any>(expensesQuery);
+
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push("/auth");
     }
   }, [user, isUserLoading, router]);
+
+  const budgetData = useMemo(() => {
+    if (!itinerary || !trip) return [];
+    
+    const rate = CONVERSION_RATES[trip.currency] || 1;
+    const categories = ["Food", "Transport", "Activities", "Stay", "Misc"];
+    
+    return categories.map(cat => {
+      // Sum from itinerary slots (denormalized cost in INR)
+      const plannedINR = itinerary.reduce((sum, day) => {
+        const slotsCost = (day.slots || [])
+          .filter((s: any) => (s.category || "").toLowerCase() === cat.toLowerCase())
+          .reduce((sSum: number, s: any) => sSum + (s.estimatedCostINR || 0), 0);
+        return sum + slotsCost;
+      }, 0);
+
+      // Sum from logged expenses (assuming logged in Trip currency)
+      const actual = (extraExpenses || [])
+        .filter((e: any) => (e.category || "").toLowerCase() === cat.toLowerCase())
+        .reduce((sum: number, e: any) => sum + (e.amount || 0), 0);
+
+      return {
+        category: cat,
+        planned: plannedINR * rate,
+        actual: actual
+      };
+    });
+  }, [itinerary, trip, extraExpenses]);
 
   if (isTripLoading || isItineraryLoading || isUserLoading) {
     return (
@@ -78,27 +124,7 @@ export default function TripDetail() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <header className="border-b border-white/5 bg-card/50 backdrop-blur-md sticky top-0 z-40 h-16 flex items-center px-4 justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.push("/dashboard")}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div>
-            <h1 className="font-headline font-bold text-lg">{trip.destination}</h1>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
-              {new Date(trip.startDate).toLocaleDateString()} — {new Date(trip.endDate).toLocaleDateString()}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="hidden sm:flex border-white/10">
-            <Share2 className="w-4 h-4 mr-2" /> Share
-          </Button>
-          <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
-            Export PDF
-          </Button>
-        </div>
-      </header>
+      <UserHeader showBack backHref="/dashboard" title={trip.destination} />
 
       <main className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         <div className="flex-1 lg:w-3/5 overflow-y-auto p-4 md:p-8 space-y-8 border-r border-white/5">
@@ -158,8 +184,11 @@ export default function TripDetail() {
                           </div>
                           <div className="flex md:flex-col items-center md:items-end justify-between md:justify-start gap-4 flex-shrink-0">
                             <div className="text-right">
-                              <span className="text-[10px] text-muted-foreground uppercase block font-bold">Est. Cost</span>
+                              <span className="text-[10px] text-muted-foreground uppercase block font-bold">Local Cost</span>
                               <span className="font-bold text-accent">₹{slot.estimatedCostINR}</span>
+                              <span className="text-[10px] text-muted-foreground block">
+                                (~{(slot.estimatedCostINR * (CONVERSION_RATES[trip.currency] || 1)).toFixed(2)} {trip.currency})
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -187,23 +216,27 @@ export default function TripDetail() {
 
             <TabsContent value="budget" className="flex-1 p-6 space-y-6 mt-0 overflow-y-auto">
               <div className="text-center space-y-2 mb-8">
-                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-widest">Total Budget</h3>
+                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-widest">Planned Trip Budget</h3>
                 <div className="text-4xl font-headline font-bold">{trip.totalBudget} {trip.currency}</div>
-                <p className="text-xs text-muted-foreground">Tracking live with BudgetSync</p>
+                <p className="text-xs text-muted-foreground">Tracking live with VOYIQ AI</p>
               </div>
+
+              <BudgetBreakdown data={budgetData} currency={trip.currency} />
 
               <Card className="glass-card border-accent/20 bg-accent/5 p-4 rounded-xl">
                 <div className="flex items-start gap-3">
                   <Sparkles className="text-accent w-5 h-5 flex-shrink-0 mt-1" />
                   <div className="space-y-2">
                     <h4 className="text-sm font-bold">AI Budget Insights</h4>
-                    <p className="text-xs text-muted-foreground">Your planned activities for today are perfectly aligned with your budget. Enjoy your day in {trip.destination}!</p>
+                    <p className="text-xs text-muted-foreground">
+                      Based on current rates, you have saved approximately 12% on transportation. Consider upgrading your dinner tonight!
+                    </p>
                   </div>
                 </div>
               </Card>
 
               <Button className="w-full h-12 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10">
-                Log New Expense
+                Log Manual Expense
               </Button>
             </TabsContent>
           </Tabs>
