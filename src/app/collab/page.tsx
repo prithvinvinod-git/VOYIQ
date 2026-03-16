@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Users, Plus, LogOut, Loader2, Copy, Check, MessageSquare, MapPin, Sparkles } from "lucide-react";
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase, updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
-import { collection, doc, query, where, getDoc, serverTimestamp } from "firebase/firestore";
+import { collection, doc, query, where, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
@@ -148,10 +148,14 @@ export default function CollabPage() {
   };
 
   const copyCode = () => {
-    if (!activeRoom) return;
-    navigator.clipboard.writeText(activeRoom.id);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    const codeToCopy = userData?.activeCollabRoomId || activeRoom?.id;
+    if (!codeToCopy) return;
+    
+    navigator.clipboard.writeText(codeToCopy).then(() => {
+      setCopied(true);
+      toast({ title: "Copied!", description: "Room code copied to clipboard." });
+      setTimeout(() => setCopied(false), 2000);
+    });
   };
 
   // Group trips by user
@@ -164,6 +168,8 @@ export default function CollabPage() {
       return acc;
     }, {});
   }, [roomTrips, members]);
+
+  const displayCode = userData?.activeCollabRoomId || activeRoom?.id || "---";
 
   return (
     <div className="min-h-screen bg-background">
@@ -187,7 +193,7 @@ export default function CollabPage() {
             </div>
             <div className="text-right">
               <p className="text-[10px] font-bold text-accent uppercase tracking-widest leading-none">Live Room</p>
-              <p className="text-xs font-headline font-bold">{activeRoom?.id}</p>
+              <p className="text-xs font-headline font-bold">{displayCode}</p>
             </div>
           </Card>
         </div>
@@ -247,8 +253,8 @@ export default function CollabPage() {
                     <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                     {members?.length || 0} Members Online
                   </Badge>
-                  <button onClick={copyCode} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-white transition-colors">
-                    Code: <span className="font-bold text-accent">{activeRoom?.id}</span> {copied ? <Check className="w-3 h-3 text-primary" /> : <Copy className="w-3 h-3" />}
+                  <button onClick={copyCode} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-white transition-colors group">
+                    Code: <span className="font-bold text-accent">{displayCode}</span> {copied ? <Check className="w-3 h-3 text-primary" /> : <Copy className="w-3 h-3 group-hover:scale-110 transition-transform" />}
                   </button>
                 </div>
               </div>
