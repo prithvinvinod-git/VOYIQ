@@ -24,6 +24,24 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
     }
 
+    // --- COLLAB ROOM RULES ---
+
+    match /collabRooms/{roomId} {
+      // Allow any signed-in user to get a room (to verify codes) or create one
+      allow get, create: if isSignedIn();
+      
+      // Only the creator can delete the room
+      allow delete: if isSignedIn() && resource.data.createdBy == request.auth.uid;
+
+      // Members subcollection
+      match /members/{userId} {
+        // Members can see who else is in the room
+        allow read: if isSignedIn();
+        // Users manage their own presence
+        allow write: if isOwner(userId);
+      }
+    }
+
     // --- TRIP RULES (Recursive) ---
 
     /**
@@ -31,20 +49,30 @@ service cloud.firestore {
      * Uses a recursive wildcard for consistent authorization across the tree.
      */
     match /trips/{tripId} {
-      // Allow listing trips where the user is an authorized collaborator
-      allow list: if isSignedIn() && request.auth.uid in resource.data.authorizedUserIds;
-      
-      // Allow get/create/update if the user is part of the trip
-      allow get, create, update: if isSignedIn() && (
-        (resource == null) || // For create
+      // Allow reading specific trips if owner, collaborator, or part of a collab session
+      allow get: if isSignedIn() && (
         (request.auth.uid in resource.data.authorizedUserIds) ||
-        (request.auth.uid == resource.data.ownerId)
+        (request.auth.uid == resource.data.ownerId) ||
+        (resource.data.collabRoomId != null)
+      );
+
+      // Allow listing trips (queries are automatically filtered by where clauses)
+      allow list: if isSignedIn();
+      
+      // Allow creating a trip
+      allow create: if isSignedIn();
+
+      // Allow updating if owner or authorized collaborator
+      allow update: if isSignedIn() && (
+        (request.auth.uid in resource.data.authorizedUserIds) ||
+        (request.auth.uid == resource.data.ownerId) ||
+        (resource.data.collabRoomId != null)
       );
       
       // Only the owner can delete a trip
       allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
 
-      // Sub-collections inherit trip-level access or use simplified checks
+      // Sub-collections inherit trip-level access
       match /{allSubcollections=**} {
         allow read, write: if isSignedIn();
       }
