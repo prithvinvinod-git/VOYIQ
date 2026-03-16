@@ -208,13 +208,18 @@ export default function TripDetail() {
   const handleNavigateAll = () => {
     if (!trip || !currentDay) return;
     
-    const origin = encodeURIComponent(trip.origin || "");
-    const destination = encodeURIComponent(trip.destination || "");
+    const origin = encodeURIComponent(trip.origin || "current location");
     const waypoints = currentDay.slots?.map((s: any) => encodeURIComponent(s.location)).filter(Boolean) || [];
     
-    // Construct multi-stop URL: origin -> Stop1 -> Stop2 -> ... -> destination
-    const route = [origin, ...waypoints, destination].filter(Boolean).join('/');
-    window.open(`https://www.google.com/maps/dir/${route}`, '_blank');
+    if (waypoints.length === 0) return;
+
+    // Use the last waypoint as the destination for the day
+    const destination = waypoints.pop();
+    const waypointQuery = waypoints.length > 0 ? `&waypoints=${waypoints.join('|')}` : '';
+    
+    // Construct Google Maps direction URL
+    const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}${waypointQuery}&travelmode=driving`;
+    window.open(mapsUrl, '_blank');
   };
 
   if (isUserLoading || (isTripLoading && !trip)) {
