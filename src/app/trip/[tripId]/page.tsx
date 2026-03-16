@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -69,23 +70,23 @@ export default function TripDetail() {
   const [expenseNote, setExpenseNote] = useState("");
 
   const tripRef = useMemoFirebase(() => {
-    if (!firestore || !tripId) return null;
+    if (!firestore || !tripId || !user) return null;
     return doc(firestore, "trips", tripId as string);
-  }, [firestore, tripId]);
+  }, [firestore, tripId, user]);
 
   const { data: trip, isLoading: isTripLoading } = useDoc<any>(tripRef);
 
   const itineraryQuery = useMemoFirebase(() => {
-    if (!firestore || !tripId) return null;
+    if (!firestore || !tripId || !user) return null;
     return query(collection(firestore, `trips/${tripId}/itineraryDays`), orderBy("dayNumber"));
-  }, [firestore, tripId]);
+  }, [firestore, tripId, user]);
 
   const { data: itinerary, isLoading: isItineraryLoading } = useCollection<any>(itineraryQuery);
 
   const expensesQuery = useMemoFirebase(() => {
-    if (!firestore || !tripId) return null;
+    if (!firestore || !tripId || !user) return null;
     return collection(firestore, `trips/${tripId}/expenses`);
-  }, [firestore, tripId]);
+  }, [firestore, tripId, user]);
 
   const { data: extraExpenses } = useCollection<any>(expensesQuery);
 
