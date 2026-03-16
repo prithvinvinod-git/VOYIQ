@@ -209,22 +209,24 @@ export default function TripDetail() {
     if (!trip || !currentDay || !currentDay.slots || currentDay.slots.length === 0) return;
     
     const slots = currentDay.slots;
-    // Start navigation from the first spot of the day
+    // CRITICAL: Start navigation FROM the first spot of the day
     const origin = encodeURIComponent(slots[0].location);
     
     if (slots.length === 1) {
-      // If only one spot, navigate from current location to that spot
+      // If only one spot, navigate from current position to that spot
       const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=current+location&destination=${origin}&travelmode=driving`;
       window.open(mapsUrl, '_blank');
       return;
     }
 
+    // Waypoints are middle stops
     const waypoints = slots.slice(1, -1).map((s: any) => encodeURIComponent(s.location)).filter(Boolean);
+    // Destination is the final stop
     const destination = encodeURIComponent(slots[slots.length - 1].location);
     
     const waypointQuery = waypoints.length > 0 ? `&waypoints=${waypoints.join('|')}` : '';
     
-    // Construct Google Maps direction URL: Start at Slot 1, go through waypoints, end at Last Slot
+    // Construct multi-stop URL
     const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}${waypointQuery}&travelmode=driving`;
     window.open(mapsUrl, '_blank');
   };
@@ -334,7 +336,6 @@ export default function TripDetail() {
                       <h4 className={`text-lg font-bold leading-tight ${slot.completed ? "line-through" : ""}`}>{slot.activity}</h4>
                       <p className="text-sm text-muted-foreground line-clamp-2 sm:line-clamp-none">{slot.description}</p>
                       
-                      {/* Local AI Phrases */}
                       {slot.localPhrases && slot.localPhrases.length > 0 && (
                         <div className="bg-white/5 rounded-2xl p-4 mt-4 border border-white/5 space-y-3">
                           <div className="flex items-center gap-2">

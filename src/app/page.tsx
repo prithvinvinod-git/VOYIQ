@@ -93,7 +93,7 @@ export default function LandingPage() {
             <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Meet Your AI Travel Brain</span>
           </div>
           <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-headline font-extrabold mb-8 tracking-tighter animate-fade-in leading-[0.85] break-words text-balance" style={{ animationDelay: '0.1s' }}>
-            WANDER BOLD.<br/><span className="gradient-text">PLAN SMART.</span>
+            EXPLORE MORE.<br/><span className="gradient-text">STRESS LESS.</span>
           </h1>
           <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto mb-12 animate-fade-in leading-relaxed" style={{ animationDelay: '0.2s' }}>
             Ditch the spreadsheets. VOYIQ uses AI to build hyper-personalized itineraries and track your budget in real-time. 

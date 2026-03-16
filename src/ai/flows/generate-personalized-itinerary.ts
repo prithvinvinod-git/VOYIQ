@@ -71,9 +71,10 @@ Identify the primary language spoken at the destination ({{{destination}}}).
 For EVERY activity slot, provide 3-4 "localPhrases" in that NATIVE language (e.g., if the destination is Paris, provide French phrases; if Tokyo, provide Japanese phrases).
 Each phrase should include the local script/text and its English meaning.
 
-HOTEL & STAY SELECTION:
+HOTEL & STAY SELECTION (CRITICAL EFFICIENCY):
 For EACH day, ensure the final activity slot (usually in the evening or night) is a high-quality hotel or accommodation suggestion. 
-This accommodation MUST be located efficiently near the day's final sightseeing spot of that day to minimize commute time for the traveler. 
+This accommodation MUST be located EFFICIENTLY near the day's final sightseeing spot or activity to minimize commute time for the traveler. 
+Research and suggest real, popular hotels relevant to the traveler's style.
 Include the specific name of the hotel in the "activity" and its real address in the "location".
 
 IMPORTANT BUDGET ALLOCATION:
