@@ -1,0 +1,494 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the VOYIQ application, storing their profile information and default preferences.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The user's display name."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "URL to the user's profile picture.",
+          "format": "uri"
+        },
+        "defaultDietPreference": {
+          "type": "string",
+          "description": "The user's default dietary preference (e.g., Vegetarian, Vegan, Non-veg, Halal, No preference)."
+        },
+        "defaultPacePreference": {
+          "type": "string",
+          "description": "The user's default travel pace preference (e.g., Relaxed, Balanced, Packed)."
+        },
+        "defaultTravelStyleIds": {
+          "type": "array",
+          "description": "An array of the user's default travel style preferences (e.g., Adventure, Culture, Food, Nature, Luxury, Budget).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tripsCreatedIds": {
+          "type": "array",
+          "description": "References to trips created and owned by this user. (Relationship: User 1:N Trip)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "collaboratingTripIds": {
+          "type": "array",
+          "description": "References to trips where this user is a collaborator. (Relationship: User N:N Trip)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "email"
+      ]
+    },
+    "Trip": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Trip",
+      "type": "object",
+      "description": "Represents a single travel plan created by a user, including destination, dates, budget, and preferences.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Trip entity."
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "Reference to the User who created and owns this trip. (Relationship: User 1:N Trip)"
+        },
+        "destination": {
+          "type": "string",
+          "description": "The primary destination city or region for the trip."
+        },
+        "startDate": {
+          "type": "string",
+          "description": "The start date of the trip.",
+          "format": "date"
+        },
+        "endDate": {
+          "type": "string",
+          "description": "The end date of the trip.",
+          "format": "date"
+        },
+        "groupType": {
+          "type": "string",
+          "description": "The type of group traveling (e.g., solo, couple, family, friends)."
+        },
+        "numTravelers": {
+          "type": "number",
+          "description": "The total number of travelers for this trip."
+        },
+        "budgetTotal": {
+          "type": "number",
+          "description": "The total budget allocated for the entire trip."
+        },
+        "budgetCurrency": {
+          "type": "string",
+          "description": "The currency of the budget (e.g., INR)."
+        },
+        "travelStyleIds": {
+          "type": "array",
+          "description": "An array of chosen travel styles for this trip (e.g., Adventure, Culture, Food, Nature, Luxury, Budget).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "pace": {
+          "type": "string",
+          "description": "The preferred travel pace for this trip (e.g., Relaxed, Balanced, Packed)."
+        },
+        "dietPreference": {
+          "type": "string",
+          "description": "The dietary preference for this trip (e.g., Vegetarian, Vegan, Non-veg, Halal, No preference)."
+        },
+        "mobilityNeeds": {
+          "type": "boolean",
+          "description": "Indicates if there are any specific mobility needs for the travelers."
+        },
+        "mustIncludePlaces": {
+          "type": "string",
+          "description": "Free text field for places or activities that must be included in the itinerary."
+        },
+        "mustAvoidPlaces": {
+          "type": "string",
+          "description": "Free text field for places or activities that must be avoided in the itinerary."
+        },
+        "collaboratorIds": {
+          "type": "array",
+          "description": "References to Users who are collaborators on this trip. (Relationship: Trip N:N User)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the trip (e.g., draft, active, completed)."
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "destination",
+        "startDate",
+        "endDate",
+        "budgetTotal",
+        "budgetCurrency",
+        "status"
+      ]
+    },
+    "ItineraryDay": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ItineraryDay",
+      "type": "object",
+      "description": "Represents a single day within a trip's generated itinerary, including daily details and weather.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ItineraryDay entity."
+        },
+        "tripId": {
+          "type": "string",
+          "description": "Reference to the Trip this itinerary day belongs to. (Relationship: Trip 1:N ItineraryDay)"
+        },
+        "dayNumber": {
+          "type": "number",
+          "description": "The sequential number of the day within the trip (e.g., 1 for day one)."
+        },
+        "date": {
+          "type": "string",
+          "description": "The specific date for this itinerary day.",
+          "format": "date"
+        },
+        "theme": {
+          "type": "string",
+          "description": "A brief theme or summary generated by AI for the day's activities."
+        },
+        "weatherCondition": {
+          "type": "string",
+          "description": "A summary of the weather condition for the day (e.g., 'clear sky', 'rain')."
+        },
+        "weatherTempHigh": {
+          "type": "number",
+          "description": "The estimated high temperature for the day in Celsius."
+        },
+        "weatherTempLow": {
+          "type": "number",
+          "description": "The estimated low temperature for the day in Celsius."
+        }
+      },
+      "required": [
+        "id",
+        "tripId",
+        "dayNumber",
+        "date"
+      ]
+    },
+    "ItinerarySlot": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ItinerarySlot",
+      "type": "object",
+      "description": "Represents a single activity or event within an itinerary day's timeline.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ItinerarySlot entity."
+        },
+        "itineraryDayId": {
+          "type": "string",
+          "description": "Reference to the ItineraryDay this slot belongs to. (Relationship: ItineraryDay 1:N ItinerarySlot)"
+        },
+        "time": {
+          "type": "string",
+          "description": "The time of day or specific hour for the activity (e.g., 'morning', '10:00 AM')."
+        },
+        "activity": {
+          "type": "string",
+          "description": "The name or title of the planned activity."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the activity."
+        },
+        "location": {
+          "type": "string",
+          "description": "The name of the location for the activity."
+        },
+        "latitude": {
+          "type": "number",
+          "description": "The geographical latitude of the activity location."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "The geographical longitude of the activity location."
+        },
+        "estimatedCostINR": {
+          "type": "number",
+          "description": "The estimated cost of the activity in INR."
+        },
+        "durationMinutes": {
+          "type": "number",
+          "description": "The estimated duration of the activity in minutes."
+        },
+        "category": {
+          "type": "string",
+          "description": "The category of the activity (e.g., Food, Transport, Stay, Activities, Misc)."
+        },
+        "tips": {
+          "type": "string",
+          "description": "Helpful tips or notes related to the activity."
+        },
+        "upvoteUserIds": {
+          "type": "array",
+          "description": "References to User IDs who have upvoted this activity slot. (Relationship: User N:N ItinerarySlot)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "downvoteUserIds": {
+          "type": "array",
+          "description": "References to User IDs who have downvoted this activity slot. (Relationship: User N:N ItinerarySlot)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "itineraryDayId",
+        "time",
+        "activity",
+        "location",
+        "latitude",
+        "longitude",
+        "estimatedCostINR",
+        "durationMinutes"
+      ]
+    },
+    "Expense": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Expense",
+      "type": "object",
+      "description": "Represents a single financial expense logged by a user against a specific trip's budget.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Expense entity."
+        },
+        "tripId": {
+          "type": "string",
+          "description": "Reference to the Trip this expense belongs to. (Relationship: Trip 1:N Expense)"
+        },
+        "category": {
+          "type": "string",
+          "description": "The category of the expense (e.g., Food, Transport, Stay, Activities, Misc)."
+        },
+        "amount": {
+          "type": "number",
+          "description": "The monetary amount of the expense."
+        },
+        "note": {
+          "type": "string",
+          "description": "An optional note or description for the expense."
+        },
+        "loggedByUserId": {
+          "type": "string",
+          "description": "Reference to the User who logged this expense. (Relationship: User 1:N Expense)"
+        },
+        "loggedAt": {
+          "type": "string",
+          "description": "The timestamp when the expense was logged.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "tripId",
+        "category",
+        "amount",
+        "loggedByUserId",
+        "loggedAt"
+      ]
+    },
+    "ChatMessage": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ChatMessage",
+      "type": "object",
+      "description": "Represents a single message within the AI chat companion for a specific trip.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ChatMessage entity."
+        },
+        "tripId": {
+          "type": "string",
+          "description": "Reference to the Trip this chat message belongs to. (Relationship: Trip 1:N ChatMessage)"
+        },
+        "role": {
+          "type": "string",
+          "description": "The role of the sender (e.g., 'user' or 'assistant')."
+        },
+        "content": {
+          "type": "string",
+          "description": "The actual text content of the message."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "The timestamp when the message was sent or received.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "tripId",
+        "role",
+        "content",
+        "timestamp"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores personal user profiles and default preferences. Access is restricted to the authenticated user whose UID matches {userId}.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/trips/{tripId}",
+        "definition": {
+          "entityName": "Trip",
+          "schema": {
+            "$ref": "#/backend/entities/Trip"
+          },
+          "description": "Represents a collaborative travel plan. Documents include 'ownerId' and 'authorizedUserIds' (an array containing both the 'ownerId' and all 'collaboratorIds') for authorization. This structure supports efficient queries for trips owned by or shared with 'request.auth.uid'.",
+          "params": [
+            {
+              "name": "tripId",
+              "description": "The unique ID of the trip."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/trips/{tripId}/itineraryDays/{itineraryDayId}",
+        "definition": {
+          "entityName": "ItineraryDay",
+          "schema": {
+            "$ref": "#/backend/entities/ItineraryDay"
+          },
+          "description": "Stores daily itinerary details for a specific trip. Includes denormalized 'tripId', 'tripOwnerId', and 'tripAuthorizedUserIds' to ensure authorization independence from the parent Trip document.",
+          "params": [
+            {
+              "name": "tripId",
+              "description": "The unique ID of the parent trip."
+            },
+            {
+              "name": "itineraryDayId",
+              "description": "The unique ID for the specific itinerary day."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/trips/{tripId}/itineraryDays/{itineraryDayId}/itinerarySlots/{itinerarySlotId}",
+        "definition": {
+          "entityName": "ItinerarySlot",
+          "schema": {
+            "$ref": "#/backend/entities/ItinerarySlot"
+          },
+          "description": "Represents individual activities or events within an itinerary day. Includes denormalized 'tripId', 'itineraryDayId', 'tripOwnerId', and 'tripAuthorizedUserIds' for authorization independence. The 'upvoteUserIds' and 'downvoteUserIds' fields are self-contained for voting.",
+          "params": [
+            {
+              "name": "tripId",
+              "description": "The unique ID of the grand-parent trip."
+            },
+            {
+              "name": "itineraryDayId",
+              "description": "The unique ID of the parent itinerary day."
+            },
+            {
+              "name": "itinerarySlotId",
+              "description": "The unique ID for the specific itinerary slot (activity)."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/trips/{tripId}/expenses/{expenseId}",
+        "definition": {
+          "entityName": "Expense",
+          "schema": {
+            "$ref": "#/backend/entities/Expense"
+          },
+          "description": "Records individual expenses related to a trip. Includes denormalized 'tripOwnerId' and 'tripAuthorizedUserIds' for authorization independence.",
+          "params": [
+            {
+              "name": "tripId",
+              "description": "The unique ID of the parent trip."
+            },
+            {
+              "name": "expenseId",
+              "description": "The unique ID for the specific expense."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/trips/{tripId}/chatMessages/{messageId}",
+        "definition": {
+          "entityName": "ChatMessage",
+          "schema": {
+            "$ref": "#/backend/entities/ChatMessage"
+          },
+          "description": "Stores messages for the AI chat companion for a specific trip. Includes denormalized 'tripOwnerId' and 'tripAuthorizedUserIds' for authorization independence.",
+          "params": [
+            {
+              "name": "tripId",
+              "description": "The unique ID of the parent trip."
+            },
+            {
+              "name": "messageId",
+              "description": "The unique ID for the specific chat message."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "This Firestore structure is designed following the core principles of Authorization Independence, Clarity of Intent, DBAC, QAPs, and Invariants to ensure a secure, scalable, and debuggable system for VOYIQ.\n\n**Authorization Independence:**\nThe critical aspect of this design is the strategic denormalization of authorization context. Access to Trip related subcollections (ItineraryDay, ItinerarySlot, Expense, ChatMessage) inherently depends on the parent Trip's owner and collaborators. To eliminate expensive and rule-breaking get() calls in security rules, each document in these subcollections (/trips/{tripId}/itineraryDays/{itineraryDayId}, /trips/{tripId}/itineraryDays/{itineraryDayId}/itinerarySlots/{itinerarySlotId}, /trips/{tripId}/expenses/{expenseId}, and /trips/{tripId}/chatMessages/{messageId}) will include denormalized fields:\n*   tripOwnerId: A copy of the ownerId from the parent Trip.\n*   tripAuthorizedUserIds: A copy of the authorizedUserIds array from the parent Trip (which includes both the ownerId and all collaboratorIds).\nThis ensures that security rules can evaluate access for any document in these nested collections by only inspecting that document's own fields and request.auth.uid, making rules simple, atomic, and efficient.\n\n**QAPs (Queries as Authorization Predicates):**\nTo support secure and efficient list operations, particularly for users to retrieve all trips they own or collaborate on, the Trip collection (/trips/{tripId}) includes an authorizedUserIds array. This array explicitly lists the ownerId and all collaboratorIds. Frontend queries can then use where('authorizedUserIds', 'array-contains', request.auth.uid). Firebase security rules can validate this query by simply checking request.auth.uid against the authorizedUserIds field in the document, without needing to traverse document hierarchies or perform additional get() calls. This structural decision ensures that rules are not used as filters but as validators for already predicate-enforced queries.\n\n**Structural Segregation & Access Modeling:**\n*   /users/{userId}: This collection stores private user profiles. Ownership is naturally path-based (request.auth.uid == userId), providing simple and robust access control for personal data.\n*   /trips/{tripId}: This is a top-level collection for collaborative trips. The ownerId and the denormalized authorizedUserIds array handle access for both owners and collaborators. This top-level approach is chosen over /users/{userId}/trips/{tripId} to better accommodate the N:N relationship with collaborators and avoid complex rule logic for shared access.\n*   Subcollections (itineraryDays, itinerarySlots, expenses, chatMessages): These are structured as subcollections under /trips/{tripId}. All documents within these subcollections inherit the authorization posture of their parent Trip through the denormalized tripOwnerId and tripAuthorizedUserIds fields, ensuring homogeneous security within each collection.\n\nThis design emphasizes explicit authorization fields within each document, simplifying security rules, enabling robust list queries, and minimizing debugging complexity."
+  }
+}

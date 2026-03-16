@@ -1,0 +1,144 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * VOYIQ SECURITY RULES DOCUMENTATION
+     *
+     * CORE PHILOSOPHY:
+     * This ruleset enforces a hybrid security model: strict path-based ownership for personal user
+     * profiles and a shared-access collaborator model for travel trips. To ensure high performance 
+     * and rule simplicity, authorization data is denormalized across the hierarchy.
+     *
+     * DATA STRUCTURE:
+     * - /users/{userId}: Private user profiles and preferences.
+     * - /trips/{tripId}: Collaborative trip plans.
+     * - /trips/{tripId}/...: Subcollections (itinerary, expenses, chat) inherit security from the trip.
+     *
+     * KEY SECURITY DECISIONS:
+     * 1. Authorization Independence: Subcollection documents (e.g., expenses) contain denormalized 
+     *    'tripAuthorizedUserIds' to allow rules to verify access without performing costly get() calls 
+     *    to parent documents.
+     * 2. Collaborator Model: Trips use an 'authorizedUserIds' array (containing owner and collaborators).
+     *    Access is granted if the authenticated user's UID is present in this list.
+     * 3. Prototyping Flexibility: These rules strictly enforce "Who" (Authorization) and "Relationship" 
+     *    (Relational Integrity) but do not validate the specific data types or presence of non-security
+     *    fields (e.g., description, amount).
+     * 4. Structural Segregation: User data is kept in a dedicated path, while shared trips are 
+     *    at the root to facilitate N:N collaboration logic.
+     */
+
+    // --- HELPER FUNCTIONS ---
+
+    /** @description Checks if the user is authenticated. */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /** @description Checks if the user's UID matches the provided ID. */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /** @description Checks if the user's UID is present in a list of authorized IDs. */
+    function isAuthorized(authorizedList) {
+      return isSignedIn() && request.auth.uid in authorizedList;
+    }
+
+    /** @description Checks if the user is an owner/authorized for a document that exists. */
+    function isExistingAuthorized(authorizedList) {
+      return resource != null && isAuthorized(authorizedList);
+    }
+
+    /** @description Validates that the resource exists and the user is the owner. */
+    function isExistingOwner(userId) {
+      return resource != null && isOwner(userId);
+    }
+
+    // --- COLLECTION RULES ---
+
+    /**
+     * @description Rules for the User collection. Restricted to the user themselves.
+     * @path /users/{userId}
+     * @allow (get) request.auth.uid == "user123"
+     * @deny (create) request.auth.uid == "user456" but document ID is "user123"
+     * @principle Path-based ownership and self-creation.
+     */
+    match /users/{userId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for Trips. Access for owners and listed collaborators.
+     * @path /trips/{tripId}
+     * @allow (update) User is in 'authorizedUserIds' array.
+     * @deny (delete) User is a collaborator but not the 'ownerId'.
+     * @principle Shared access via denormalized member lists.
+     */
+    match /trips/{tripId} {
+      allow get, list: if isAuthorized(resource.data.authorizedUserIds);
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid && request.auth.uid in request.resource.data.authorizedUserIds;
+      allow update: if isExistingAuthorized(resource.data.authorizedUserIds) && request.resource.data.ownerId == resource.data.ownerId;
+      allow delete: if resource != null && isOwner(resource.data.ownerId);
+    }
+
+    /**
+     * @description Rules for ItineraryDays. Inherits trip authorization via denormalized fields.
+     * @path /trips/{tripId}/itineraryDays/{itineraryDayId}
+     * @allow (get) request.auth.uid in resource.data.tripAuthorizedUserIds
+     * @deny (create) request.resource.data.tripId != tripId
+     * @principle Relational integrity and inherited authorization.
+     */
+    match /trips/{tripId}/itineraryDays/{itineraryDayId} {
+      allow get, list: if isAuthorized(resource.data.tripAuthorizedUserIds);
+      allow create: if isAuthorized(request.resource.data.tripAuthorizedUserIds) && request.resource.data.tripId == tripId;
+      allow update: if isExistingAuthorized(resource.data.tripAuthorizedUserIds) && request.resource.data.tripId == resource.data.tripId;
+      allow delete: if isExistingAuthorized(resource.data.tripAuthorizedUserIds);
+    }
+
+    /**
+     * @description Rules for ItinerarySlots (activities). Inherits trip authorization.
+     * @path /trips/{tripId}/itineraryDays/{itineraryDayId}/itinerarySlots/{itinerarySlotId}
+     * @allow (update) User is a collaborator on the trip.
+     * @deny (create) tripId in data does not match the URL path.
+     * @principle Deeply nested relational integrity.
+     */
+    match /trips/{tripId}/itineraryDays/{itineraryDayId}/itinerarySlots/{itinerarySlotId} {
+      allow get, list: if isAuthorized(resource.data.tripAuthorizedUserIds);
+      allow create: if isAuthorized(request.resource.data.tripAuthorizedUserIds) && request.resource.data.tripId == tripId;
+      allow update: if isExistingAuthorized(resource.data.tripAuthorizedUserIds) && request.resource.data.tripId == resource.data.tripId;
+      allow delete: if isExistingAuthorized(resource.data.tripAuthorizedUserIds);
+    }
+
+    /**
+     * @description Rules for Expenses. Records individual financial logs.
+     * @path /trips/{tripId}/expenses/{expenseId}
+     * @allow (list) query filter 'tripAuthorizedUserIds' contains user UID.
+     * @deny (update) Attempting to change the 'loggedByUserId' field.
+     * @principle Immutability of audit fields and inherited access.
+     */
+    match /trips/{tripId}/expenses/{expenseId} {
+      allow get, list: if isAuthorized(resource.data.tripAuthorizedUserIds);
+      allow create: if isAuthorized(request.resource.data.tripAuthorizedUserIds) && request.resource.data.loggedByUserId == request.auth.uid && request.resource.data.tripId == tripId;
+      allow update: if isExistingAuthorized(resource.data.tripAuthorizedUserIds) && request.resource.data.loggedByUserId == resource.data.loggedByUserId;
+      allow delete: if isExistingAuthorized(resource.data.tripAuthorizedUserIds);
+    }
+
+    /**
+     * @description Rules for AI Chat Messages.
+     * @path /trips/{tripId}/chatMessages/{messageId}
+     * @allow (create) Message belongs to the active trip and signed-in user.
+     * @principle Inherited trip authorization.
+     */
+    match /trips/{tripId}/chatMessages/{messageId} {
+      allow get, list: if isAuthorized(resource.data.tripAuthorizedUserIds);
+      allow create: if isAuthorized(request.resource.data.tripAuthorizedUserIds) && request.resource.data.tripId == tripId;
+      allow update: if isExistingAuthorized(resource.data.tripAuthorizedUserIds) && request.resource.data.tripId == resource.data.tripId;
+      allow delete: if isExistingAuthorized(resource.data.tripAuthorizedUserIds);
+    }
+
+  }
+}
