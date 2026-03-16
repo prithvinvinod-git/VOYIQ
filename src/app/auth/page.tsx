@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from "react";
@@ -8,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Compass, Mail, Lock, Loader2, AlertCircle, ChevronLeft, User } from "lucide-react";
-import Link from "lucide-react";
 import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth, useFirestore } from "@/firebase";
@@ -174,62 +172,64 @@ export default function AuthPage() {
                     <TabsTrigger value="signup" className="text-xs">Sign Up</TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="signup" className="space-y-4">
+                  <div className="space-y-4">
+                    <TabsContent value="signup" className="space-y-4 mt-0">
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-name">Full Name</Label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input 
+                            id="signup-name" 
+                            type="text" 
+                            placeholder="John Doe" 
+                            className="pl-10 h-12 bg-white/5 border-white/10"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    </TabsContent>
+
                     <div className="space-y-2">
-                      <Label htmlFor="signup-name">Full Name</Label>
+                      <Label htmlFor="email">Email Address</Label>
                       <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input 
-                          id="signup-name" 
-                          type="text" 
-                          placeholder="John Doe" 
+                          id="email" 
+                          type="email" 
+                          placeholder="name@example.com" 
                           className="pl-10 h-12 bg-white/5 border-white/10"
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
                         />
                       </div>
                     </div>
-                  </TabsContent>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input 
-                        id="email" 
-                        type="email" 
-                        placeholder="name@example.com" 
-                        className="pl-10 h-12 bg-white/5 border-white/10"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                      />
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input 
+                          id="password" 
+                          type="password" 
+                          placeholder="••••••••" 
+                          className="pl-10 h-12 bg-white/5 border-white/10"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                        />
+                      </div>
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input 
-                        id="password" 
-                        type="password" 
-                        placeholder="••••••••" 
-                        className="pl-10 h-12 bg-white/5 border-white/10"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                      />
-                    </div>
-                  </div>
 
-                  <TabsContent value="login">
-                    <Button className="w-full h-12 bg-primary text-primary-foreground mt-4" onClick={() => handleEmailAuth(false)} disabled={loading}>
-                      {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : "Sign In"}
-                    </Button>
-                  </TabsContent>
-                  <TabsContent value="signup">
-                    <Button className="w-full h-12 bg-primary text-primary-foreground mt-4" onClick={() => handleEmailAuth(true)} disabled={loading}>
-                      {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : "Create Account"}
-                    </Button>
-                  </TabsContent>
+                    <TabsContent value="login" className="mt-0">
+                      <Button className="w-full h-12 bg-primary text-primary-foreground mt-4" onClick={() => handleEmailAuth(false)} disabled={loading}>
+                        {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : "Sign In"}
+                      </Button>
+                    </TabsContent>
+                    <TabsContent value="signup" className="mt-0">
+                      <Button className="w-full h-12 bg-primary text-primary-foreground mt-4" onClick={() => handleEmailAuth(true)} disabled={loading}>
+                        {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : "Create Account"}
+                      </Button>
+                    </TabsContent>
+                  </div>
                 </Tabs>
               </TabsContent>
             </Tabs>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -257,7 +256,7 @@ export default function CollabPage() {
                     )}
                   </div>
                   <div className="flex-1">
-                    <div className="font-bold text-sm flex items-center gap-2">
+                    <div className="text-sm font-bold flex items-center gap-2">
                       {m.name}
                       {m.id === user?.uid && <Badge variant="outline" className="text-[8px] py-0 px-1 border-primary/30 text-primary">You</Badge>}
                     </div>
