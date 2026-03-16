@@ -90,6 +90,7 @@ export default function Dashboard() {
             <p className="text-muted-foreground">You have {trips.length} adventures tracked.</p>
           </div>
           <PlanSelectionDialog 
+            tripCount={trips.length}
             trigger={
               <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl px-8 h-12 shadow-lg shadow-primary/20">
                 <Plus className="mr-2 w-5 h-5" /> Plan New Adventure
@@ -158,6 +159,7 @@ export default function Dashboard() {
                 <h3 className="text-xl font-bold mb-2">No trips yet</h3>
                 <p className="text-muted-foreground mb-6">Start your first adventure today with VOYIQ AI.</p>
                 <PlanSelectionDialog 
+                  tripCount={trips.length}
                   trigger={<Button variant="outline" className="border-primary text-primary hover:bg-primary/10">Plan a New Trip</Button>}
                   onSelectFree={() => router.push("/plan/new")}
                 />

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -16,15 +15,17 @@ import {
   Sparkles,
   Check,
   Globe,
-  Users as UsersIcon
+  Users as UsersIcon,
+  AlertCircle
 } from "lucide-react";
-import { useFirestore, useUser } from "@/firebase";
-import { collection, doc, writeBatch } from "firebase/firestore";
+import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
+import { collection, doc, writeBatch, query, where } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { generatePersonalizedItinerary } from "@/ai/flows/generate-personalized-itinerary";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { UserHeader } from "@/components/layout/UserHeader";
+import { PlanSelectionDialog } from "@/components/shared/PlanSelectionDialog";
 import {
   Select,
   SelectContent,
@@ -45,7 +46,7 @@ const COMMON_CURRENCIES = [
 export default function TripWizard() {
   const [step, setStep] = useState<Step>(1);
   const [loading, setLoading] = useState(false);
-  const [query, setQuery] = useState("");
+  const [queryVal, setQueryVal] = useState("");
   const [originQuery, setOriginQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [originResults, setOriginResults] = useState<any[]>([]);
@@ -71,6 +72,16 @@ export default function TripWizard() {
     mustAvoid: ""
   });
 
+  // Trip count check for Free Tier
+  const tripsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(collection(firestore, "trips"), where("authorizedUserIds", "array-contains", user.uid));
+  }, [firestore, user]);
+  
+  const { data: tripsData } = useCollection(tripsQuery);
+  const tripCount = tripsData?.length || 0;
+  const isLimitReached = tripCount >= 4;
+
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push("/auth");
@@ -79,7 +90,7 @@ export default function TripWizard() {
 
   const searchPlace = async (val: string, type: 'origin' | 'dest') => {
     if (type === 'origin') setOriginQuery(val);
-    else setQuery(val);
+    else setQueryVal(val);
 
     if (val.length < 3) return;
     try {
@@ -99,7 +110,7 @@ export default function TripWizard() {
       setOriginResults([]);
     } else {
       setFormData({ ...formData, destination: item.display_name });
-      setQuery(item.display_name);
+      setQueryVal(item.display_name);
       setSearchResults([]);
     }
   };
@@ -118,10 +129,21 @@ export default function TripWizard() {
 
   const handleSubmit = async () => {
     if (!user || !firestore) return;
+    
+    if (isLimitReached) {
+      toast({ 
+        variant: "destructive", 
+        title: "Upgrade Required", 
+        description: "You've reached the limit of 4 trips on the Free Explorer plan." 
+      });
+      return;
+    }
+
     if (!formData.numTravelers || formData.numTravelers < 1) {
       toast({ variant: "destructive", title: "Error", description: "Please enter a valid number of travelers." });
       return;
     }
+    
     setLoading(true);
     try {
       const aiResponse = await generatePersonalizedItinerary({
@@ -176,18 +198,36 @@ export default function TripWizard() {
           <div className="space-y-4">
             <div className="flex items-center justify-between text-sm font-medium">
               <span className="text-muted-foreground">Step {step} of 4</span>
-              <span className="text-primary font-bold">
-                {step === 1 && "Basic Info"}
-                {step === 2 && "Budget & Style"}
-                {step === 3 && "Preferences"}
-                {step === 4 && "Review & Generate"}
-              </span>
+              <div className="flex items-center gap-4">
+                 {isLimitReached && <Badge variant="destructive" className="animate-pulse">Free Limit Reached</Badge>}
+                 <span className="text-primary font-bold">
+                  {step === 1 && "Basic Info"}
+                  {step === 2 && "Budget & Style"}
+                  {step === 3 && "Preferences"}
+                  {step === 4 && "Review & Generate"}
+                </span>
+              </div>
             </div>
             <Progress value={step * 25} className="h-2 bg-white/5" />
           </div>
 
           <Card className="glass-card border-none shadow-2xl overflow-visible">
             <CardContent className="p-8 md:p-12">
+              {isLimitReached && step !== 4 && (
+                <div className="mb-8 p-4 bg-destructive/10 border border-destructive/20 rounded-xl flex items-center gap-3">
+                  <AlertCircle className="text-destructive w-5 h-5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-bold">You've reached your free trip limit.</p>
+                    <p className="text-xs text-muted-foreground">Upgrade to Premium to plan more than 4 adventures.</p>
+                  </div>
+                  <PlanSelectionDialog 
+                    tripCount={tripCount}
+                    trigger={<Button size="sm" variant="destructive">Upgrade</Button>}
+                    onSelectFree={() => {}}
+                  />
+                </div>
+              )}
+
               {step === 1 && (
                 <div className="space-y-8 animate-fade-in">
                   <div className="space-y-2">
@@ -225,7 +265,7 @@ export default function TripWizard() {
                         <Input 
                           placeholder="Search places..." 
                           className="pl-10 h-12 bg-white/5 border-white/10"
-                          value={query}
+                          value={queryVal}
                           onChange={(e) => searchPlace(e.target.value, 'dest')}
                         />
                       </div>
@@ -343,8 +383,19 @@ export default function TripWizard() {
                     <p><strong>Dates:</strong> {formData.startDate} to {formData.endDate}</p>
                     <p><strong>Travelers:</strong> {formData.numTravelers} ({formData.groupType})</p>
                   </div>
-                  <Button size="lg" className="w-full h-16 bg-primary text-primary-foreground text-lg shadow-xl shadow-primary/20" onClick={handleSubmit} disabled={loading}>
-                    {loading ? <span className="flex items-center gap-2"><Sparkles className="animate-spin" /> Generating...</span> : "Generate My Trip"}
+                  <Button 
+                    size="lg" 
+                    className="w-full h-16 bg-primary text-primary-foreground text-lg shadow-xl shadow-primary/20" 
+                    onClick={handleSubmit} 
+                    disabled={loading || isLimitReached}
+                  >
+                    {loading ? (
+                      <span className="flex items-center gap-2"><Sparkles className="animate-spin" /> Generating...</span>
+                    ) : isLimitReached ? (
+                      "Limit Reached - Please Upgrade"
+                    ) : (
+                      "Generate My Trip"
+                    )}
                   </Button>
                 </div>
               )}

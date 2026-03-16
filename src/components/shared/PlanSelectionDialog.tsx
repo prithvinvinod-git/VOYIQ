@@ -11,16 +11,18 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Check, Sparkles, Zap, Crown, Globe, Mic, Navigation, Users, Wallet, MessageSquare } from "lucide-react";
+import { Check, Sparkles, Zap, Crown, Globe, Mic, Navigation, Users, Wallet, MessageSquare, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface PlanSelectionDialogProps {
   trigger: React.ReactNode;
   onSelectFree: () => void;
+  tripCount?: number;
 }
 
-export function PlanSelectionDialog({ trigger, onSelectFree }: PlanSelectionDialogProps) {
+export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0 }: PlanSelectionDialogProps) {
   const [open, setOpen] = React.useState(false);
+  const isLimitReached = tripCount >= 4;
 
   const freeFeatures = [
     { icon: Sparkles, text: "Smart AI Itineraries" },
@@ -50,12 +52,17 @@ export function PlanSelectionDialog({ trigger, onSelectFree }: PlanSelectionDial
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-8">
           {/* Free Plan */}
-          <Card className="bg-white/5 border-white/10 hover:border-primary/50 transition-all flex flex-col">
+          <Card className={`bg-white/5 border-white/10 hover:border-primary/50 transition-all flex flex-col ${isLimitReached ? 'ring-2 ring-destructive/50' : ''}`}>
             <CardContent className="p-6 flex-1 flex flex-col">
               <div className="mb-6">
                 <Badge variant="outline" className="mb-2 border-primary/30 text-primary">Standard</Badge>
                 <h3 className="text-2xl font-bold">Explorer</h3>
                 <p className="text-3xl font-headline font-bold mt-2">Free</p>
+                {isLimitReached && (
+                  <div className="mt-2 flex items-center gap-2 text-destructive text-xs font-bold uppercase">
+                    <AlertTriangle className="w-3 h-3" /> Limit Reached (4/4)
+                  </div>
+                )}
               </div>
               
               <ul className="space-y-3 mb-8 flex-1">
@@ -71,12 +78,13 @@ export function PlanSelectionDialog({ trigger, onSelectFree }: PlanSelectionDial
               
               <Button 
                 className="w-full h-12 bg-white/10 hover:bg-white/20 text-white"
+                disabled={isLimitReached}
                 onClick={() => {
                   setOpen(false);
                   onSelectFree();
                 }}
               >
-                Continue with Free
+                {isLimitReached ? "Limit Reached" : "Continue with Free"}
               </Button>
             </CardContent>
           </Card>
@@ -88,11 +96,11 @@ export function PlanSelectionDialog({ trigger, onSelectFree }: PlanSelectionDial
             </div>
             <CardContent className="p-6 flex-1 flex flex-col">
               <div className="mb-6">
-                <Badge variant="outline" className="mb-2 border-accent/30 text-accent">Coming Soon</Badge>
+                <Badge variant="outline" className="mb-2 border-accent/30 text-accent">Best Value</Badge>
                 <h3 className="text-2xl font-bold flex items-center gap-2">
-                  Nomad <Crown className="w-5 h-5 text-accent" />
+                  Premium <Crown className="w-5 h-5 text-accent" />
                 </h3>
-                <p className="text-3xl font-headline font-bold mt-2">$9.99<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+                <p className="text-3xl font-headline font-bold mt-2">₹2,999<span className="text-sm font-normal text-muted-foreground">/year</span></p>
               </div>
               
               <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">Includes everything in Free, plus:</div>
@@ -109,7 +117,7 @@ export function PlanSelectionDialog({ trigger, onSelectFree }: PlanSelectionDial
               </ul>
               
               <Button className="w-full h-12 bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg shadow-accent/20">
-                Join the Waitlist
+                Upgrade Now
               </Button>
             </CardContent>
           </Card>
