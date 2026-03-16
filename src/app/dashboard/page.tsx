@@ -85,14 +85,16 @@ export default function Dashboard() {
 
       <main className="container mx-auto px-4 pt-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
-          <div>
-            <h1 className="text-4xl font-headline font-bold mb-2">Welcome back, {user?.displayName?.split(' ')[0] || "Explorer"}!</h1>
-            <p className="text-muted-foreground">You have {trips.length} adventures tracked.</p>
+          <div className="max-w-full">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-2 break-words">
+              Welcome back, {user?.displayName?.split(' ')[0] || "Explorer"}!
+            </h1>
+            <p className="text-muted-foreground text-sm sm:text-base">You have {trips.length} adventures tracked.</p>
           </div>
           <PlanSelectionDialog 
             tripCount={trips.length}
             trigger={
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl px-8 h-12 shadow-lg shadow-primary/20">
+              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl px-8 h-12 shadow-lg shadow-primary/20 w-full md:w-auto">
                 <Plus className="mr-2 w-5 h-5" /> Plan New Adventure
               </Button>
             }
@@ -103,8 +105,8 @@ export default function Dashboard() {
         {/* Active Journeys Section */}
         <div className="space-y-6 mb-12">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-headline font-bold">Active Journeys</h2>
-            <Button variant="link" className="text-primary hover:text-primary/80">View History</Button>
+            <h2 className="text-xl sm:text-2xl font-headline font-bold">Active Journeys</h2>
+            <Button variant="link" className="text-primary hover:text-primary/80 text-sm">View History</Button>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -112,8 +114,8 @@ export default function Dashboard() {
               trips.map((trip) => (
                 <Link key={trip.id} href={`/trip/${trip.id}`}>
                   <Card className="glass-card border-none hover:bg-white/5 transition-all group overflow-hidden">
-                    <div className="p-6 flex gap-6">
-                      <div className="w-32 h-32 rounded-xl bg-white/5 border border-white/10 flex-shrink-0 relative overflow-hidden">
+                    <div className="p-4 sm:p-6 flex flex-col sm:flex-row gap-4 sm:gap-6">
+                      <div className="w-full sm:w-32 h-32 rounded-xl bg-white/5 border border-white/10 flex-shrink-0 relative overflow-hidden">
                         <Image 
                           src={`https://picsum.photos/seed/${trip.id}/150/150`} 
                           alt={trip.destination} 
@@ -124,12 +126,12 @@ export default function Dashboard() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between mb-2">
-                          <h3 className="text-xl font-bold truncate pr-4">{trip.destination}</h3>
-                          <Badge variant={trip.health > 80 ? "default" : "secondary"} className={trip.health > 80 ? "bg-primary/20 text-primary border-none" : ""}>
-                            {Math.round(trip.health || 0)}% Complete
+                          <h3 className="text-lg sm:text-xl font-bold truncate pr-4">{trip.destination}</h3>
+                          <Badge variant={trip.health > 80 ? "default" : "secondary"} className={trip.health > 80 ? "bg-primary/20 text-primary border-none text-[10px] sm:text-xs" : "text-[10px] sm:text-xs"}>
+                            {Math.round(trip.health || 0)}%
                           </Badge>
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground mb-4">
                           <div className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" /> 
                             <span>{new Date(trip.startDate).toLocaleDateString()}</span>

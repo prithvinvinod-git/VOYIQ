@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from "react";
@@ -74,11 +73,6 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
             
             {/* Primary Navigation */}
             <div className="hidden md:flex items-center gap-1 ml-4">
-              <Link href="/dashboard">
-                <Button variant="ghost" className="gap-2 text-[10px] font-bold uppercase tracking-widest hover:text-primary h-9">
-                  <LayoutDashboard className="w-3.5 h-3.5" /> Trips
-                </Button>
-              </Link>
               <Link href="/plan/new">
                 <Button variant="ghost" className="gap-2 text-[10px] font-bold uppercase tracking-widest hover:text-primary h-9">
                   <Plane className="w-3.5 h-3.5" /> New Trip
@@ -87,7 +81,7 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
               
               {isPremium ? (
                 <Link href="/collab">
-                  <Button variant="ghost" className="gap-2 text-[10px] font-bold uppercase tracking-widest text-accent hover:text-accent/80 h-9">
+                  <Button variant="ghost" className="gap-2 text-[10px] font-bold uppercase tracking-widest text-accent hover:bg-accent hover:text-accent-foreground h-9">
                     <Users className="w-3.5 h-3.5" /> Collab
                   </Button>
                 </Link>
@@ -95,7 +89,7 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
                 <PlanSelectionDialog 
                   tripCount={tripCount}
                   trigger={
-                    <Button variant="ghost" className="gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-white h-9">
+                    <Button variant="ghost" className="gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:bg-white/10 hover:text-white h-9">
                       <Users className="w-3.5 h-3.5 opacity-50" /> Collab <Lock className="w-2.5 h-2.5 ml-0.5" />
                     </Button>
                   }

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Compass, Mail, Phone, Lock, ArrowRight, Loader2, AlertCircle, ChevronLeft } from "lucide-react";
+import { Compass, Mail, Phone, Lock, ArrowRight, Loader2, AlertCircle, ChevronLeft, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/firebase";
@@ -17,7 +17,8 @@ import {
   createUserWithEmailAndPassword,
   signInWithPhoneNumber,
   RecaptchaVerifier,
-  ConfirmationResult
+  ConfirmationResult,
+  updateProfile
 } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -29,6 +30,7 @@ export default function AuthPage() {
   
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
@@ -95,15 +97,16 @@ export default function AuthPage() {
   };
 
   const handleEmailAuth = async (isSignUp: boolean) => {
-    if (!email || !password) {
-      toast({ variant: "destructive", title: "Missing fields", description: "Email and password are required." });
+    if (!email || !password || (isSignUp && !name)) {
+      toast({ variant: "destructive", title: "Missing fields", description: "All fields are required." });
       return;
     }
     setLoading(true);
     setConfigError(null);
     try {
       if (isSignUp) {
-        await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(userCredential.user, { displayName: name });
         toast({ title: "Account created!", description: "Welcome to VOYIQ." });
       } else {
         await signInWithEmailAndPassword(auth, email, password);
@@ -234,42 +237,69 @@ export default function AuthPage() {
               </TabsContent>
 
               <TabsContent value="email" className="space-y-4 animate-fade-in">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input 
-                      id="email" 
-                      type="email" 
-                      placeholder="name@example.com" 
-                      className="pl-10 h-12 bg-white/5 border-white/10"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
+                <Tabs defaultValue="login" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-4 bg-white/5 border-none h-8">
+                    <TabsTrigger value="login" className="text-xs">Log In</TabsTrigger>
+                    <TabsTrigger value="signup" className="text-xs">Sign Up</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="signup" className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-name">Full Name</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input 
+                          id="signup-name" 
+                          type="text" 
+                          placeholder="John Doe" 
+                          className="pl-10 h-12 bg-white/5 border-white/10"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email Address</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input 
+                        id="email" 
+                        type="email" 
+                        placeholder="name@example.com" 
+                        className="pl-10 h-12 bg-white/5 border-white/10"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input 
-                      id="password" 
-                      type="password" 
-                      placeholder="••••••••" 
-                      className="pl-10 h-12 bg-white/5 border-white/10"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input 
+                        id="password" 
+                        type="password" 
+                        placeholder="••••••••" 
+                        className="pl-10 h-12 bg-white/5 border-white/10"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3 pt-2">
-                  <Button variant="outline" className="h-12 border-white/10 hover:bg-white/5" onClick={() => handleEmailAuth(false)} disabled={loading}>
-                    Sign In
-                  </Button>
-                  <Button className="h-12 bg-primary text-primary-foreground" onClick={() => handleEmailAuth(true)} disabled={loading}>
-                    Sign Up
-                  </Button>
-                </div>
+
+                  <TabsContent value="login">
+                    <Button className="w-full h-12 bg-primary text-primary-foreground mt-4" onClick={() => handleEmailAuth(false)} disabled={loading}>
+                      {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : "Sign In"}
+                    </Button>
+                  </TabsContent>
+                  <TabsContent value="signup">
+                    <Button className="w-full h-12 bg-primary text-primary-foreground mt-4" onClick={() => handleEmailAuth(true)} disabled={loading}>
+                      {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : "Create Account"}
+                    </Button>
+                  </TabsContent>
+                </Tabs>
               </TabsContent>
 
               <TabsContent value="phone" className="space-y-4 animate-fade-in">
