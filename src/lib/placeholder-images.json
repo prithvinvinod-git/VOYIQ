@@ -1,3 +1,28 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-travel",
+      "description": "Epic travel landscape with mountains and lake",
+      "imageUrl": "https://picsum.photos/seed/88/1200/800",
+      "imageHint": "travel landscape"
+    },
+    {
+      "id": "paris-itinerary",
+      "description": "Eiffel Tower at sunset",
+      "imageUrl": "https://picsum.photos/seed/42/600/400",
+      "imageHint": "paris france"
+    },
+    {
+      "id": "bali-nature",
+      "description": "Lush green rice terraces in Bali",
+      "imageUrl": "https://picsum.photos/seed/55/600/400",
+      "imageHint": "bali nature"
+    },
+    {
+      "id": "tokyo-urban",
+      "description": "Shibuya Crossing at night",
+      "imageUrl": "https://picsum.photos/seed/12/600/400",
+      "imageHint": "tokyo street"
+    }
+  ]
 }
