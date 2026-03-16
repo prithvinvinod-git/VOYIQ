@@ -74,9 +74,9 @@ End Date: {{{endDate}}}
 Number of Travelers: {{{numTravelers}}}
 Group Type: {{{groupType}}}
 Total Budget: {{{totalBudget}}} {{{currency}}}
-Travel Style: {{{travelStyle.join ", "}}}
+Travel Style: {{#each travelStyle}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 Pace: {{{pace}}}
-Dietary Preferences: {{{dietaryPreferences.join ", "}}}
+Dietary Preferences: {{#each dietaryPreferences}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 Mobility Needs: {{{mobilityNeeds}}}
 {{#if mustIncludePlaces}}
 Must Include Places: {{{mustIncludePlaces}}}

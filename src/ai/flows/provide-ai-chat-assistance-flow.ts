@@ -98,7 +98,7 @@ Dates: {{{tripContext.startDate}}} to {{{tripContext.endDate}}}
 Group Type: {{{tripContext.groupType}}}
 Number of Travelers: {{{tripContext.numTravelers}}}
 Budget: {{{tripContext.budget.total}}} {{{tripContext.budget.currency}}}
-Travel Style: {{{tripContext.travelStyle}}}
+Travel Style: {{#each tripContext.travelStyle}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 Pace: {{{tripContext.pace}}}
 Dietary Preferences: {{{tripContext.dietPref}}}
 
