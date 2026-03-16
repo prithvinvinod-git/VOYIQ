@@ -205,29 +205,16 @@ export default function TripDetail() {
     toast({ title: "Expense logged!", description: `Added ${expenseAmount} to ${expenseCategory}.` });
   };
 
-  const getAiSuggestions = async (overCategory: string, limit: number, spent: number) => {
-    if (!trip) return;
-    setIsAiLoading(true);
-    try {
-      const suggestions = await suggestBudgetAlternatives({
-        tripContext: {
-          destination: trip.destination,
-          travelStyle: trip.travelStyle || [],
-          pace: trip.pace || "Balanced",
-          dietPref: (trip.dietaryPreferences || ["No preference"])[0],
-          numTravelers: trip.numTravelers || 1,
-        },
-        overBudgetCategory: overCategory,
-        budgetLimit: limit,
-        amountSpent: spent,
-        currency: trip.currency || "INR",
-      });
-      setAiSuggestions(suggestions);
-    } catch (e: any) {
-      toast({ variant: "destructive", title: "AI Error", description: e.message });
-    } finally {
-      setIsAiLoading(false);
-    }
+  const handleNavigateAll = () => {
+    if (!trip || !currentDay) return;
+    
+    const origin = encodeURIComponent(trip.origin || "");
+    const destination = encodeURIComponent(trip.destination || "");
+    const waypoints = currentDay.slots?.map((s: any) => encodeURIComponent(s.location)).filter(Boolean) || [];
+    
+    // Construct multi-stop URL: origin -> Stop1 -> Stop2 -> ... -> destination
+    const route = [origin, ...waypoints, destination].filter(Boolean).join('/');
+    window.open(`https://www.google.com/maps/dir/${route}`, '_blank');
   };
 
   if (isUserLoading || (isTripLoading && !trip)) {
@@ -284,7 +271,7 @@ export default function TripDetail() {
           <CheckCircle2 className="text-primary w-5 h-5" />
           <span className="text-xs font-bold uppercase tracking-widest">Itinerary Progress</span>
         </div>
-        <Progress value={progressValue} className="h-2 flex-1 w-full max-w-xl" />
+        <Progress value={progressValue} className="h-2.5 flex-1 w-full max-w-xl" />
         <span className="text-xs font-bold">{Math.round(progressValue)}%</span>
       </div>
 
@@ -377,11 +364,8 @@ export default function TripDetail() {
             
             <TabsContent value="map" className="flex-1 mt-0 relative">
                <div className="absolute top-4 right-4 z-10">
-                 <Button size="sm" variant="secondary" className="bg-white text-black shadow-2xl hover:bg-white/90 rounded-xl" onClick={() => {
-                   const stops = currentDay?.slots?.map((s: any) => encodeURIComponent(s.location)).join('/') || "";
-                   window.open(`https://www.google.com/maps/dir/${encodeURIComponent(trip.origin)}/${stops}/${encodeURIComponent(trip.destination)}`, '_blank');
-                 }}>
-                   <Navigation className="w-4 h-4 mr-2" /> Navigate All
+                 <Button size="sm" variant="secondary" className="bg-white text-black shadow-2xl hover:bg-white/90 rounded-xl font-bold" onClick={handleNavigateAll}>
+                   <Navigation className="w-4 h-4 mr-2" /> Navigate Day
                  </Button>
                </div>
                <TripMap locations={currentDay?.slots || []} />
