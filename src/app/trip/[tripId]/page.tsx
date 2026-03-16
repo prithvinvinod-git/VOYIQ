@@ -17,18 +17,38 @@ import {
   TrendingDown,
   AlertCircle,
   Loader2,
-  Coins
+  Coins,
+  MessageSquareQuote,
+  Plus
 } from "lucide-react";
-import { useDoc, useCollection, useFirestore, useMemoFirebase, useUser, updateDocumentNonBlocking } from "@/firebase";
-import { doc, collection, query, orderBy } from "firebase/firestore";
+import { useDoc, useCollection, useFirestore, useMemoFirebase, useUser, updateDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase";
+import { doc, collection, query, orderBy, serverTimestamp } from "firebase/firestore";
 import { ChatCompanion } from "@/components/chat/ChatCompanion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserHeader } from "@/components/layout/UserHeader";
 import { BudgetBreakdown } from "@/components/trip/BudgetBreakdown";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { suggestBudgetAlternatives, type SuggestBudgetAlternativesOutput } from "@/ai/flows/suggest-budget-alternatives-flow";
 import dynamic from "next/dynamic";
+import { useToast } from "@/hooks/use-toast";
 
 const TripMap = dynamic(() => import("@/components/trip/TripMap"), { ssr: false });
 
@@ -41,14 +61,30 @@ const CONVERSION_RATES: Record<string, number> = {
   "INR": 1,
 };
 
+const CATEGORY_PHRASES: Record<string, string[]> = {
+  "food": ["The check, please.", "Is it spicy?", "Water, please.", "Where is the restroom?"],
+  "transport": ["To this address, please.", "How much is the fare?", "Stop here.", "When is the next one?"],
+  "activities": ["One ticket, please.", "Can I take photos?", "When do you close?", "Is there a guide?"],
+  "shopping": ["How much is this?", "Do you take cards?", "Is there a discount?", "I'll take it."],
+  "default": ["Hello!", "Thank you.", "Where is...?", "Help, please."]
+};
+
 export default function TripDetail() {
   const { tripId } = useParams();
   const router = useRouter();
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
+  const { toast } = useToast();
+  
   const [activeDay, setActiveDay] = useState(1);
   const [aiSuggestions, setAiSuggestions] = useState<SuggestBudgetAlternativesOutput | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false);
+  
+  // Expense Form State
+  const [expenseAmount, setExpenseAmount] = useState("");
+  const [expenseCategory, setExpenseCategory] = useState("Misc");
+  const [expenseNote, setExpenseNote] = useState("");
 
   const tripRef = useMemoFirebase(() => {
     if (!firestore || !tripId) return null;
@@ -182,6 +218,39 @@ export default function TripDetail() {
     updateDocumentNonBlocking(tripDocRef, { health: newProgress });
   };
 
+  const handleLogExpense = () => {
+    if (!firestore || !tripId || !user || !expenseAmount) return;
+    
+    const amount = parseFloat(expenseAmount);
+    if (isNaN(amount)) return;
+
+    const expensesColRef = collection(firestore, `trips/${tripId}/expenses`);
+    addDocumentNonBlocking(expensesColRef, {
+      tripId,
+      category: expenseCategory,
+      amount: amount,
+      note: expenseNote,
+      loggedByUserId: user.uid,
+      loggedAt: new Date().toISOString(),
+      tripAuthorizedUserIds: trip.authorizedUserIds,
+      tripOwnerId: trip.ownerId
+    });
+
+    toast({
+      title: "Expense Logged",
+      description: `Logged ${amount} ${trip.currency} for ${expenseCategory}.`,
+    });
+
+    setExpenseAmount("");
+    setExpenseNote("");
+    setIsExpenseDialogOpen(false);
+  };
+
+  const getPhrases = (category: string) => {
+    const cat = (category || "").toLowerCase();
+    return CATEGORY_PHRASES[cat] || CATEGORY_PHRASES["default"];
+  };
+
   const openInGoogleMaps = () => {
     if (!currentDay || !currentDay.slots || currentDay.slots.length === 0) return;
     
@@ -301,7 +370,22 @@ export default function TripDetail() {
                               </div>
                               <h3 className={`text-xl font-bold ${slot.completed ? "line-through text-muted-foreground" : ""}`}>{slot.activity}</h3>
                               <p className="text-sm text-muted-foreground line-clamp-2">{slot.description}</p>
-                              <div className="flex flex-wrap gap-2 mt-2">
+                              
+                              {/* Local Phrases Suggestion */}
+                              <div className="mt-4 p-3 bg-white/5 rounded-xl border border-white/5 space-y-2">
+                                <div className="flex items-center gap-2 text-[9px] uppercase font-bold text-accent tracking-tighter">
+                                  <MessageSquareQuote className="w-3 h-3" /> Local Phrases to use
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                  {getPhrases(slot.category).map((phrase, pi) => (
+                                    <span key={pi} className="text-[10px] text-muted-foreground bg-white/5 px-2 py-1 rounded-md border border-white/5 italic">
+                                      "{phrase}"
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div className="flex flex-wrap gap-2 mt-4">
                                 {slot.category && <Badge variant="secondary" className="text-[10px] bg-white/5 border-white/10">{slot.category}</Badge>}
                                 <div className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground px-2 py-0.5 rounded-md bg-white/5">
                                   <MapIcon className="w-3 h-3" /> {slot.location}
@@ -377,9 +461,56 @@ export default function TripDetail() {
                 </div>
               </Card>
 
-              <Button className="w-full h-12 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10">
-                Log Manual Expense
-              </Button>
+              <Dialog open={isExpenseDialogOpen} onOpenChange={setIsExpenseDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="w-full h-12 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10">
+                    <Plus className="w-4 h-4 mr-2" /> Log Manual Expense
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="glass-card border-white/10 sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Log Trip Expense</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label>Amount ({trip.currency})</Label>
+                      <Input 
+                        type="number" 
+                        placeholder="0.00" 
+                        className="bg-white/5 border-white/10"
+                        value={expenseAmount}
+                        onChange={(e) => setExpenseAmount(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Category</Label>
+                      <Select value={expenseCategory} onValueChange={setExpenseCategory}>
+                        <SelectTrigger className="bg-white/5 border-white/10">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="glass-card border-white/10">
+                          {["Food", "Transport", "Activities", "Stay", "Misc"].map(cat => (
+                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Note (Optional)</Label>
+                      <Input 
+                        placeholder="Coffee, souvenir, etc." 
+                        className="bg-white/5 border-white/10"
+                        value={expenseNote}
+                        onChange={(e) => setExpenseNote(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsExpenseDialogOpen(false)}>Cancel</Button>
+                    <Button className="bg-primary text-primary-foreground" onClick={handleLogExpense}>Save Expense</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </TabsContent>
 
             <TabsContent value="ai" className="flex-1 p-6 space-y-6 mt-0 overflow-y-auto">
