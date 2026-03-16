@@ -64,6 +64,8 @@ export default function AuthPage() {
       console.error("Google Auth Error:", error);
       if (error.code === "auth/operation-not-allowed") {
         setConfigError("Google sign-in is not enabled in your Firebase Console. Please enable it under Authentication > Sign-in method.");
+      } else if (error.code === "auth/unauthorized-domain") {
+        setConfigError(`This domain is not authorized. Please go to Firebase Console > Authentication > Settings > Authorized domains and add "${window.location.hostname}".`);
       } else {
         toast({
           variant: "destructive",
@@ -127,6 +129,8 @@ export default function AuthPage() {
       console.error("Phone Auth Error:", error);
       if (error.code === "auth/operation-not-allowed") {
         setConfigError("Phone sign-in is not enabled in your Firebase Console.");
+      } else if (error.code === "auth/unauthorized-domain") {
+        setConfigError(`This domain is not authorized for phone sign-in. Add "${window.location.hostname}" to Authorized Domains in Firebase Console.`);
       } else {
         toast({ variant: "destructive", title: "Phone auth failed", description: error.message });
       }
@@ -158,7 +162,7 @@ export default function AuthPage() {
 
       <div className="w-full max-w-md space-y-4">
         {configError && (
-          <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive animate-fade-in">
+          <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive animate-fade-in shadow-lg">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Configuration Required</AlertTitle>
             <AlertDescription className="text-xs">
