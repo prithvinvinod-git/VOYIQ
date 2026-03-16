@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -19,7 +18,8 @@ import {
   Brain,
   TrendingDown,
   AlertTriangle,
-  Wallet
+  Wallet,
+  Languages
 } from "lucide-react";
 import { useDoc, useCollection, useFirestore, useMemoFirebase, useUser, updateDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase";
 import { doc, collection, query, orderBy, serverTimestamp } from "firebase/firestore";
@@ -52,14 +52,6 @@ import { useToast } from "@/hooks/use-toast";
 const TripMap = dynamic(() => import("@/components/trip/TripMap"), { ssr: false });
 
 const CATEGORIES = ["Food", "Transport", "Stay", "Activities", "Misc"];
-
-const LOCAL_PHRASES: Record<string, string[]> = {
-  Food: ["Check, please!", "Is this vegetarian?", "Water, please.", "Delicious!"],
-  Transport: ["Where is the station?", "How much to the center?", "Next stop, please.", "Ticket for one."],
-  Activities: ["What time do you close?", "Is there a student discount?", "Can I take photos?", "Where is the exit?"],
-  Stay: ["What is the WiFi password?", "Can I have extra towels?", "What time is checkout?", "Where is breakfast?"],
-  Misc: ["Hello!", "Thank you!", "Where is the restroom?", "Excuse me."]
-};
 
 export default function TripDetail() {
   const { tripId } = useParams();
@@ -101,7 +93,6 @@ export default function TripDetail() {
     return itinerary?.find(d => d.dayNumber === activeDay) || itinerary?.[0];
   }, [itinerary, activeDay]);
 
-  // Aggregate Budget Data for the Chart - focus on selected day vs manual expenses
   const budgetStats = useMemo(() => {
     const stats: Record<string, { planned: number; actual: number }> = {
       Food: { planned: 0, actual: 0 },
@@ -111,14 +102,12 @@ export default function TripDetail() {
       Misc: { planned: 0, actual: 0 },
     };
 
-    // Planned cost for the SELECTED DAY ONLY
     (currentDay?.slots || []).forEach((slot: any) => {
       const cat = slot.category || "Misc";
       const key = CATEGORIES.includes(cat) ? cat : "Misc";
       stats[key].planned += slot.estimatedCostINR || 0;
     });
 
-    // Actual manual expenses logged for the entire trip (or filtered by date if preferred)
     extraExpenses?.forEach(exp => {
       const cat = exp.category || "Misc";
       const key = CATEGORIES.includes(cat) ? cat : "Misc";
@@ -131,7 +120,6 @@ export default function TripDetail() {
     }));
   }, [currentDay, extraExpenses]);
 
-  // Calculate Remaining Budget for Progress Bar
   const budgetProgress = useMemo(() => {
     if (!trip) return { total: 0, spent: 0, remaining: 0, percent: 0 };
     const totalSpent = extraExpenses?.reduce((acc, exp) => acc + (exp.amount || 0), 0) || 0;
@@ -145,8 +133,8 @@ export default function TripDetail() {
     };
   }, [trip, extraExpenses]);
 
-  const { totalSlots, completedSlots, progressValue } = useMemo(() => {
-    if (!itinerary) return { totalSlots: 0, completedSlots: 0, progressValue: 0 };
+  const { progressValue } = useMemo(() => {
+    if (!itinerary) return { progressValue: 0 };
     let total = 0;
     let completed = 0;
     itinerary.forEach(day => {
@@ -156,8 +144,6 @@ export default function TripDetail() {
       });
     });
     return {
-      totalSlots: total,
-      completedSlots: completed,
       progressValue: total > 0 ? (completed / total) * 100 : 0
     };
   }, [itinerary]);
@@ -231,11 +217,6 @@ export default function TripDetail() {
     }
   };
 
-  const bookingUrl = useMemo(() => {
-    if (!trip) return "";
-    return `https://www.google.com/travel/flights?q=Flights%20to%20${encodeURIComponent(trip.destination)}%20from%20${encodeURIComponent(trip.origin || "")}%20on%20${trip.startDate}`;
-  }, [trip]);
-
   if (isTripLoading || isItineraryLoading || isUserLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -263,26 +244,6 @@ export default function TripDetail() {
 
       <main className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 border-r border-white/5">
-          {/* Flight Suggestion Card */}
-          {trip.origin && (
-            <Card className="glass-card border-none bg-gradient-to-r from-primary/10 to-accent/5 p-6 rounded-2xl">
-              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
-                    <Plane className="text-primary w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg">Travel from {trip.origin.split(',')[0]}</h3>
-                    <p className="text-sm text-muted-foreground">Arrive by: {new Date(new Date(trip.startDate).getTime() - 86400000).toDateString()}</p>
-                  </div>
-                </div>
-                <Button onClick={() => window.open(bookingUrl, '_blank')} className="bg-primary text-primary-foreground gap-2">
-                  <ExternalLink className="w-4 h-4" /> Book Flights
-                </Button>
-              </div>
-            </Card>
-          )}
-
           <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
             {days.map((day) => (
               <Button key={day.id} variant={activeDay === day.dayNumber ? "default" : "outline"} className={`w-20 h-14 rounded-xl ${activeDay === day.dayNumber ? "bg-primary" : "border-white/10"}`} onClick={() => setActiveDay(day.dayNumber)}>
@@ -309,17 +270,25 @@ export default function TripDetail() {
                       <Clock className="w-3 h-3" /> {slot.time}
                     </div>
                     <h4 className={`font-bold ${slot.completed ? "line-through" : ""}`}>{slot.activity}</h4>
-                    <p className="text-xs text-muted-foreground mb-2">{slot.description}</p>
+                    <p className="text-xs text-muted-foreground mb-4">{slot.description}</p>
                     
-                    {/* Local Phrases */}
-                    <div className="bg-white/5 rounded-lg p-2 mb-2">
-                       <p className="text-[9px] uppercase font-bold text-muted-foreground mb-1">Local Phrases</p>
-                       <div className="flex flex-wrap gap-2">
-                         {(LOCAL_PHRASES[slot.category] || LOCAL_PHRASES.Misc).map((phrase, i) => (
-                           <span key={i} className="text-[10px] bg-white/10 px-2 py-0.5 rounded italic">"{phrase}"</span>
-                         ))}
-                       </div>
-                    </div>
+                    {/* Local AI Phrases */}
+                    {slot.localPhrases && slot.localPhrases.length > 0 && (
+                      <div className="bg-white/5 rounded-xl p-3 mb-4 border border-white/5">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Languages className="w-3 h-3 text-primary" />
+                          <p className="text-[10px] uppercase font-bold text-muted-foreground">Useful Local Phrases</p>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {slot.localPhrases.map((phrase: any, i: number) => (
+                            <div key={i} className="flex flex-col">
+                              <span className="text-xs font-bold text-accent italic">"{phrase.phrase}"</span>
+                              <span className="text-[10px] text-muted-foreground">{phrase.meaning}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     <div className="flex items-center gap-2 mt-2">
                       <Badge variant="outline" className="text-[9px] border-white/10">{slot.category}</Badge>
@@ -349,7 +318,7 @@ export default function TripDetail() {
                    const stops = currentDay?.slots?.map((s: any) => encodeURIComponent(s.location)).join('/') || "";
                    window.open(`https://www.google.com/maps/dir/${encodeURIComponent(trip.origin)}/${stops}/${encodeURIComponent(trip.destination)}`, '_blank');
                  }}>
-                   <Navigation className="w-4 h-4 mr-2" /> Navigate Route
+                   <Navigation className="w-4 h-4 mr-2" /> Navigate
                  </Button>
                </div>
                <TripMap locations={currentDay?.slots || []} />
@@ -358,7 +327,6 @@ export default function TripDetail() {
             <TabsContent value="budget" className="flex-1 mt-0 p-6 overflow-y-auto space-y-6">
                <BudgetBreakdown data={budgetStats} currency={trip.currency} />
                
-               {/* Remaining Budget Progress */}
                <Card className="glass-card border-none bg-primary/5">
                  <CardContent className="p-4 space-y-4">
                    <div className="flex items-center justify-between">
@@ -369,57 +337,21 @@ export default function TripDetail() {
                      <span className="text-xs font-medium">{trip.currency} {budgetProgress.remaining.toFixed(0)}</span>
                    </div>
                    <Progress value={budgetProgress.percent} className="h-2" />
-                   <div className="flex justify-between text-[10px] text-muted-foreground font-bold uppercase">
-                     <span>Spent: {trip.currency} {budgetProgress.spent.toFixed(0)}</span>
-                     <span>Total: {trip.currency} {budgetProgress.total.toFixed(0)}</span>
-                   </div>
                  </CardContent>
                </Card>
 
                <Button className="w-full" variant="outline" onClick={() => setIsExpenseDialogOpen(true)}>
-                 <Plus className="w-4 h-4 mr-2" /> Log Manual Expense
+                 <Plus className="w-4 h-4 mr-2" /> Log Expense
                </Button>
-               
-               <div className="mt-8 space-y-4">
-                 <h4 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Spending Alerts</h4>
-                 {budgetStats.map(stat => (
-                   stat.actual > stat.planned && stat.planned > 0 && (
-                     <div key={stat.category} className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 flex items-start gap-3">
-                       <AlertTriangle className="text-destructive w-5 h-5 mt-0.5" />
-                       <div className="flex-1">
-                         <p className="text-sm font-bold">{stat.category} is over budget!</p>
-                         <p className="text-xs text-muted-foreground">Spent {trip.currency} {stat.actual.toFixed(0)} vs Planned {trip.currency} {stat.planned.toFixed(0)}</p>
-                         <Button variant="link" className="p-0 h-auto text-xs text-primary" onClick={() => getAiSuggestions(stat.category, stat.planned, stat.actual)}>
-                           Get AI Suggestions
-                         </Button>
-                       </div>
-                     </div>
-                   )
-                 ))}
-               </div>
             </TabsContent>
 
             <TabsContent value="ai" className="flex-1 mt-0 p-6 overflow-y-auto">
               <div className="space-y-6">
                 <div className="flex items-center gap-3 mb-4">
                   <Brain className="text-primary w-6 h-6" />
-                  <h3 className="text-xl font-headline font-bold">AI Budget Optimizer</h3>
+                  <h3 className="text-xl font-headline font-bold">Optimizer</h3>
                 </div>
                 
-                {!aiSuggestions && !isAiLoading && (
-                  <div className="text-center py-10 glass-card rounded-2xl border-dashed">
-                    <Sparkles className="w-8 h-8 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-sm text-muted-foreground">Select an alert in BudgetSync to generate tailored suggestions.</p>
-                  </div>
-                )}
-
-                {isAiLoading && (
-                  <div className="flex flex-col items-center justify-center py-20 gap-4">
-                    <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                    <p className="text-sm text-muted-foreground animate-pulse">Brainstorming alternatives...</p>
-                  </div>
-                )}
-
                 {aiSuggestions && (
                   <div className="space-y-4 animate-fade-in">
                     {aiSuggestions.alternatives.map((alt, i) => (
@@ -436,7 +368,7 @@ export default function TripDetail() {
                         </CardContent>
                       </Card>
                     ))}
-                    <Button variant="outline" className="w-full text-xs" onClick={() => setAiSuggestions(null)}>Clear Suggestions</Button>
+                    <Button variant="outline" className="w-full text-xs" onClick={() => setAiSuggestions(null)}>Clear</Button>
                   </div>
                 )}
               </div>
@@ -445,7 +377,6 @@ export default function TripDetail() {
         </div>
       </main>
 
-      {/* Log Expense Dialog */}
       <Dialog open={isExpenseDialogOpen} onOpenChange={setIsExpenseDialogOpen}>
         <DialogContent className="glass-card border-white/10">
           <DialogHeader>
@@ -473,19 +404,10 @@ export default function TripDetail() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Note (Optional)</Label>
-              <Input 
-                placeholder="What was this for?" 
-                className="bg-white/5 border-white/10" 
-                value={expenseNote}
-                onChange={(e) => setExpenseNote(e.target.value)}
-              />
-            </div>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setIsExpenseDialogOpen(false)}>Cancel</Button>
-            <Button className="bg-primary text-primary-foreground" onClick={handleLogExpense}>Save Expense</Button>
+            <Button className="bg-primary text-primary-foreground" onClick={handleLogExpense}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

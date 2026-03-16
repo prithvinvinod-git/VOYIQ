@@ -24,6 +24,11 @@ const GeneratePersonalizedItineraryInputSchema = z.object({
 });
 export type GeneratePersonalizedItineraryInput = z.infer<typeof GeneratePersonalizedItineraryInputSchema>;
 
+const LocalPhraseSchema = z.object({
+  phrase: z.string().describe('The phrase in the local language of the destination.'),
+  meaning: z.string().describe('The English translation/meaning of the phrase.'),
+});
+
 const ItinerarySlotSchema = z.object({
   time: z.string().describe('The time slot for the activity.'),
   activity: z.string().describe('A concise name for the activity.'),
@@ -35,6 +40,7 @@ const ItinerarySlotSchema = z.object({
   durationMinutes: z.number().int().positive().describe('Duration in minutes.'),
   category: z.string().describe('Category of the activity.'),
   tips: z.string().describe('Helpful tips.'),
+  localPhrases: z.array(LocalPhraseSchema).describe('3-4 helpful phrases in the LOCAL language of the destination specifically for this activity/category.'),
 });
 
 const ItineraryDaySchema = z.object({
@@ -60,12 +66,16 @@ const itineraryGenerationPrompt = ai.definePrompt({
   prompt: `You are VOYIQ's expert travel planner. Generate a hyper-personalized day-by-day
 itinerary based on the provided trip details.
 
+LOCAL LANGUAGE INTEGRATION:
+Identify the primary language spoken at the destination ({{{destination}}}). 
+For EVERY activity slot, provide 3-4 "localPhrases" in that native language (e.g., if the destination is Paris, provide French phrases like "L'addition s'il vous plaît" for a restaurant visit).
+Each phrase should include the local text and its English meaning.
+
 IMPORTANT BUDGET ALLOCATION:
 The user has a total budget of {{{totalBudget}}} {{{currency}}}. 
 You MUST attempt to distribute this entire budget across the itinerary slots. 
 The sum of 'estimatedCostINR' across ALL slots in the ENTIRE itinerary should be approximately equal to the total budget provided (convert to INR if needed, e.g., 1 USD = 83 INR).
-Do not generate tiny costs (like 0 or 100 INR) unless the activity is truly free. 
-Ensure the 'estimatedCostINR' values reflect realistic costs for the destination and travel style (e.g., Luxury travel should have much higher costs).
+Ensure the 'estimatedCostINR' values reflect realistic costs for the destination and travel style.
 
 Trip Details:
 From: {{{origin}}}
