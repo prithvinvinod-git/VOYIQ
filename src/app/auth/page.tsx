@@ -59,15 +59,17 @@ export default function AuthPage() {
       });
       router.push("/dashboard");
     } catch (error: any) {
-      // Silently handle popup closed error
+      console.error("Google Auth Error:", error);
+      
       if (error.code === "auth/popup-closed-by-user" || error.code === "auth/cancelled-popup-request") {
         setLoading(false);
         return; 
       }
-      
-      console.error("Google Auth Error:", error);
-      if (error.code === "auth/operation-not-allowed" || error.code === "auth/requests-to-this-api-identitytoolkit-method-google.cloud.identitytoolkit.v1.projectconfigservice.getprojectconfig-are-blocked.") {
-        setConfigError("Authentication service is currently restricted. Please check your project settings.");
+
+      if (error.code === "auth/operation-not-allowed") {
+        setConfigError("Google Sign-In is not enabled. Please enable it in the Firebase Console under Authentication > Sign-in method.");
+      } else if (error.message.includes("projectconfigservice.getprojectconfig-are-blocked") || error.code === "auth/unauthorized-domain") {
+        setConfigError("API Restriction Error: Please ensure the 'Identity Toolkit API' is enabled in your Google Cloud Console for this API key and that the domain is authorized.");
       } else {
         toast({
           variant: "destructive",
@@ -124,7 +126,9 @@ export default function AuthPage() {
           <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive shadow-lg">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Configuration Required</AlertTitle>
-            <AlertDescription className="text-xs">{configError}</AlertDescription>
+            <AlertDescription className="text-xs leading-relaxed">
+              {configError}
+            </AlertDescription>
           </Alert>
         )}
 

@@ -53,6 +53,15 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
     signOut(auth).then(() => router.push("/"));
   };
 
+  const handleCollabClick = (e: React.MouseEvent) => {
+    if (!isPremium) {
+      e.preventDefault();
+      setIsPlanDialogOpen(true);
+    } else {
+      router.push("/collab");
+    }
+  };
+
   return (
     <nav className="border-b border-white/5 bg-card/30 backdrop-blur-md sticky top-0 z-40">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -81,24 +90,13 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
                 </Button>
               </Link>
               
-              {isPremium ? (
-                <Link href="/collab">
-                  <Button 
-                    variant="ghost" 
-                    className="gap-2 text-[10px] font-bold uppercase tracking-widest text-accent hover:bg-accent hover:text-accent-foreground transition-colors h-9"
-                  >
-                    <Users className="w-3.5 h-3.5" /> Collab Hub
-                  </Button>
-                </Link>
-              ) : (
-                <Button 
-                  variant="ghost" 
-                  className="gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:bg-white/10 hover:text-white h-9"
-                  onClick={() => setIsPlanDialogOpen(true)}
-                >
-                  <Users className="w-3.5 h-3.5 opacity-50" /> Collab Hub <Lock className="w-2.5 h-2.5 ml-0.5" />
-                </Button>
-              )}
+              <Button 
+                variant="ghost" 
+                className={`gap-2 text-[10px] font-bold uppercase tracking-widest h-9 ${isPremium ? 'text-accent hover:bg-accent/10' : 'text-muted-foreground hover:bg-white/10 hover:text-white'}`}
+                onClick={handleCollabClick}
+              >
+                <Users className="w-3.5 h-3.5" /> Collab Hub {!isPremium && <Lock className="w-2.5 h-2.5 ml-0.5 opacity-50" />}
+              </Button>
             </div>
           </div>
         </div>
@@ -133,21 +131,12 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
                 <Plane className="mr-2 w-4 h-4" /> Plan New Trip
               </DropdownMenuItem>
               
-              {isPremium ? (
-                <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/collab")}>
-                  <Users className="mr-2 w-4 h-4" /> Collab Hub
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem 
-                  className="cursor-pointer" 
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    setIsPlanDialogOpen(true);
-                  }}
-                >
-                  <Users className="mr-2 w-4 h-4" /> Collab Hub <Lock className="w-3 h-3 ml-auto opacity-50" />
-                </DropdownMenuItem>
-              )}
+              <DropdownMenuItem 
+                className="cursor-pointer" 
+                onClick={handleCollabClick}
+              >
+                <Users className="mr-2 w-4 h-4" /> Collab Hub {!isPremium && <Lock className="w-3 h-3 ml-auto opacity-50" />}
+              </DropdownMenuItem>
               
               <DropdownMenuSeparator className="bg-white/5" />
               <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive" onClick={handleLogout}>

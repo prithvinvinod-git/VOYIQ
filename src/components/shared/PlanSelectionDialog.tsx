@@ -106,10 +106,10 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0, open
         description: "Your account has been upgraded successfully. Collab features are now unlocked!"
       });
       
-      // Use a timeout to ensure the dialog state transition is handled correctly by Radix
+      // Closing with a slight delay to ensure UI states settle
       setTimeout(() => {
         setOpen(false);
-      }, 100);
+      }, 150);
     } catch (e: any) {
       console.error("Upgrade error:", e);
       toast({
@@ -126,8 +126,8 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0, open
     <Dialog open={isOpen} onOpenChange={setOpen}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogPortal>
-        <DialogOverlay className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm" />
-        <DialogContent className="fixed left-[50%] top-[50%] z-[60] w-full max-w-[95vw] sm:max-w-[750px] translate-x-[-50%] translate-y-[-50%] glass-card border-white/10 p-0 overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[90vh] shadow-2xl">
+        <DialogOverlay className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm" />
+        <DialogContent className="fixed left-[50%] top-[50%] z-[110] w-full max-w-[95vw] sm:max-w-[750px] translate-x-[-50%] translate-y-[-50%] glass-card border-white/10 p-0 overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[90vh] shadow-2xl">
           <DialogHeader className="p-6 sm:p-10 pb-4 text-center shrink-0">
             <DialogTitle className="text-2xl sm:text-4xl font-headline font-bold mb-2">Explorer Tiers</DialogTitle>
             <DialogDescription className="text-muted-foreground text-sm sm:text-base">
