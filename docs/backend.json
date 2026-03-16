@@ -75,6 +75,10 @@
           "type": "string",
           "description": "Reference to the User who created and owns this trip. (Relationship: User 1:N Trip)"
         },
+        "origin": {
+          "type": "string",
+          "description": "The starting city or airport for the traveler."
+        },
         "destination": {
           "type": "string",
           "description": "The primary destination city or region for the trip."
@@ -142,6 +146,14 @@
         "status": {
           "type": "string",
           "description": "The current status of the trip (e.g., draft, active, completed)."
+        },
+        "health": {
+          "type": "number",
+          "description": "Completion percentage of the itinerary."
+        },
+        "totalCompletedSlots": {
+          "type": "number",
+          "description": "Total number of checked-off activities across all days."
         }
       },
       "required": [
@@ -256,19 +268,9 @@
           "type": "string",
           "description": "Helpful tips or notes related to the activity."
         },
-        "upvoteUserIds": {
-          "type": "array",
-          "description": "References to User IDs who have upvoted this activity slot. (Relationship: User N:N ItinerarySlot)",
-          "items": {
-            "type": "string"
-          }
-        },
-        "downvoteUserIds": {
-          "type": "array",
-          "description": "References to User IDs who have downvoted this activity slot. (Relationship: User N:N ItinerarySlot)",
-          "items": {
-            "type": "string"
-          }
+        "completed": {
+          "type": "boolean",
+          "description": "Whether the user has finished this activity."
         }
       },
       "required": [
@@ -276,11 +278,7 @@
         "itineraryDayId",
         "time",
         "activity",
-        "location",
-        "latitude",
-        "longitude",
-        "estimatedCostINR",
-        "durationMinutes"
+        "location"
       ]
     },
     "Expense": {
@@ -382,7 +380,7 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Stores personal user profiles and default preferences. Access is restricted to the authenticated user whose UID matches {userId}.",
+          "description": "Stores personal user profiles.",
           "params": [
             {
               "name": "userId",
@@ -398,7 +396,7 @@
           "schema": {
             "$ref": "#/backend/entities/Trip"
           },
-          "description": "Represents a collaborative travel plan. Documents include 'ownerId' and 'authorizedUserIds' (an array containing both the 'ownerId' and all 'collaboratorIds') for authorization. This structure supports efficient queries for trips owned by or shared with 'request.auth.uid'.",
+          "description": "Represents a travel plan.",
           "params": [
             {
               "name": "tripId",
@@ -406,92 +404,8 @@
             }
           ]
         }
-      },
-      {
-        "path": "/trips/{tripId}/itineraryDays/{itineraryDayId}",
-        "definition": {
-          "entityName": "ItineraryDay",
-          "schema": {
-            "$ref": "#/backend/entities/ItineraryDay"
-          },
-          "description": "Stores daily itinerary details for a specific trip. Includes denormalized 'tripId', 'tripOwnerId', and 'tripAuthorizedUserIds' to ensure authorization independence from the parent Trip document.",
-          "params": [
-            {
-              "name": "tripId",
-              "description": "The unique ID of the parent trip."
-            },
-            {
-              "name": "itineraryDayId",
-              "description": "The unique ID for the specific itinerary day."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/trips/{tripId}/itineraryDays/{itineraryDayId}/itinerarySlots/{itinerarySlotId}",
-        "definition": {
-          "entityName": "ItinerarySlot",
-          "schema": {
-            "$ref": "#/backend/entities/ItinerarySlot"
-          },
-          "description": "Represents individual activities or events within an itinerary day. Includes denormalized 'tripId', 'itineraryDayId', 'tripOwnerId', and 'tripAuthorizedUserIds' for authorization independence. The 'upvoteUserIds' and 'downvoteUserIds' fields are self-contained for voting.",
-          "params": [
-            {
-              "name": "tripId",
-              "description": "The unique ID of the grand-parent trip."
-            },
-            {
-              "name": "itineraryDayId",
-              "description": "The unique ID of the parent itinerary day."
-            },
-            {
-              "name": "itinerarySlotId",
-              "description": "The unique ID for the specific itinerary slot (activity)."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/trips/{tripId}/expenses/{expenseId}",
-        "definition": {
-          "entityName": "Expense",
-          "schema": {
-            "$ref": "#/backend/entities/Expense"
-          },
-          "description": "Records individual expenses related to a trip. Includes denormalized 'tripOwnerId' and 'tripAuthorizedUserIds' for authorization independence.",
-          "params": [
-            {
-              "name": "tripId",
-              "description": "The unique ID of the parent trip."
-            },
-            {
-              "name": "expenseId",
-              "description": "The unique ID for the specific expense."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/trips/{tripId}/chatMessages/{messageId}",
-        "definition": {
-          "entityName": "ChatMessage",
-          "schema": {
-            "$ref": "#/backend/entities/ChatMessage"
-          },
-          "description": "Stores messages for the AI chat companion for a specific trip. Includes denormalized 'tripOwnerId' and 'tripAuthorizedUserIds' for authorization independence.",
-          "params": [
-            {
-              "name": "tripId",
-              "description": "The unique ID of the parent trip."
-            },
-            {
-              "name": "messageId",
-              "description": "The unique ID for the specific chat message."
-            }
-          ]
-        }
       }
     ],
-    "reasoning": "This Firestore structure is designed following the core principles of Authorization Independence, Clarity of Intent, DBAC, QAPs, and Invariants to ensure a secure, scalable, and debuggable system for VOYIQ."
+    "reasoning": "Standard structure for VOYIQ app."
   }
 }
