@@ -1,15 +1,15 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { LogOut, ChevronLeft, Menu, Compass, Users, Lock } from "lucide-react";
+import { LogOut, ChevronLeft, Compass, Users, Lock, Plane, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
-import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
+import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { doc } from "firebase/firestore";
+import { doc, collection, query, where } from "firebase/firestore";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,6 +39,14 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
   const { data: userData } = useDoc<any>(userRef);
   const isPremium = userData?.isPremium || false;
 
+  const tripsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(collection(firestore, "trips"), where("ownerId", "==", user.uid));
+  }, [firestore, user]);
+  
+  const { data: tripsData } = useCollection(tripsQuery);
+  const tripCount = tripsData?.length || 0;
+
   const handleLogout = () => {
     signOut(auth).then(() => router.push("/"));
   };
@@ -64,19 +72,31 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
               </span>
             </Link>
             
-            {/* Collab Menu Option */}
-            <div className="hidden md:flex items-center gap-2 ml-4">
+            {/* Primary Navigation */}
+            <div className="hidden md:flex items-center gap-1 ml-4">
+              <Link href="/dashboard">
+                <Button variant="ghost" className="gap-2 text-[10px] font-bold uppercase tracking-widest hover:text-primary h-9">
+                  <LayoutDashboard className="w-3.5 h-3.5" /> Trips
+                </Button>
+              </Link>
+              <Link href="/plan/new">
+                <Button variant="ghost" className="gap-2 text-[10px] font-bold uppercase tracking-widest hover:text-primary h-9">
+                  <Plane className="w-3.5 h-3.5" /> New Trip
+                </Button>
+              </Link>
+              
               {isPremium ? (
                 <Link href="/collab">
-                  <Button variant="ghost" className="gap-2 text-xs font-bold uppercase tracking-widest hover:text-primary">
-                    <Users className="w-4 h-4" /> Collab
+                  <Button variant="ghost" className="gap-2 text-[10px] font-bold uppercase tracking-widest text-accent hover:text-accent/80 h-9">
+                    <Users className="w-3.5 h-3.5" /> Collab
                   </Button>
                 </Link>
               ) : (
                 <PlanSelectionDialog 
+                  tripCount={tripCount}
                   trigger={
-                    <Button variant="ghost" className="gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-white">
-                      <Users className="w-4 h-4 opacity-50" /> Collab <Lock className="w-3 h-3 ml-1" />
+                    <Button variant="ghost" className="gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-white h-9">
+                      <Users className="w-3.5 h-3.5 opacity-50" /> Collab <Lock className="w-2.5 h-2.5 ml-0.5" />
                     </Button>
                   }
                   onSelectFree={() => {}}
@@ -110,13 +130,13 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
                 Account
               </div>
               <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/dashboard")}>
-                Dashboard
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer md:hidden" onClick={() => isPremium ? router.push("/collab") : null}>
-                Collab {isPremium ? "" : "🔒"}
+                <LayoutDashboard className="mr-2 w-4 h-4" /> Dashboard
               </DropdownMenuItem>
               <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/plan/new")}>
-                Plan New Trip
+                <Plane className="mr-2 w-4 h-4" /> Plan New Trip
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => isPremium ? router.push("/collab") : null}>
+                <Users className="mr-2 w-4 h-4" /> Collab {isPremium ? "" : "🔒"}
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-white/5" />
               <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive" onClick={handleLogout}>
