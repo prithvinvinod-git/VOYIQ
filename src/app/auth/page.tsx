@@ -59,15 +59,15 @@ export default function AuthPage() {
       });
       router.push("/dashboard");
     } catch (error: any) {
-      console.error("Google Auth Error:", error);
       // Silently handle popup closed error
-      if (error.code === "auth/popup-closed-by-user") {
+      if (error.code === "auth/popup-closed-by-user" || error.code === "auth/cancelled-popup-request") {
         setLoading(false);
         return; 
       }
       
-      if (error.code === "auth/operation-not-allowed") {
-        setConfigError("Google sign-in is not enabled in your Firebase Console.");
+      console.error("Google Auth Error:", error);
+      if (error.code === "auth/operation-not-allowed" || error.code === "auth/requests-to-this-api-identitytoolkit-method-google.cloud.identitytoolkit.v1.projectconfigservice.getprojectconfig-are-blocked.") {
+        setConfigError("Authentication service is currently restricted. Please check your project settings.");
       } else {
         toast({
           variant: "destructive",

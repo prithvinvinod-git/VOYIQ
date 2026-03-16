@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from "react";
@@ -103,7 +104,7 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
         </div>
 
         <div className="flex items-center gap-4">
-          <DropdownMenu>
+          <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <div className="flex items-center gap-2 pl-2 pr-4 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full cursor-pointer transition-all">
                 <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border border-white/10">
@@ -121,7 +122,7 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
                 </div>
               </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 glass-card border-white/10">
+            <DropdownMenuContent align="end" className="w-56 glass-card border-white/10 z-[100]">
               <div className="px-2 py-1.5 text-xs font-bold text-muted-foreground uppercase tracking-widest">
                 Account
               </div>

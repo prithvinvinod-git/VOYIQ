@@ -106,7 +106,7 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0, open
         description: "Your account has been upgraded successfully. Collab features are now unlocked!"
       });
       
-      // Delay closing slightly to ensure state propagation and prevent focus locks
+      // Use a timeout to ensure the dialog state transition is handled correctly by Radix
       setTimeout(() => {
         setOpen(false);
       }, 100);
