@@ -1,7 +1,6 @@
-
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   LogOut, 
@@ -39,6 +38,7 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
   const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
+  const [isPlanDialogOpen, setIsPlanDialogOpen] = useState(false);
 
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -90,14 +90,13 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
                   </Button>
                 </Link>
               ) : (
-                <PlanSelectionDialog 
-                  trigger={
-                    <Button variant="ghost" className="gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:bg-white/10 hover:text-white h-9">
-                      <Users className="w-3.5 h-3.5 opacity-50" /> Collab Hub <Lock className="w-2.5 h-2.5 ml-0.5" />
-                    </Button>
-                  }
-                  onSelectFree={() => {}}
-                />
+                <Button 
+                  variant="ghost" 
+                  className="gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:bg-white/10 hover:text-white h-9"
+                  onClick={() => setIsPlanDialogOpen(true)}
+                >
+                  <Users className="w-3.5 h-3.5 opacity-50" /> Collab Hub <Lock className="w-2.5 h-2.5 ml-0.5" />
+                </Button>
               )}
             </div>
           </div>
@@ -138,14 +137,15 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
                   <Users className="mr-2 w-4 h-4" /> Collab Hub
                 </DropdownMenuItem>
               ) : (
-                <PlanSelectionDialog 
-                  trigger={
-                    <DropdownMenuItem className="cursor-pointer">
-                      <Users className="mr-2 w-4 h-4" /> Collab Hub <Lock className="w-3 h-3 ml-auto opacity-50" />
-                    </DropdownMenuItem>
-                  }
-                  onSelectFree={() => {}}
-                />
+                <DropdownMenuItem 
+                  className="cursor-pointer" 
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setIsPlanDialogOpen(true);
+                  }}
+                >
+                  <Users className="mr-2 w-4 h-4" /> Collab Hub <Lock className="w-3 h-3 ml-auto opacity-50" />
+                </DropdownMenuItem>
               )}
               
               <DropdownMenuSeparator className="bg-white/5" />
@@ -156,6 +156,15 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
           </DropdownMenu>
         </div>
       </div>
+
+      <PlanSelectionDialog 
+        open={isPlanDialogOpen}
+        onOpenChange={setIsPlanDialogOpen}
+        onSelectFree={() => {
+          setIsPlanDialogOpen(false);
+          router.push("/plan/new");
+        }}
+      />
     </nav>
   );
 }
