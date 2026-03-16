@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -104,10 +103,10 @@ export default function Dashboard() {
       <main className="container mx-auto px-4 pt-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div className="w-full max-w-full overflow-hidden">
-            <h1 className="text-xl sm:text-2xl md:text-5xl font-headline font-bold mb-2 break-words text-white leading-tight">
+            <h1 className="text-2xl sm:text-3xl md:text-5xl font-headline font-bold mb-2 break-words text-white leading-tight">
               Welcome back, {user?.displayName?.split(' ')[0] || userData?.name?.split(' ')[0] || "Explorer"}!
             </h1>
-            <p className="text-muted-foreground text-[10px] sm:text-base">You have {trips.length} adventures tracked.</p>
+            <p className="text-muted-foreground text-xs sm:text-base">You have {trips.length} adventures tracked.</p>
           </div>
           
           <Button 

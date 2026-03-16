@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -112,7 +111,7 @@ export default function CollabPage() {
       const memberRef = doc(firestore, `collabRooms/${code}/members`, user.uid);
       await setDocumentNonBlocking(memberRef, {
         id: user.uid,
-        name: user.displayName,
+        name: user.displayName || userData?.name || "Explorer",
         photoURL: user.photoURL,
         joinedAt: new Date().toISOString()
       }, {});
@@ -145,7 +144,7 @@ export default function CollabPage() {
       const memberRef = doc(firestore, `collabRooms/${roomCode.toUpperCase()}/members`, user.uid);
       await setDocumentNonBlocking(memberRef, {
         id: user.uid,
-        name: user.displayName,
+        name: user.displayName || userData?.name || "Explorer",
         photoURL: user.photoURL,
         joinedAt: new Date().toISOString()
       }, {});

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from "react";
@@ -84,7 +83,7 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
                 <Link href="/collab">
                   <Button 
                     variant="ghost" 
-                    className="gap-2 text-[10px] font-bold uppercase tracking-widest text-accent hover:bg-accent hover:text-background transition-colors h-9"
+                    className="gap-2 text-[10px] font-bold uppercase tracking-widest text-accent hover:bg-accent hover:text-accent-foreground transition-colors h-9"
                   >
                     <Users className="w-3.5 h-3.5" /> Collab Hub
                   </Button>
