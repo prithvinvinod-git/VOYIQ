@@ -369,6 +369,7 @@
     "providers": [
       "google.com",
       "password",
+      "phone",
       "anonymous"
     ]
   },
