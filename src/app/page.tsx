@@ -59,7 +59,7 @@ export default function LandingPage() {
             <Sparkles className="w-4 h-4 text-primary" />
             <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Meet Your AI Travel Brain</span>
           </div>
-          <h1 className="text-5xl md:text-8xl font-headline font-extrabold mb-8 tracking-tighter animate-fade-in leading-[0.9]" style={{ animationDelay: '0.1s' }}>
+          <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-headline font-extrabold mb-8 tracking-tighter animate-fade-in leading-[0.85] lg:leading-[0.8]" style={{ animationDelay: '0.1s' }}>
             ROAM SMART.<br/><span className="gradient-text">PLAN EFFORTLESS.</span>
           </h1>
           <p className="text-lg md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-12 animate-fade-in leading-relaxed" style={{ animationDelay: '0.2s' }}>
