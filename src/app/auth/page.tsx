@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Compass, Mail, Phone, Lock, ArrowRight, Loader2, AlertCircle } from "lucide-react";
+import { Compass, Mail, Phone, Lock, ArrowRight, Loader2, AlertCircle, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/firebase";
@@ -178,6 +178,11 @@ export default function AuthPage() {
       <div id="recaptcha-container"></div>
 
       <div className="w-full max-w-md space-y-4">
+        <Link href="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-white transition-colors mb-2">
+          <ChevronLeft className="w-4 h-4" />
+          Back to home
+        </Link>
+
         {configError && (
           <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive animate-fade-in shadow-lg">
             <AlertCircle className="h-4 w-4" />
