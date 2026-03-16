@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -127,7 +128,7 @@ export default function TripWizard() {
         authorizedUserIds: [user.uid],
         ...formData,
         status: "active",
-        health: 100,
+        health: 0, // Initial progress is 0%
         createdAt: new Date().toISOString()
       };
 

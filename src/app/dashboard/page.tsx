@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect } from "react";
@@ -57,7 +58,10 @@ export default function Dashboard() {
     health: t.health || 0 
   }));
 
-  const explorationScore = trips.length * 250 + (trips.length > 0 ? 120 : 0);
+  const totalHealth = trips.reduce((acc, t) => acc + (t.health || 0), 0);
+  const explorationScore = trips.length * 250 + totalHealth * 10;
+  const levelProgress = totalHealth % 100 || 0;
+  const currentLevel = Math.floor(totalHealth / 100) + 1;
   const streakDays = trips.length > 0 ? 4 : 0;
 
   return (
@@ -80,17 +84,17 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <Card className="glass-card border-none bg-gradient-to-br from-card to-primary/5">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Level 4 Explorer</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Level {currentLevel} Explorer</CardTitle>
               <Star className="w-4 h-4 text-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{explorationScore} XP</div>
               <div className="mt-2 space-y-1">
                 <div className="flex justify-between text-[10px] text-muted-foreground uppercase font-bold">
-                  <span>To Level 5</span>
-                  <span>75%</span>
+                  <span>To Level {currentLevel + 1}</span>
+                  <span>{levelProgress}%</span>
                 </div>
-                <Progress value={75} className="h-1 bg-white/5" />
+                <Progress value={levelProgress} className="h-1 bg-white/5" />
               </div>
             </CardContent>
           </Card>

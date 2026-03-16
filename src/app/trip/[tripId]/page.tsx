@@ -116,15 +116,35 @@ export default function TripDetail() {
   }, [itinerary, trip, extraExpenses]);
 
   const handleToggleSlot = (day: any, slotIdx: number) => {
-    if (!firestore || !tripId) return;
+    if (!firestore || !tripId || !itinerary) return;
+    
     const updatedSlots = [...day.slots];
+    const newStatus = !updatedSlots[slotIdx].completed;
     updatedSlots[slotIdx] = { 
       ...updatedSlots[slotIdx], 
-      completed: !updatedSlots[slotIdx].completed 
+      completed: newStatus 
     };
 
+    // Update the specific day document
     const dayRef = doc(firestore, `trips/${tripId}/itineraryDays`, day.id);
     updateDocumentNonBlocking(dayRef, { slots: updatedSlots });
+
+    // Calculate overall trip progress across all days
+    let total = 0;
+    let completed = 0;
+    itinerary.forEach(d => {
+      const currentSlots = d.id === day.id ? updatedSlots : (d.slots || []);
+      currentSlots.forEach((s: any) => {
+        total++;
+        if (s.completed) completed++;
+      });
+    });
+
+    const newProgress = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+    // Update the parent trip document's health field (which represents progress)
+    const tripDocRef = doc(firestore, "trips", tripId as string);
+    updateDocumentNonBlocking(tripDocRef, { health: newProgress });
   };
 
   if (isTripLoading || isItineraryLoading || isUserLoading) {
