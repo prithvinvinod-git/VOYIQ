@@ -260,10 +260,10 @@ export default function CollabPage() {
                     )}
                   </div>
                   <div>
-                    <p className="font-bold text-sm flex items-center gap-2">
+                    <div className="font-bold text-sm flex items-center gap-2">
                       {m.name}
                       {m.id === user?.uid && <Badge variant="outline" className="text-[8px] py-0 px-1 border-primary/30 text-primary">You</Badge>}
-                    </p>
+                    </div>
                     <p className="text-[10px] text-muted-foreground flex items-center gap-1">
                       <Clock className="w-3 h-3" /> Joined {new Date(m.joinedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
