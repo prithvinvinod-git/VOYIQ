@@ -28,12 +28,12 @@ export default function LandingPage() {
       {/* Header */}
       <header className="fixed top-0 w-full z-50 border-b border-white/10 bg-background/80 backdrop-blur-md">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-primary-foreground font-headline font-bold">V</span>
             </div>
             <span className="text-xl font-headline font-bold tracking-tight">VOYIQ</span>
-          </div>
+          </Link>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium">
             <Link href="#features" className="hover:text-primary transition-colors">How it Works</Link>
             <Link href="#benefits" className="hover:text-primary transition-colors">Why VOYIQ</Link>
@@ -59,7 +59,7 @@ export default function LandingPage() {
             <Sparkles className="w-4 h-4 text-primary" />
             <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Meet Your AI Travel Brain</span>
           </div>
-          <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-headline font-extrabold mb-8 tracking-tighter animate-fade-in leading-[0.85] lg:leading-[0.8]" style={{ animationDelay: '0.1s' }}>
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-headline font-extrabold mb-8 tracking-tighter animate-fade-in leading-tight lg:leading-[1.1]" style={{ animationDelay: '0.1s' }}>
             ROAM SMART.<br/><span className="gradient-text">PLAN EFFORTLESS.</span>
           </h1>
           <p className="text-lg md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-12 animate-fade-in leading-relaxed" style={{ animationDelay: '0.2s' }}>
@@ -204,12 +204,12 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="py-12 border-t border-white/5 bg-card">
         <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <div className="w-6 h-6 bg-primary rounded flex items-center justify-center">
               <span className="text-primary-foreground text-xs font-headline font-bold">V</span>
             </div>
             <span className="text-lg font-headline font-bold tracking-tight">VOYIQ</span>
-          </div>
+          </Link>
           <div className="text-sm text-muted-foreground">
             © 2024 VOYIQ AI. Built for explorers, by explorers.
           </div>
