@@ -11,7 +11,6 @@ import {
   Clock, 
   Sparkles,
   CheckCircle2,
-  ExternalLink,
   Loader2,
   Plus,
   Plane,
@@ -22,10 +21,12 @@ import {
   Wallet,
   Languages,
   ChevronLeft,
-  MapPin
+  MapPin,
+  Scan,
+  Lock
 } from "lucide-react";
 import { useDoc, useCollection, useFirestore, useMemoFirebase, useUser, updateDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase";
-import { doc, collection, query, orderBy, serverTimestamp } from "firebase/firestore";
+import { doc, collection, query, orderBy } from "firebase/firestore";
 import { ChatCompanion } from "@/components/chat/ChatCompanion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserHeader } from "@/components/layout/UserHeader";
@@ -48,9 +49,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { suggestBudgetAlternatives, type SuggestBudgetAlternativesOutput } from "@/ai/flows/suggest-budget-alternatives-flow";
+import { SuggestBudgetAlternativesOutput } from "@/ai/flows/suggest-budget-alternatives-flow";
 import dynamic from "next/dynamic";
 import { useToast } from "@/hooks/use-toast";
+import { ARNavigation } from "@/components/trip/ARNavigation";
+import { PlanSelectionDialog } from "@/components/shared/PlanSelectionDialog";
 
 const TripMap = dynamic(() => import("@/components/trip/TripMap"), { 
   ssr: false,
@@ -70,6 +73,7 @@ export default function TripDetail() {
   const [aiSuggestions, setAiSuggestions] = useState<SuggestBudgetAlternativesOutput | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false);
+  const [isPlanDialogOpen, setIsPlanDialogOpen] = useState(false);
   
   const [expenseAmount, setExpenseAmount] = useState("");
   const [expenseCategory, setExpenseCategory] = useState("Misc");
@@ -87,6 +91,13 @@ export default function TripDetail() {
   }, [firestore, tripId, user]);
 
   const { data: trip, isLoading: isTripLoading, error: tripError } = useDoc<any>(tripRef);
+
+  const userRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "users", user.uid);
+  }, [firestore, user]);
+  const { data: userData } = useDoc<any>(userRef);
+  const isPremium = userData?.isPremium || false;
 
   const itineraryQuery = useMemoFirebase(() => {
     if (!firestore || !tripId || !user) return null;
@@ -207,28 +218,25 @@ export default function TripDetail() {
 
   const handleNavigateAll = () => {
     if (!trip || !currentDay || !currentDay.slots || currentDay.slots.length === 0) return;
-    
     const slots = currentDay.slots;
-    // CRITICAL: Start navigation FROM the first spot of the day
     const origin = encodeURIComponent(slots[0].location);
-    
     if (slots.length === 1) {
-      // If only one spot, navigate from current position to that spot
       const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=current+location&destination=${origin}&travelmode=driving`;
       window.open(mapsUrl, '_blank');
       return;
     }
-
-    // Waypoints are middle stops
     const waypoints = slots.slice(1, -1).map((s: any) => encodeURIComponent(s.location)).filter(Boolean);
-    // Destination is the final stop
     const destination = encodeURIComponent(slots[slots.length - 1].location);
-    
     const waypointQuery = waypoints.length > 0 ? `&waypoints=${waypoints.join('|')}` : '';
-    
-    // Construct multi-stop URL
     const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}${waypointQuery}&travelmode=driving`;
     window.open(mapsUrl, '_blank');
+  };
+
+  const handleARTabClick = (e: React.MouseEvent) => {
+    if (!isPremium) {
+      e.preventDefault();
+      setIsPlanDialogOpen(true);
+    }
   };
 
   if (isUserLoading || (isTripLoading && !trip)) {
@@ -247,9 +255,7 @@ export default function TripDetail() {
           <AlertTriangle className="text-destructive w-10 h-10" />
         </div>
         <h1 className="text-3xl font-headline font-bold mb-2">Access Restricted</h1>
-        <p className="text-muted-foreground max-w-md mb-8">
-          You might not have permission to view this journey, or it has been archived.
-        </p>
+        <p className="text-muted-foreground max-w-md mb-8">You might not have permission to view this journey.</p>
         <Button className="bg-primary text-primary-foreground h-12 px-8 rounded-xl" onClick={() => router.push("/dashboard")}>
           <ChevronLeft className="w-4 h-4 mr-2" /> Back to Dashboard
         </Button>
@@ -257,28 +263,9 @@ export default function TripDetail() {
     );
   }
 
-  if (!trip) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-6">
-          <Plane className="text-muted-foreground w-10 h-10 opacity-40" />
-        </div>
-        <h1 className="text-3xl font-headline font-bold mb-2">Adventure Not Found</h1>
-        <p className="text-muted-foreground max-w-md mb-8">
-          We couldn't find the trip you're looking for. It may have been deleted or moved.
-        </p>
-        <Button variant="outline" className="border-primary text-primary h-12 px-8 rounded-xl" onClick={() => router.push("/dashboard")}>
-          Go to Dashboard
-        </Button>
-      </div>
-    );
-  }
-
-  const days = itinerary || [];
-
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <UserHeader showBack backHref="/dashboard" title={trip.destination} />
+      <UserHeader showBack backHref="/dashboard" title={trip?.destination || "Journey"} />
 
       <div className="bg-card/40 border-b border-white/5 py-4 px-4 sm:px-8 flex flex-col md:flex-row items-center gap-4">
         <div className="flex items-center gap-2">
@@ -292,7 +279,7 @@ export default function TripDetail() {
       <main className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 border-r border-white/5 scrollbar-hide">
           <div className="flex items-center gap-2 overflow-x-auto pb-4 scrollbar-hide">
-            {days.map((day) => (
+            {itinerary?.map((day) => (
               <Button 
                 key={day.id} 
                 variant={activeDay === day.dayNumber ? "default" : "outline"} 
@@ -369,8 +356,15 @@ export default function TripDetail() {
 
         <div className="lg:w-2/5 flex flex-col bg-card/20 min-h-[500px] lg:min-h-0">
           <Tabs defaultValue="map" className="h-full flex flex-col">
-            <TabsList className="m-4 bg-white/5 p-1 border border-white/10 rounded-2xl shrink-0">
+            <TabsList className="m-4 bg-white/5 p-1 border border-white/10 rounded-2xl shrink-0 overflow-x-auto">
               <TabsTrigger value="map" className="flex-1 py-3 rounded-xl font-bold">Explore Map</TabsTrigger>
+              <TabsTrigger 
+                value="ar" 
+                className={`flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 ${!isPremium ? 'opacity-50' : ''}`}
+                onClick={handleARTabClick}
+              >
+                <Scan className="w-4 h-4" /> AR HUD {!isPremium && <Lock className="w-3 h-3" />}
+              </TabsTrigger>
               <TabsTrigger value="budget" className="flex-1 py-3 rounded-xl font-bold">BudgetSync</TabsTrigger>
               <TabsTrigger value="ai" className="flex-1 py-3 rounded-xl font-bold">Optimizer</TabsTrigger>
             </TabsList>
@@ -384,9 +378,27 @@ export default function TripDetail() {
                <TripMap locations={currentDay?.slots || []} />
             </TabsContent>
 
+            <TabsContent value="ar" className="flex-1 mt-0 relative bg-black overflow-hidden">
+              {isPremium ? (
+                <ARNavigation slots={currentDay?.slots || []} />
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 space-y-6">
+                  <div className="w-20 h-20 bg-accent/20 rounded-full flex items-center justify-center animate-pulse">
+                    <Scan className="w-10 h-10 text-accent" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-2xl font-headline font-bold text-white">Unlock AR View</h3>
+                    <p className="text-sm text-muted-foreground">Experience futuristic, high-precision navigation through your camera lens.</p>
+                  </div>
+                  <Button className="bg-accent text-accent-foreground rounded-xl h-12 px-8 font-bold" onClick={() => setIsPlanDialogOpen(true)}>
+                    Upgrade to Premium
+                  </Button>
+                </div>
+              )}
+            </TabsContent>
+
             <TabsContent value="budget" className="flex-1 mt-0 p-6 overflow-y-auto space-y-6 scrollbar-hide">
-               <BudgetBreakdown data={budgetStats} currency={trip.currency} />
-               
+               <BudgetBreakdown data={budgetStats} currency={trip?.currency || "USD"} />
                <Card className="glass-card border-none bg-primary/5 p-6 rounded-3xl">
                  <div className="space-y-4">
                    <div className="flex items-center justify-between">
@@ -396,7 +408,7 @@ export default function TripDetail() {
                        </div>
                        <div className="flex flex-col">
                          <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Left to Spend</span>
-                         <span className="text-xl font-bold">{trip.currency} {budgetProgress.remaining.toFixed(0)}</span>
+                         <span className="text-xl font-bold">{trip?.currency} {budgetProgress.remaining.toFixed(0)}</span>
                        </div>
                      </div>
                    </div>
@@ -404,7 +416,6 @@ export default function TripDetail() {
                    <p className="text-[10px] text-right text-muted-foreground font-bold">{Math.round(budgetProgress.percent)}% OF TOTAL BUDGET</p>
                  </div>
                </Card>
-
                <Button className="w-full h-14 bg-white/5 hover:bg-white/10 border-white/10 rounded-2xl font-bold" variant="outline" onClick={() => setIsExpenseDialogOpen(true)}>
                  <Plus className="w-5 h-5 mr-2" /> Log Actual Expense
                </Button>
@@ -421,7 +432,6 @@ export default function TripDetail() {
                     <p className="text-xs text-muted-foreground">Smart suggestions to balance your spend.</p>
                   </div>
                 </div>
-                
                 {aiSuggestions ? (
                   <div className="space-y-4 animate-fade-in">
                     {aiSuggestions.alternatives.map((alt, i) => (
@@ -431,14 +441,13 @@ export default function TripDetail() {
                             <Badge className="bg-primary/20 text-primary border-none px-3 py-1">{alt.category}</Badge>
                             <div className="flex items-center gap-2 text-accent font-bold">
                               <TrendingDown className="w-4 h-4" />
-                              Save ~{trip.currency} {alt.estimatedSavings}
+                              Save ~{trip?.currency} {alt.estimatedSavings}
                             </div>
                           </div>
                           <p className="text-sm font-medium leading-relaxed">{alt.suggestion}</p>
                         </CardContent>
                       </Card>
                     ))}
-                    <Button variant="ghost" className="w-full text-xs opacity-50 hover:opacity-100" onClick={() => setAiSuggestions(null)}>Dismiss Suggestions</Button>
                   </div>
                 ) : (
                   <div className="py-20 text-center glass-card border-dashed border-white/10 rounded-3xl">
@@ -459,21 +468,13 @@ export default function TripDetail() {
           </DialogHeader>
           <div className="space-y-6 py-6">
             <div className="space-y-2">
-              <Label className="text-xs uppercase font-bold tracking-widest opacity-60">Amount ({trip.currency})</Label>
-              <Input 
-                type="number" 
-                placeholder="0.00" 
-                className="h-14 bg-white/5 border-white/10 rounded-2xl text-lg font-bold" 
-                value={expenseAmount}
-                onChange={(e) => setExpenseAmount(e.target.value)}
-              />
+              <Label className="text-xs uppercase font-bold tracking-widest opacity-60">Amount ({trip?.currency})</Label>
+              <Input type="number" placeholder="0.00" className="h-14 bg-white/5 border-white/10 rounded-2xl text-lg font-bold" value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)}/>
             </div>
             <div className="space-y-2">
               <Label className="text-xs uppercase font-bold tracking-widest opacity-60">Category</Label>
               <Select value={expenseCategory} onValueChange={setExpenseCategory}>
-                <SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-2xl">
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-2xl"><SelectValue /></SelectTrigger>
                 <SelectContent className="glass-card border-white/10 rounded-2xl">
                   {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
@@ -481,12 +482,7 @@ export default function TripDetail() {
             </div>
             <div className="space-y-2">
               <Label className="text-xs uppercase font-bold tracking-widest opacity-60">Note (Optional)</Label>
-              <Input 
-                placeholder="What was this for?" 
-                className="h-14 bg-white/5 border-white/10 rounded-2xl" 
-                value={expenseNote}
-                onChange={(e) => setExpenseNote(e.target.value)}
-              />
+              <Input placeholder="What was this for?" className="h-14 bg-white/5 border-white/10 rounded-2xl" value={expenseNote} onChange={(e) => setExpenseNote(e.target.value)}/>
             </div>
           </div>
           <DialogFooter className="gap-3">
@@ -496,6 +492,7 @@ export default function TripDetail() {
         </DialogContent>
       </Dialog>
 
+      <PlanSelectionDialog open={isPlanDialogOpen} onOpenChange={setIsPlanDialogOpen} onSelectFree={() => setIsPlanDialogOpen(false)} />
       <ChatCompanion tripData={trip} />
     </div>
   );
