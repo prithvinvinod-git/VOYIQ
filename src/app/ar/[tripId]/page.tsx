@@ -39,10 +39,22 @@ export default function ARTripHUD() {
     if (userData && !userData.isPremium) router.push(`/trip/${tripId}`);
   }, [user, isUserLoading, userData, router, tripId]);
 
-  const allSlots = useMemo(() => {
-    if (!itinerary) return [];
-    // Combine slots from all days for navigation
-    return itinerary.flatMap(day => day.slots || []);
+  const relevantSlots = useMemo(() => {
+    if (!itinerary || itinerary.length === 0) return [];
+    
+    // Attempt to find slots for the current date
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    
+    const todayDay = itinerary.find(day => day.date === todayStr);
+    if (todayDay) return todayDay.slots || [];
+    
+    // Fallback: Find the first day that has unchecked slots
+    const firstActiveDay = itinerary.find(day => (day.slots || []).some((s: any) => !s.completed));
+    if (firstActiveDay) return firstActiveDay.slots || [];
+    
+    // Final fallback: Just use the first day's slots
+    return itinerary[0]?.slots || [];
   }, [itinerary]);
 
   if (isUserLoading || isTripLoading || isItineraryLoading) {
@@ -72,7 +84,7 @@ export default function ARTripHUD() {
         <UserHeader showBack backHref={`/trip/${tripId}`} title={`${trip.destination} HUD`} />
       </div>
       <div className="flex-1 relative">
-        <ARNavigation slots={allSlots} />
+        <ARNavigation slots={relevantSlots} />
       </div>
     </div>
   );

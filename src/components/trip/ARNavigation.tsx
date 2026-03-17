@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
@@ -20,7 +21,7 @@ interface ARNavigationProps {
 }
 
 declare global {
-  interface window {
+  interface Window {
     google: any;
     initMap: () => void;
   }
@@ -202,6 +203,8 @@ export function ARNavigation({ slots }: ARNavigationProps) {
                 console.warn("StreetView init failed:", svErr);
               }
             }
+          } else if (status === 'REQUEST_DENIED' || status === 'OVER_QUERY_LIMIT') {
+            setPermissionError("Google Maps Services (Directions/Street View) are not enabled. Please enable them in your Google Cloud Console for this API key.");
           } else {
             console.warn("Directions request failed with status:", status);
           }
