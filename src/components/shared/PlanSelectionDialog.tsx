@@ -71,7 +71,7 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0, open
   const premiumFeatures = [
     { icon: Users, text: "Real-time Collab Rooms", status: "active" },
     { icon: Zap, text: "Unlimited Itineraries", status: "active" },
-    { icon: Navigation, text: "AR Navigation", status: "upcoming" },
+    { icon: Navigation, text: "AR HUD Navigation", status: "experimental" },
     { icon: Mic, text: "AI Voice Travel Assistant", status: "upcoming" },
     { icon: Languages, text: "Live Voice Translation", status: "upcoming" },
   ];
@@ -132,7 +132,7 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0, open
         <DialogOverlay className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm" />
         <DialogContent className="fixed left-[50%] top-[50%] z-[110] w-full max-w-[95vw] sm:max-w-[750px] translate-x-[-50%] translate-y-[-50%] glass-card border-white/10 p-0 overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[90vh] shadow-2xl">
           <DialogHeader className="p-6 sm:p-10 pb-4 text-center shrink-0">
-            <DialogTitle className="text-2xl sm:text-4xl font-headline font-bold mb-2">Explorer Tiers</DialogTitle>
+            <DialogTitle className="text-2xl sm:text-4xl font-headline font-bold mb-2 text-white">Explorer Tiers</DialogTitle>
             <DialogDescription className="text-muted-foreground text-sm sm:text-base">
               Choose the best way to power your adventures.
             </DialogDescription>
@@ -144,7 +144,7 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0, open
                 <CardContent className="p-6 flex-1 flex flex-col">
                   <div className="mb-6">
                     <Badge variant="outline" className="mb-3 border-primary/30 text-primary px-3 py-1">Standard</Badge>
-                    <h3 className="text-xl font-bold">Free Explorer</h3>
+                    <h3 className="text-xl font-bold text-white">Free Explorer</h3>
                     <p className="text-2xl font-headline font-bold mt-2 text-white">₹0</p>
                     {isLimitReached && (
                       <div className="mt-3 flex items-center gap-2 text-destructive text-[10px] font-bold uppercase bg-destructive/10 p-2 rounded-lg">
@@ -184,7 +184,7 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0, open
                 <CardContent className="p-6 flex-1 flex flex-col">
                   <div className="mb-6">
                     <Badge variant="outline" className="mb-3 border-accent/30 text-accent px-3 py-1">Unlimited Potential</Badge>
-                    <h3 className="text-xl font-bold flex items-center gap-2">
+                    <h3 className="text-xl font-bold flex items-center gap-2 text-white">
                       Pro Voyager <Crown className="w-5 h-5 text-accent" />
                     </h3>
                     <p className="text-2xl font-headline font-bold mt-2 text-white">₹2,999<span className="text-xs font-normal text-muted-foreground ml-1">/year</span></p>
@@ -193,12 +193,20 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0, open
                   <ul className="space-y-4 mb-6 flex-1">
                     {premiumFeatures.map((f, i) => (
                       <li key={i} className={`flex items-center gap-3 text-sm ${f.status === 'upcoming' ? 'text-muted-foreground italic' : 'font-semibold text-white'}`}>
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${f.status === 'upcoming' ? 'bg-white/5' : 'bg-accent/20'}`}>
-                          {f.status === 'upcoming' ? <Clock className="w-3.5 h-3.5 opacity-50" /> : <f.icon className="w-3.5 h-3.5 text-accent" />}
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          f.status === 'upcoming' ? 'bg-white/5' : 
+                          f.status === 'experimental' ? 'bg-primary/20' : 'bg-accent/20'
+                        }`}>
+                          {f.status === 'upcoming' ? (
+                            <Clock className="w-3.5 h-3.5 opacity-50" />
+                          ) : (
+                            <f.icon className={`w-3.5 h-3.5 ${f.status === 'experimental' ? 'text-primary' : 'text-accent'}`} />
+                          )}
                         </div>
                         <div className="flex flex-col">
                           <span>{f.text}</span>
                           {f.status === 'upcoming' && <span className="text-[10px] uppercase font-bold text-accent/60 not-italic">Coming Soon</span>}
+                          {f.status === 'experimental' && <span className="text-[10px] uppercase font-bold text-primary animate-pulse">Experimental</span>}
                         </div>
                       </li>
                     ))}
@@ -213,7 +221,7 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0, open
                       <Input 
                         id="promo"
                         placeholder="Code" 
-                        className="h-11 bg-white/10 border-white/10 text-center font-mono placeholder:text-[10px] placeholder:tracking-normal focus:ring-accent"
+                        className="h-11 bg-white/10 border-white/10 text-center font-mono placeholder:text-[10px] placeholder:tracking-normal focus:ring-accent text-white"
                         value={promoCode}
                         onChange={(e) => setPromoCode(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleUpgrade()}
