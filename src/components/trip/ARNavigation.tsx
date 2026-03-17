@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
@@ -21,7 +20,7 @@ interface ARNavigationProps {
 }
 
 declare global {
-  interface Window {
+  interface window {
     google: any;
     initMap: () => void;
   }
@@ -30,6 +29,8 @@ declare global {
 export function ARNavigation({ slots }: ARNavigationProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streetViewRef = useRef<HTMLDivElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  
   const [isSystemActive, setIsSystemActive] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [hasLocationPermission, setHasLocationPermission] = useState<boolean | null>(null);
@@ -54,7 +55,6 @@ export function ARNavigation({ slots }: ARNavigationProps) {
       return;
     }
 
-    // Use the Firebase API key as a fallback for Maps
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || firebaseConfig.apiKey || '';
     
     if (!apiKey) {
@@ -81,6 +81,16 @@ export function ARNavigation({ slots }: ARNavigationProps) {
     script.onload = () => setIsMapsLoaded(true);
     script.onerror = () => setPermissionError("Google Maps API failed to load. Check your internet or API key.");
     document.head.appendChild(script);
+  }, []);
+
+  // Cleanup Camera Stream on Unmount
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+    };
   }, []);
 
   // Check for secure context
@@ -110,6 +120,7 @@ export function ARNavigation({ slots }: ARNavigationProps) {
         video: { facingMode: 'environment' } 
       });
       
+      streamRef.current = stream;
       setHasCameraPermission(true);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -140,6 +151,12 @@ export function ARNavigation({ slots }: ARNavigationProps) {
         : error.message || "Initialization failed.";
       setPermissionError(msg);
       setHasCameraPermission(false);
+      
+      // Stop stream if partial success
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
     } finally {
       setIsInitializing(false);
     }
