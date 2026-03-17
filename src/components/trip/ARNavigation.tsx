@@ -44,20 +44,35 @@ export function ARNavigation({ slots }: ARNavigationProps) {
   const [nextInstruction, setNextInstruction] = useState<string>("");
   const [isMapsLoaded, setIsMapsLoaded] = useState(false);
 
-  // Load Google Maps API
+  // Load Google Maps API safely
   useEffect(() => {
-    if (typeof window === 'undefined' || window.google) {
+    if (typeof window === 'undefined') return;
+    
+    if (window.google && window.google.maps) {
       setIsMapsLoaded(true);
       return;
     }
 
+    // Check if script already exists
+    const existingScript = document.getElementById('google-maps-api');
+    if (existingScript) {
+      const checkInterval = setInterval(() => {
+        if (window.google && window.google.maps) {
+          setIsMapsLoaded(true);
+          clearInterval(checkInterval);
+        }
+      }, 500);
+      return;
+    }
+
     const script = document.createElement('script');
-    // Using a placeholder key - User needs to provide their own in environment
+    script.id = 'google-maps-api';
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry,places`;
     script.async = true;
     script.defer = true;
     script.onload = () => setIsMapsLoaded(true);
+    script.onerror = () => setPermissionError("Google Maps API failed to load. Check your internet or API key.");
     document.head.appendChild(script);
   }, []);
 
@@ -91,7 +106,11 @@ export function ARNavigation({ slots }: ARNavigationProps) {
       setHasCameraPermission(true);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+        try {
+          await videoRef.current.play();
+        } catch (playErr) {
+          console.warn("Video play failed:", playErr);
+        }
       }
 
       // Request Geolocation
@@ -102,14 +121,14 @@ export function ARNavigation({ slots }: ARNavigationProps) {
             setHasLocationPermission(true);
             resolve();
           },
-          (err) => reject(new Error("Location Access Denied")),
+          (err) => reject(new Error("Location Access Denied. Enable GPS in your settings.")),
           { enableHighAccuracy: true, timeout: 15000 }
         );
       });
 
       setIsSystemActive(true);
     } catch (error: any) {
-      setPermissionError(error.message);
+      setPermissionError(error.message || "Initialization failed.");
       setHasCameraPermission(false);
     } finally {
       setIsInitializing(false);
@@ -118,7 +137,7 @@ export function ARNavigation({ slots }: ARNavigationProps) {
 
   // Update Navigation Logic (Street View + Directions)
   useEffect(() => {
-    if (!isSystemActive || !currentPosition || !targetSlot || !isMapsLoaded || !window.google) return;
+    if (!isSystemActive || !currentPosition || !targetSlot || !isMapsLoaded || !window.google || !window.google.maps) return;
 
     const directionsService = new window.google.maps.DirectionsService();
     const streetViewService = new window.google.maps.StreetViewService();
@@ -135,25 +154,26 @@ export function ARNavigation({ slots }: ARNavigationProps) {
           const firstStep = leg.steps[0];
           
           setNextInstruction(firstStep.instructions.replace(/<[^>]*>?/gm, ''));
-          
-          // Update distance/bearing based on actual route if needed
           setDistance(leg.distance.value);
 
-          // Update Street View Preview for the next waypoint or destination
-          const previewPoint = leg.steps.length > 1 ? leg.steps[1].start_location : leg.end_location;
-          
+          // Update Street View Preview safely
           if (streetViewRef.current) {
-            new window.google.maps.StreetViewPanorama(streetViewRef.current, {
-              position: previewPoint,
-              addressControl: false,
-              linksControl: false,
-              panControl: false,
-              enableCloseButton: false,
-              zoomControl: false,
-              scrollwheel: false,
-              disableDefaultUI: true,
-              clickToGo: false,
-            });
+            const previewPoint = leg.steps.length > 1 ? leg.steps[1].start_location : leg.end_location;
+            try {
+              new window.google.maps.StreetViewPanorama(streetViewRef.current, {
+                position: previewPoint,
+                addressControl: false,
+                linksControl: false,
+                panControl: false,
+                enableCloseButton: false,
+                zoomControl: false,
+                scrollwheel: false,
+                disableDefaultUI: true,
+                clickToGo: false,
+              });
+            } catch (svErr) {
+              console.warn("StreetView init failed:", svErr);
+            }
           }
         }
       }
@@ -190,14 +210,14 @@ export function ARNavigation({ slots }: ARNavigationProps) {
       <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black text-white p-8 space-y-6 text-center">
         <Lock className="w-16 h-16 text-destructive" />
         <h3 className="text-2xl font-headline font-bold">Secure Context Required</h3>
-        <p className="text-sm text-muted-foreground">AR features require HTTPS for hardware access.</p>
+        <p className="text-sm text-muted-foreground">AR features require HTTPS for hardware access. Localhost or SSL is required.</p>
       </div>
     );
   }
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-black">
-      {/* 1. Live Camera Feed */}
+      {/* 1. Live Camera Feed - Always present to avoid re-mounting issues */}
       <video 
         ref={videoRef} 
         className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${isSystemActive ? 'opacity-100' : 'opacity-0'}`}
@@ -217,8 +237,14 @@ export function ARNavigation({ slots }: ARNavigationProps) {
             <h3 className="text-2xl font-headline font-bold">Launch AR HUB</h3>
             <p className="text-sm text-muted-foreground">Visual navigation with live Street View confirmation.</p>
           </div>
-          <Button onClick={requestPermissions} disabled={isInitializing} className="w-full max-w-xs h-16 bg-primary text-primary-foreground font-bold rounded-2xl gap-3">
-            {isInitializing ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Zap className="w-5 h-5" /> Initialize Sensors</>}
+          <Button onClick={requestPermissions} disabled={isInitializing || !isMapsLoaded} className="w-full max-w-xs h-16 bg-primary text-primary-foreground font-bold rounded-2xl gap-3">
+            {isInitializing ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : !isMapsLoaded ? (
+              <span className="flex items-center gap-2">Connecting APIs... <Loader2 className="w-3 h-3 animate-spin" /></span>
+            ) : (
+              <><Zap className="w-5 h-5" /> Initialize Sensors</>
+            )}
           </Button>
         </div>
       )}
@@ -228,12 +254,12 @@ export function ARNavigation({ slots }: ARNavigationProps) {
         <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black p-6 text-center space-y-8">
           <XCircle className="w-16 h-16 text-destructive" />
           <div className="space-y-4 max-w-sm">
-            <h2 className="text-2xl font-headline font-bold text-white">Access Denied</h2>
+            <h2 className="text-2xl font-headline font-bold text-white">System Error</h2>
             <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-left">
               <AlertDescription className="text-xs">{permissionError}</AlertDescription>
             </Alert>
             <Button className="w-full h-12 bg-white/10 text-white rounded-xl" onClick={() => {setPermissionError(null); setIsInitializing(false);}}>
-              <RefreshCw className="w-4 h-4 mr-2" /> Retry
+              <RefreshCw className="w-4 h-4 mr-2" /> Retry Initialization
             </Button>
           </div>
         </div>
@@ -251,7 +277,7 @@ export function ARNavigation({ slots }: ARNavigationProps) {
                 </div>
                 <div>
                   <p className="text-[8px] uppercase font-bold text-muted-foreground tracking-widest">Active Waypoint</p>
-                  <p className="text-sm font-bold text-white truncate max-w-[150px]">{targetSlot?.activity}</p>
+                  <p className="text-sm font-bold text-white truncate max-w-[150px]">{targetSlot?.activity || "Locating..."}</p>
                 </div>
               </div>
               <div className="text-right">
@@ -283,12 +309,12 @@ export function ARNavigation({ slots }: ARNavigationProps) {
           <div className="absolute bottom-8 left-6 right-6 z-10">
             <div className="flex gap-4 items-end">
               {/* Street View Mini HUD */}
-              <div className="w-32 h-32 rounded-3xl border-2 border-white/20 overflow-hidden bg-black/80 shadow-2xl shrink-0 group">
+              <div className="w-32 h-32 rounded-3xl border-2 border-white/20 overflow-hidden bg-black/80 shadow-2xl shrink-0 group relative">
                 <div ref={streetViewRef} className="w-full h-full opacity-80 group-hover:opacity-100 transition-opacity" />
                 <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
                    <Eye className="w-6 h-6 text-white/20 group-hover:text-primary transition-colors" />
                 </div>
-                <div className="absolute top-2 left-2 px-1.5 py-0.5 bg-black/60 rounded text-[8px] font-bold text-primary uppercase tracking-widest">
+                <div className="absolute top-2 left-2 px-1.5 py-0.5 bg-black/60 rounded text-[8px] font-bold text-primary uppercase tracking-widest z-20">
                   Street View Peek
                 </div>
               </div>
@@ -299,7 +325,7 @@ export function ARNavigation({ slots }: ARNavigationProps) {
                   <ShieldCheck className="w-3.5 h-3.5 text-primary" />
                   <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Location Verified</span>
                 </div>
-                <p className="text-xs font-medium text-white/90 truncate">{targetSlot?.location}</p>
+                <p className="text-xs font-medium text-white/90 truncate">{targetSlot?.location || "Calculating coordinates..."}</p>
                 <div className="mt-2 flex -space-x-1">
                   {[1,2,3].map(i => <div key={i} className="w-5 h-5 rounded-full border border-background bg-primary/20" />)}
                 </div>
