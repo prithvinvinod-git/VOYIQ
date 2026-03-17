@@ -205,12 +205,15 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0, open
                   </ul>
 
                   <div className="space-y-3 pt-6 border-t border-white/10 mt-auto">
-                    <Label htmlFor="promo" className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Upgrade Access Code</Label>
+                    <div className="flex justify-between items-center">
+                      <Label htmlFor="promo" className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Access Code</Label>
+                      <span className="text-[9px] font-bold text-accent/80 bg-accent/5 px-1.5 rounded uppercase">Use: coet</span>
+                    </div>
                     <div className="flex gap-2">
                       <Input 
                         id="promo"
-                        placeholder="use: coet" 
-                        className="h-11 bg-white/10 border-white/10 text-center font-mono tracking-widest focus:ring-accent"
+                        placeholder="Code" 
+                        className="h-11 bg-white/10 border-white/10 text-center font-mono placeholder:text-[10px] placeholder:tracking-normal focus:ring-accent"
                         value={promoCode}
                         onChange={(e) => setPromoCode(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleUpgrade()}
