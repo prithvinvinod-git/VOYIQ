@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Navigation, MapPin, AlertCircle, Loader2, Scan, Camera, ShieldCheck, XCircle, Zap, RefreshCw, Lock } from "lucide-react";
+import { Navigation, MapPin, AlertCircle, Loader2, Scan, Camera, ShieldCheck, XCircle, Zap, RefreshCw, Lock, ArrowRight, Eye } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,8 +19,16 @@ interface ARNavigationProps {
   slots: Slot[];
 }
 
+declare global {
+  interface Window {
+    google: any;
+    initMap: () => void;
+  }
+}
+
 export function ARNavigation({ slots }: ARNavigationProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const streetViewRef = useRef<HTMLDivElement>(null);
   const [isSystemActive, setIsSystemActive] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [hasLocationPermission, setHasLocationPermission] = useState<boolean | null>(null);
@@ -31,15 +39,36 @@ export function ARNavigation({ slots }: ARNavigationProps) {
   const [isInitializing, setIsInitializing] = useState(false);
   const [permissionError, setPermissionError] = useState<string | null>(null);
   const [isSecure, setIsSecure] = useState(true);
+  
+  // Navigation State
+  const [nextInstruction, setNextInstruction] = useState<string>("");
+  const [isMapsLoaded, setIsMapsLoaded] = useState(false);
 
-  // Check for secure context on mount
+  // Load Google Maps API
+  useEffect(() => {
+    if (typeof window === 'undefined' || window.google) {
+      setIsMapsLoaded(true);
+      return;
+    }
+
+    const script = document.createElement('script');
+    // Using a placeholder key - User needs to provide their own in environment
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry,places`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => setIsMapsLoaded(true);
+    document.head.appendChild(script);
+  }, []);
+
+  // Check for secure context
   useEffect(() => {
     if (typeof window !== 'undefined' && !window.isSecureContext) {
       setIsSecure(false);
     }
   }, []);
 
-  // Find the next unchecked slot as the target
+  // Find the next unchecked slot
   useEffect(() => {
     const nextSlot = slots.find(s => !s.completed) || slots[0];
     setTargetSlot(nextSlot);
@@ -50,36 +79,22 @@ export function ARNavigation({ slots }: ARNavigationProps) {
     setPermissionError(null);
 
     try {
-      // 1. Check for basic support and secure context
       if (!window.isSecureContext) {
-        throw new Error("Security Restriction: AR features require an HTTPS connection to access hardware. Please ensure you are using a secure URL.");
+        throw new Error("Security Restriction: AR features require HTTPS.");
       }
 
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error("Hardware API Missing: Your browser does not support camera access in this context.");
-      }
-
-      // 2. Request Camera - This MUST be triggered by a direct user click (like this function)
-      // to ensure Chrome/Safari shows the native "Allow/Deny" popup.
+      // Request Camera
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          facingMode: 'environment'
-        } 
+        video: { facingMode: 'environment' } 
       });
       
       setHasCameraPermission(true);
-      
-      // Attach stream to video ref
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play().catch(e => console.warn("Video play failed:", e));
+        await videoRef.current.play();
       }
 
-      // 3. Request Geolocation
-      if (!navigator.geolocation) {
-        throw new Error("Hardware API Missing: Geolocation is not supported by your browser.");
-      }
-
+      // Request Geolocation
       await new Promise<void>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
@@ -87,107 +102,102 @@ export function ARNavigation({ slots }: ARNavigationProps) {
             setHasLocationPermission(true);
             resolve();
           },
-          (err) => {
-            let msg = "Location Access Denied.";
-            if (err.code === err.PERMISSION_DENIED) {
-              msg = "Location Denied: The request for location access was rejected. Please enable Location in your browser settings.";
-            } else if (err.code === err.TIMEOUT) {
-              msg = "Location Timeout: The request to get your location timed out.";
-            }
-            reject(new Error(msg));
-          },
+          (err) => reject(new Error("Location Access Denied")),
           { enableHighAccuracy: true, timeout: 15000 }
         );
       });
 
       setIsSystemActive(true);
     } catch (error: any) {
-      console.error('AR Initialization Error:', error);
-      
-      let friendlyMessage = error.message;
-      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-        friendlyMessage = "Browser Blocked: Permission was previously denied. Chrome will not ask again automatically. Please click the 'Lock' icon in your address bar and reset Camera/Location permissions to 'Allow'.";
-      } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
-        friendlyMessage = "Hardware Missing: No camera detected on this device.";
-      }
-
-      setPermissionError(friendlyMessage);
+      setPermissionError(error.message);
       setHasCameraPermission(false);
     } finally {
       setIsInitializing(false);
     }
   };
 
-  // Continuous Position Tracking
+  // Update Navigation Logic (Street View + Directions)
   useEffect(() => {
-    if (!hasLocationPermission || !isSystemActive) return;
+    if (!isSystemActive || !currentPosition || !targetSlot || !isMapsLoaded || !window.google) return;
 
-    const watchId = navigator.geolocation.watchPosition(
-      (pos) => setCurrentPosition(pos),
-      (err) => console.error('Geolocation watch error:', err),
-      { enableHighAccuracy: true }
+    const directionsService = new window.google.maps.DirectionsService();
+    const streetViewService = new window.google.maps.StreetViewService();
+
+    directionsService.route(
+      {
+        origin: new window.google.maps.LatLng(currentPosition.coords.latitude, currentPosition.coords.longitude),
+        destination: new window.google.maps.LatLng(targetSlot.lat, targetSlot.lng),
+        travelMode: window.google.maps.TravelMode.WALKING,
+      },
+      (result: any, status: string) => {
+        if (status === 'OK' && result.routes[0]) {
+          const leg = result.routes[0].legs[0];
+          const firstStep = leg.steps[0];
+          
+          setNextInstruction(firstStep.instructions.replace(/<[^>]*>?/gm, ''));
+          
+          // Update distance/bearing based on actual route if needed
+          setDistance(leg.distance.value);
+
+          // Update Street View Preview for the next waypoint or destination
+          const previewPoint = leg.steps.length > 1 ? leg.steps[1].start_location : leg.end_location;
+          
+          if (streetViewRef.current) {
+            new window.google.maps.StreetViewPanorama(streetViewRef.current, {
+              position: previewPoint,
+              addressControl: false,
+              linksControl: false,
+              panControl: false,
+              enableCloseButton: false,
+              zoomControl: false,
+              scrollwheel: false,
+              disableDefaultUI: true,
+              clickToGo: false,
+            });
+          }
+        }
+      }
     );
+  }, [currentPosition, targetSlot, isSystemActive, isMapsLoaded]);
 
-    return () => navigator.geolocation.clearWatch(watchId);
-  }, [hasLocationPermission, isSystemActive]);
-
-  // Calculate Bearing and Distance
+  // Calculate Bearing for the Arrow
   useEffect(() => {
     if (!currentPosition || !targetSlot) return;
-
     const lat1 = currentPosition.coords.latitude;
     const lon1 = currentPosition.coords.longitude;
     const lat2 = targetSlot.lat;
     const lon2 = targetSlot.lng;
 
-    const R = 6371e3; // metres
-    const φ1 = (lat1 * Math.PI) / 180;
-    const φ2 = (lat2 * Math.PI) / 180;
-    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-
-    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-              Math.cos(φ1) * Math.cos(φ2) *
-              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const d = R * c;
-    setDistance(d);
-
-    const y = Math.sin(Δλ) * Math.cos(φ2);
-    const x = Math.cos(φ1) * Math.sin(φ2) -
-              Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
-    const θ = Math.atan2(y, x);
-    const brng = ((θ * 180) / Math.PI + 360) % 360;
+    const y = Math.sin((lon2 - lon1) * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180);
+    const x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180) -
+              Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos((lon2 - lon1) * Math.PI / 180);
+    const brng = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
     setBearing(brng);
   }, [currentPosition, targetSlot]);
 
-  // Cleanup
   useEffect(() => {
-    return () => {
-      if (videoRef.current?.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
-        stream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, []);
+    if (!hasLocationPermission || !isSystemActive) return;
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => setCurrentPosition(pos),
+      null,
+      { enableHighAccuracy: true }
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [hasLocationPermission, isSystemActive]);
 
   if (!isSecure) {
     return (
       <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black text-white p-8 space-y-6 text-center">
         <Lock className="w-16 h-16 text-destructive" />
         <h3 className="text-2xl font-headline font-bold">Secure Context Required</h3>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          AR Navigation requires a secure HTTPS connection to access your device's camera and location sensors.
-        </p>
-        <Button variant="outline" className="border-white/10" onClick={() => window.location.href = window.location.href.replace('http:', 'https:')}>
-          Reload with HTTPS
-        </Button>
+        <p className="text-sm text-muted-foreground">AR features require HTTPS for hardware access.</p>
       </div>
     );
   }
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-black">
+      {/* 1. Live Camera Feed */}
       <video 
         ref={videoRef} 
         className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${isSystemActive ? 'opacity-100' : 'opacity-0'}`}
@@ -196,110 +206,116 @@ export function ARNavigation({ slots }: ARNavigationProps) {
         playsInline 
       />
 
+      {/* 2. Initialization Overlay */}
       {!isSystemActive && !permissionError && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black text-white p-8 space-y-8 animate-in fade-in">
-          <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(0,212,184,0.1)] relative">
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black text-white p-8 space-y-8">
+          <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center relative">
             <Scan className="w-12 h-12 text-primary" />
             <div className="absolute inset-0 border-2 border-primary/20 rounded-full animate-ping" />
           </div>
           <div className="text-center space-y-4 max-w-xs">
-            <h3 className="text-2xl font-headline font-bold">Initialize HUD</h3>
-            <p className="text-sm text-muted-foreground font-medium">Click below to launch native browser permission requests for Camera and GPS.</p>
+            <h3 className="text-2xl font-headline font-bold">Launch AR HUB</h3>
+            <p className="text-sm text-muted-foreground">Visual navigation with live Street View confirmation.</p>
           </div>
-          <Button 
-            onClick={requestPermissions} 
-            disabled={isInitializing}
-            className="w-full max-w-xs h-16 bg-primary text-primary-foreground font-bold rounded-2xl shadow-xl shadow-primary/20 gap-3 text-lg"
-          >
-            {isInitializing ? (
-              <><Loader2 className="w-5 h-5 animate-spin" /> Syncing Sensors...</>
-            ) : (
-              <><Zap className="w-5 h-5" /> Start AR Systems</>
-            )}
+          <Button onClick={requestPermissions} disabled={isInitializing} className="w-full max-w-xs h-16 bg-primary text-primary-foreground font-bold rounded-2xl gap-3">
+            {isInitializing ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Zap className="w-5 h-5" /> Initialize Sensors</>}
           </Button>
         </div>
       )}
 
+      {/* 3. Error Overlay */}
       {permissionError && (
-        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black p-6 text-center space-y-8 animate-in zoom-in-95">
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black p-6 text-center space-y-8">
           <XCircle className="w-16 h-16 text-destructive" />
           <div className="space-y-4 max-w-sm">
-            <h2 className="text-2xl font-headline font-bold text-white">Access Required</h2>
-            <p className="text-muted-foreground text-sm">Hardware sensors must be enabled to visualize your journey.</p>
+            <h2 className="text-2xl font-headline font-bold text-white">Access Denied</h2>
             <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-left">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Diagnostics</AlertTitle>
-              <AlertDescription className="text-xs leading-relaxed">{permissionError}</AlertDescription>
+              <AlertDescription className="text-xs">{permissionError}</AlertDescription>
             </Alert>
-            <Button 
-              className="w-full h-12 bg-white/10 text-white hover:bg-white/20 font-bold rounded-xl gap-2"
-              onClick={() => {
-                setPermissionError(null);
-                setIsInitializing(false);
-              }}
-            >
-              <RefreshCw className="w-4 h-4" /> Retry Connection
+            <Button className="w-full h-12 bg-white/10 text-white rounded-xl" onClick={() => {setPermissionError(null); setIsInitializing(false);}}>
+              <RefreshCw className="w-4 h-4 mr-2" /> Retry
             </Button>
           </div>
         </div>
       )}
 
+      {/* 4. Active AR HUD */}
       {isSystemActive && (
         <>
-          <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 w-[90%] max-w-sm animate-in slide-in-from-top duration-700">
-            <div className="glass-card bg-black/40 backdrop-blur-xl border-primary/30 p-4 rounded-3xl flex items-center justify-between shadow-2xl">
+          {/* Top Status HUD */}
+          <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 w-[90%] max-w-sm">
+            <div className="glass-card bg-black/40 backdrop-blur-xl border-primary/30 p-4 rounded-3xl flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center animate-pulse">
                   <Navigation className="w-5 h-5 text-primary" />
                 </div>
-                <div className="min-w-0">
-                  <p className="text-[8px] uppercase font-bold text-muted-foreground tracking-widest">Target Active</p>
-                  <p className="text-sm font-bold text-white truncate max-w-[150px]">{targetSlot?.activity || 'Calculating...'}</p>
+                <div>
+                  <p className="text-[8px] uppercase font-bold text-muted-foreground tracking-widest">Active Waypoint</p>
+                  <p className="text-sm font-bold text-white truncate max-w-[150px]">{targetSlot?.activity}</p>
                 </div>
               </div>
-              <div className="text-right flex-shrink-0">
-                <p className="text-[10px] font-bold text-accent">
-                  {distance > 1000 ? `${(distance / 1000).toFixed(1)} km` : `${Math.round(distance)} m`}
-                </p>
+              <div className="text-right">
+                <p className="text-sm font-bold text-accent">{distance > 1000 ? `${(distance/1000).toFixed(1)}km` : `${Math.round(distance)}m`}</p>
                 <p className="text-[8px] text-muted-foreground uppercase font-bold">Distance</p>
               </div>
             </div>
+            
+            {/* Live Instructions Pill */}
+            {nextInstruction && (
+              <div className="mt-3 bg-accent/20 border border-accent/40 backdrop-blur-md px-4 py-2 rounded-2xl flex items-center gap-2 animate-in slide-in-from-top">
+                <ArrowRight className="w-4 h-4 text-accent animate-bounce-x" />
+                <span className="text-[11px] font-bold text-white">{nextInstruction}</span>
+              </div>
+            )}
           </div>
 
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="relative w-64 h-64 border border-primary/20 rounded-full flex items-center justify-center">
+          {/* Center Visual Compass */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-40">
+            <div className="relative w-64 h-64 border border-primary/20 rounded-full">
               <div className="absolute inset-4 border border-white/5 rounded-full" />
-              <div 
-                className="absolute transition-transform duration-500 ease-out"
-                style={{ transform: `rotate(${bearing}deg)` }}
-              >
-                <div className="w-4 h-12 bg-primary rounded-full relative -top-32 shadow-[0_0_20px_hsl(var(--primary))] animate-pulse">
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -mt-4 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[20px] border-b-primary" />
-                </div>
+              <div className="absolute transition-transform duration-500 ease-out h-full w-full" style={{ transform: `rotate(${bearing}deg)` }}>
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-12 bg-primary rounded-full shadow-[0_0_15px_hsl(var(--primary))]" />
               </div>
-              <div className="w-2 h-2 bg-white rounded-full shadow-lg" />
             </div>
           </div>
 
-          <div className="absolute bottom-10 left-6 right-6 z-10 animate-in slide-in-from-bottom duration-700">
-            <div className="glass-card bg-black/60 backdrop-blur-xl border-white/10 p-5 rounded-[2rem] space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-primary" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">HUD Operational</span>
+          {/* Bottom Visual Guide (Street View Preview) */}
+          <div className="absolute bottom-8 left-6 right-6 z-10">
+            <div className="flex gap-4 items-end">
+              {/* Street View Mini HUD */}
+              <div className="w-32 h-32 rounded-3xl border-2 border-white/20 overflow-hidden bg-black/80 shadow-2xl shrink-0 group">
+                <div ref={streetViewRef} className="w-full h-full opacity-80 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                   <Eye className="w-6 h-6 text-white/20 group-hover:text-primary transition-colors" />
+                </div>
+                <div className="absolute top-2 left-2 px-1.5 py-0.5 bg-black/60 rounded text-[8px] font-bold text-primary uppercase tracking-widest">
+                  Street View Peek
                 </div>
               </div>
-              <p className="text-xs font-medium text-white/90 truncate">{targetSlot?.location}</p>
+
+              {/* Target Location Card */}
+              <div className="flex-1 glass-card bg-black/60 backdrop-blur-xl border-white/10 p-5 rounded-[2rem]">
+                <div className="flex items-center gap-2 mb-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-primary" />
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Location Verified</span>
+                </div>
+                <p className="text-xs font-medium text-white/90 truncate">{targetSlot?.location}</p>
+                <div className="mt-2 flex -space-x-1">
+                  {[1,2,3].map(i => <div key={i} className="w-5 h-5 rounded-full border border-background bg-primary/20" />)}
+                </div>
+              </div>
             </div>
           </div>
         </>
       )}
 
       <style jsx global>{`
-        @keyframes scan {
-          0% { top: 0; opacity: 0; }
-          50% { opacity: 1; }
-          100% { top: 100%; opacity: 0; }
+        @keyframes bounce-x {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(5px); }
+        }
+        .animate-bounce-x {
+          animation: bounce-x 1s infinite;
         }
       `}</style>
     </div>
