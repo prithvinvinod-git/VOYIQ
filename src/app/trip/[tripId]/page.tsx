@@ -28,7 +28,7 @@ import {
 import { useDoc, useCollection, useFirestore, useMemoFirebase, useUser, updateDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase";
 import { doc, collection, query, orderBy } from "firebase/firestore";
 import { ChatCompanion } from "@/components/chat/ChatCompanion";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/tabs";
 import { UserHeader } from "@/components/layout/UserHeader";
 import { BudgetBreakdown } from "@/components/trip/BudgetBreakdown";
 import { Progress } from "@/components/ui/progress";
@@ -239,6 +239,23 @@ export default function TripDetail() {
     }
   };
 
+  const handleBookFlight = () => {
+    if (!trip) return;
+    
+    // Calculate departure date as 1 day before the trip starts
+    const tripStart = new Date(trip.startDate);
+    const flightStart = new Date(tripStart);
+    flightStart.setDate(flightStart.getDate() - 1);
+    const flightStartStr = flightStart.toISOString().split('T')[0];
+    
+    // Construct Google Flights URL
+    const origin = encodeURIComponent(trip.origin || "");
+    const destination = encodeURIComponent(trip.destination || "");
+    const url = `https://www.google.com/travel/flights?q=Flights from ${origin} to ${destination} on ${flightStartStr} returning ${trip.endDate} for ${trip.numTravelers} adults`;
+    
+    window.open(url, '_blank');
+  };
+
   if (isUserLoading || (isTripLoading && !trip)) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
@@ -273,9 +290,21 @@ export default function TripDetail() {
           <span className="text-xs font-bold uppercase tracking-widest">Itinerary Progress</span>
         </div>
         <Progress value={progressValue} className="h-2.5 flex-1 w-full max-w-xl" />
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <span className="text-xs font-bold">{Math.round(progressValue)}%</span>
-          <Button size="sm" className="bg-primary/20 text-primary hover:bg-primary/30 rounded-lg gap-2" onClick={handleLaunchAR}>
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="bg-accent/10 text-accent border-accent/20 hover:bg-accent/20 rounded-lg gap-2 h-9" 
+            onClick={handleBookFlight}
+          >
+            <Plane className="w-4 h-4" /> Book Flights
+          </Button>
+          <Button 
+            size="sm" 
+            className="bg-primary/20 text-primary hover:bg-primary/30 rounded-lg gap-2 h-9" 
+            onClick={handleLaunchAR}
+          >
             <Scan className="w-4 h-4" /> AR HUD
           </Button>
         </div>
