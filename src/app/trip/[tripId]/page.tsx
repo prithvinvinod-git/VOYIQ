@@ -52,7 +52,6 @@ import {
 import { SuggestBudgetAlternativesOutput } from "@/ai/flows/suggest-budget-alternatives-flow";
 import dynamic from "next/dynamic";
 import { useToast } from "@/hooks/use-toast";
-import { ARNavigation } from "@/components/trip/ARNavigation";
 import { PlanSelectionDialog } from "@/components/shared/PlanSelectionDialog";
 
 const TripMap = dynamic(() => import("@/components/trip/TripMap"), { 
@@ -232,10 +231,11 @@ export default function TripDetail() {
     window.open(mapsUrl, '_blank');
   };
 
-  const handleARTabClick = (e: React.MouseEvent) => {
+  const handleLaunchAR = () => {
     if (!isPremium) {
-      e.preventDefault();
       setIsPlanDialogOpen(true);
+    } else {
+      router.push(`/ar/${tripId}`);
     }
   };
 
@@ -273,7 +273,12 @@ export default function TripDetail() {
           <span className="text-xs font-bold uppercase tracking-widest">Itinerary Progress</span>
         </div>
         <Progress value={progressValue} className="h-2.5 flex-1 w-full max-w-xl" />
-        <span className="text-xs font-bold">{Math.round(progressValue)}%</span>
+        <div className="flex items-center gap-4">
+          <span className="text-xs font-bold">{Math.round(progressValue)}%</span>
+          <Button size="sm" className="bg-primary/20 text-primary hover:bg-primary/30 rounded-lg gap-2" onClick={handleLaunchAR}>
+            <Scan className="w-4 h-4" /> AR HUD
+          </Button>
+        </div>
       </div>
 
       <main className="flex-1 flex flex-col lg:flex-row overflow-hidden">
@@ -358,13 +363,6 @@ export default function TripDetail() {
           <Tabs defaultValue="map" className="h-full flex flex-col">
             <TabsList className="m-4 bg-white/5 p-1 border border-white/10 rounded-2xl shrink-0 overflow-x-auto">
               <TabsTrigger value="map" className="flex-1 py-3 rounded-xl font-bold">Explore Map</TabsTrigger>
-              <TabsTrigger 
-                value="ar" 
-                className={`flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 ${!isPremium ? 'opacity-50' : ''}`}
-                onClick={handleARTabClick}
-              >
-                <Scan className="w-4 h-4" /> AR HUD {!isPremium && <Lock className="w-3 h-3" />}
-              </TabsTrigger>
               <TabsTrigger value="budget" className="flex-1 py-3 rounded-xl font-bold">BudgetSync</TabsTrigger>
               <TabsTrigger value="ai" className="flex-1 py-3 rounded-xl font-bold">Optimizer</TabsTrigger>
             </TabsList>
@@ -376,25 +374,6 @@ export default function TripDetail() {
                  </Button>
                </div>
                <TripMap locations={currentDay?.slots || []} />
-            </TabsContent>
-
-            <TabsContent value="ar" className="flex-1 mt-0 relative bg-black overflow-hidden">
-              {isPremium ? (
-                <ARNavigation slots={currentDay?.slots || []} />
-              ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 space-y-6">
-                  <div className="w-20 h-20 bg-accent/20 rounded-full flex items-center justify-center animate-pulse">
-                    <Scan className="w-10 h-10 text-accent" />
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="text-2xl font-headline font-bold text-white">Unlock AR View</h3>
-                    <p className="text-sm text-muted-foreground">Experience futuristic, high-precision navigation through your camera lens.</p>
-                  </div>
-                  <Button className="bg-accent text-accent-foreground rounded-xl h-12 px-8 font-bold" onClick={() => setIsPlanDialogOpen(true)}>
-                    Upgrade to Premium
-                  </Button>
-                </div>
-              )}
             </TabsContent>
 
             <TabsContent value="budget" className="flex-1 mt-0 p-6 overflow-y-auto space-y-6 scrollbar-hide">

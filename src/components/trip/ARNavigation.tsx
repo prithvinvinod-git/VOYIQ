@@ -4,7 +4,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Navigation, MapPin, AlertCircle, Loader2, Scan } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface Slot {
   lat: number;
@@ -35,9 +35,10 @@ export function ARNavigation({ slots }: ARNavigationProps) {
 
   // Request Camera Permission
   useEffect(() => {
+    let stream: MediaStream | null = null;
     const getCameraPermission = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
+        stream = await navigator.mediaDevices.getUserMedia({ 
           video: { facingMode: 'environment' } 
         });
         setHasCameraPermission(true);
@@ -52,6 +53,12 @@ export function ARNavigation({ slots }: ARNavigationProps) {
       }
     };
     getCameraPermission();
+
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
   }, []);
 
   // Request Geolocation
@@ -71,7 +78,7 @@ export function ARNavigation({ slots }: ARNavigationProps) {
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);
 
-  // Calculate Bearing and Distance
+  // Calculate Bearing and Distance using Spherical Geometry
   useEffect(() => {
     if (!currentPosition || !targetSlot) return;
 
@@ -94,7 +101,7 @@ export function ARNavigation({ slots }: ARNavigationProps) {
     const d = R * c;
     setDistance(d);
 
-    // Bearing
+    // Initial Bearing
     const y = Math.sin(Δλ) * Math.cos(φ2);
     const x = Math.cos(φ1) * Math.sin(φ2) -
               Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
@@ -124,13 +131,13 @@ export function ARNavigation({ slots }: ARNavigationProps) {
       />
 
       {/* Permission Overlays */}
-      {!hasCameraPermission && (
+      {!hasCameraPermission && hasCameraPermission !== null && (
         <div className="absolute inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
           <Alert variant="destructive" className="glass-card border-destructive/50">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Hardware Access Required</AlertTitle>
             <AlertDescription>
-              Please enable camera access to initialize the AR exploration HUD.
+              Please enable camera access in your browser settings to initialize the AR exploration HUD.
             </AlertDescription>
           </Alert>
         </div>
@@ -187,15 +194,17 @@ export function ARNavigation({ slots }: ARNavigationProps) {
           {/* Bottom Info Bar */}
           <div className="absolute bottom-10 left-6 right-6 z-10">
             <div className="glass-card bg-black/60 backdrop-blur-xl border-white/10 p-5 rounded-[2rem] space-y-3">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-primary" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Location Identified</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-primary" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Location Identified</span>
+                </div>
+                <div className="flex gap-2">
+                  <Badge className="bg-primary/20 text-primary border-none text-[8px] px-2 py-0.5 uppercase">GPS Active</Badge>
+                  <Badge className="bg-accent/20 text-accent border-none text-[8px] px-2 py-0.5 uppercase">Motion Sync</Badge>
+                </div>
               </div>
               <p className="text-xs font-medium text-white/90">{targetSlot?.location}</p>
-              <div className="flex gap-2 pt-2">
-                <Badge className="bg-primary/20 text-primary border-none text-[8px] px-2 py-0.5 uppercase">GPS Active</Badge>
-                <Badge className="bg-accent/20 text-accent border-none text-[8px] px-2 py-0.5 uppercase">Motion Sync</Badge>
-              </div>
             </div>
           </div>
 

@@ -11,7 +11,8 @@ import {
   Lock, 
   Plane, 
   LayoutDashboard, 
-  Plus 
+  Plus,
+  Scan
 } from "lucide-react";
 import Link from "next/link";
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
@@ -56,12 +57,21 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
 
   const handleCollabClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    setIsMenuOpen(false); // Close the menu immediately to prevent focus lock
-    
+    setIsMenuOpen(false);
     if (!isPremium) {
       setIsPlanDialogOpen(true);
     } else {
       router.push("/collab");
+    }
+  };
+
+  const handleARClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsMenuOpen(false);
+    if (!isPremium) {
+      setIsPlanDialogOpen(true);
+    } else {
+      router.push("/ar");
     }
   };
 
@@ -99,6 +109,14 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
                 onClick={handleCollabClick}
               >
                 <Users className="w-3.5 h-3.5" /> Collab Hub {!isPremium && <Lock className="w-2.5 h-2.5 ml-0.5 opacity-50" />}
+              </Button>
+
+              <Button 
+                variant="ghost" 
+                className={`gap-2 text-[10px] font-bold uppercase tracking-widest h-9 ${isPremium ? 'text-primary hover:bg-primary/10' : 'text-muted-foreground hover:bg-white/10 hover:text-white'}`}
+                onClick={handleARClick}
+              >
+                <Scan className="w-3.5 h-3.5" /> AR HUD {!isPremium && <Lock className="w-2.5 h-2.5 ml-0.5 opacity-50" />}
               </Button>
             </div>
           </div>
@@ -139,6 +157,13 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
                 onClick={handleCollabClick}
               >
                 <Users className="mr-2 w-4 h-4" /> Collab Hub {!isPremium && <Lock className="w-3 h-3 ml-auto opacity-50" />}
+              </DropdownMenuItem>
+
+              <DropdownMenuItem 
+                className="cursor-pointer" 
+                onClick={handleARClick}
+              >
+                <Scan className="mr-2 w-4 h-4" /> AR HUD {!isPremium && <Lock className="w-3 h-3 ml-auto opacity-50" />}
               </DropdownMenuItem>
               
               <DropdownMenuSeparator className="bg-white/5" />
