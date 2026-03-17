@@ -6,6 +6,7 @@ import { Navigation, MapPin, AlertCircle, Loader2, Scan, Camera, ShieldCheck, XC
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { firebaseConfig } from "@/firebase/config";
 
 interface Slot {
   lat: number;
@@ -53,7 +54,14 @@ export function ARNavigation({ slots }: ARNavigationProps) {
       return;
     }
 
-    // Check if script already exists
+    // Use the Firebase API key as a fallback for Maps
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || firebaseConfig.apiKey || '';
+    
+    if (!apiKey) {
+      setPermissionError("Google Maps API Key missing. Please check your configuration.");
+      return;
+    }
+
     const existingScript = document.getElementById('google-maps-api');
     if (existingScript) {
       const checkInterval = setInterval(() => {
@@ -67,7 +75,6 @@ export function ARNavigation({ slots }: ARNavigationProps) {
 
     const script = document.createElement('script');
     script.id = 'google-maps-api';
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry,places`;
     script.async = true;
     script.defer = true;
@@ -128,7 +135,10 @@ export function ARNavigation({ slots }: ARNavigationProps) {
 
       setIsSystemActive(true);
     } catch (error: any) {
-      setPermissionError(error.message || "Initialization failed.");
+      const msg = error.name === 'NotAllowedError' 
+        ? "Permission Denied: Chrome has blocked camera access. Reset permissions via the 'Lock' icon in your address bar." 
+        : error.message || "Initialization failed.";
+      setPermissionError(msg);
       setHasCameraPermission(false);
     } finally {
       setIsInitializing(false);
@@ -139,45 +149,50 @@ export function ARNavigation({ slots }: ARNavigationProps) {
   useEffect(() => {
     if (!isSystemActive || !currentPosition || !targetSlot || !isMapsLoaded || !window.google || !window.google.maps) return;
 
-    const directionsService = new window.google.maps.DirectionsService();
-    const streetViewService = new window.google.maps.StreetViewService();
+    try {
+      const directionsService = new window.google.maps.DirectionsService();
+      
+      directionsService.route(
+        {
+          origin: new window.google.maps.LatLng(currentPosition.coords.latitude, currentPosition.coords.longitude),
+          destination: new window.google.maps.LatLng(targetSlot.lat, targetSlot.lng),
+          travelMode: window.google.maps.TravelMode.WALKING,
+        },
+        (result: any, status: string) => {
+          if (status === 'OK' && result.routes[0]) {
+            const leg = result.routes[0].legs[0];
+            const firstStep = leg.steps[0];
+            
+            setNextInstruction(firstStep.instructions.replace(/<[^>]*>?/gm, ''));
+            setDistance(leg.distance.value);
 
-    directionsService.route(
-      {
-        origin: new window.google.maps.LatLng(currentPosition.coords.latitude, currentPosition.coords.longitude),
-        destination: new window.google.maps.LatLng(targetSlot.lat, targetSlot.lng),
-        travelMode: window.google.maps.TravelMode.WALKING,
-      },
-      (result: any, status: string) => {
-        if (status === 'OK' && result.routes[0]) {
-          const leg = result.routes[0].legs[0];
-          const firstStep = leg.steps[0];
-          
-          setNextInstruction(firstStep.instructions.replace(/<[^>]*>?/gm, ''));
-          setDistance(leg.distance.value);
-
-          // Update Street View Preview safely
-          if (streetViewRef.current) {
-            const previewPoint = leg.steps.length > 1 ? leg.steps[1].start_location : leg.end_location;
-            try {
-              new window.google.maps.StreetViewPanorama(streetViewRef.current, {
-                position: previewPoint,
-                addressControl: false,
-                linksControl: false,
-                panControl: false,
-                enableCloseButton: false,
-                zoomControl: false,
-                scrollwheel: false,
-                disableDefaultUI: true,
-                clickToGo: false,
-              });
-            } catch (svErr) {
-              console.warn("StreetView init failed:", svErr);
+            // Update Street View Preview safely
+            if (streetViewRef.current) {
+              const previewPoint = leg.steps.length > 1 ? leg.steps[1].start_location : leg.end_location;
+              try {
+                new window.google.maps.StreetViewPanorama(streetViewRef.current, {
+                  position: previewPoint,
+                  addressControl: false,
+                  linksControl: false,
+                  panControl: false,
+                  enableCloseButton: false,
+                  zoomControl: false,
+                  scrollwheel: false,
+                  disableDefaultUI: true,
+                  clickToGo: false,
+                });
+              } catch (svErr) {
+                console.warn("StreetView init failed:", svErr);
+              }
             }
+          } else {
+            console.warn("Directions request failed with status:", status);
           }
         }
-      }
-    );
+      );
+    } catch (e) {
+      console.error("Directions Service Error:", e);
+    }
   }, [currentPosition, targetSlot, isSystemActive, isMapsLoaded]);
 
   // Calculate Bearing for the Arrow
@@ -217,7 +232,7 @@ export function ARNavigation({ slots }: ARNavigationProps) {
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-black">
-      {/* 1. Live Camera Feed - Always present to avoid re-mounting issues */}
+      {/* 1. Live Camera Feed */}
       <video 
         ref={videoRef} 
         className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${isSystemActive ? 'opacity-100' : 'opacity-0'}`}
@@ -243,7 +258,7 @@ export function ARNavigation({ slots }: ARNavigationProps) {
             ) : !isMapsLoaded ? (
               <span className="flex items-center gap-2">Connecting APIs... <Loader2 className="w-3 h-3 animate-spin" /></span>
             ) : (
-              <><Zap className="w-5 h-5" /> Initialize Sensors</>
+              <><Zap className="w-5 h-5" /> Start AR Systems</>
             )}
           </Button>
         </div>
