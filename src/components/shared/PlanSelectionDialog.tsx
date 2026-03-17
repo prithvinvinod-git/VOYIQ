@@ -209,7 +209,7 @@ export function PlanSelectionDialog({ trigger, onSelectFree, tripCount = 0, open
                     <div className="flex gap-2">
                       <Input 
                         id="promo"
-                        placeholder="code: coet" 
+                        placeholder="use: coet" 
                         className="h-11 bg-white/10 border-white/10 text-center font-mono tracking-widest focus:ring-accent"
                         value={promoCode}
                         onChange={(e) => setPromoCode(e.target.value)}
