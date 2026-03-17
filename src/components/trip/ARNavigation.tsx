@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Navigation, MapPin, AlertCircle, Loader2, Scan, Camera, ShieldCheck, XCircle, Zap } from "lucide-react";
+import { Navigation, MapPin, AlertCircle, Loader2, Scan, Camera, ShieldCheck, XCircle, Zap, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,30 +43,29 @@ export function ARNavigation({ slots }: ARNavigationProps) {
 
     try {
       // 1. Check for basic support
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      if (typeof window === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error("Camera API is not supported in this browser or context (requires HTTPS).");
       }
 
-      // 2. Request Camera - This triggers the browser popup
-      // We do this first because it's the most common failure point
+      // 2. Request Camera - This triggers the browser native popup
+      // This MUST be called directly from the user click handler to work in Chrome/Safari
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
+        video: { 
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
       });
       
       setHasCameraPermission(true);
       
-      // Crucial: Set the stream to the video ref immediately
+      // Attach stream to video ref
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        // Attempt to play immediately
-        try {
-          await videoRef.current.play();
-        } catch (e) {
-          console.warn("Autoplay was prevented:", e);
-        }
+        await videoRef.current.play().catch(e => console.warn("Video play failed:", e));
       }
 
-      // 3. Request Geolocation - This triggers the second browser popup
+      // 3. Request Geolocation - This triggers the second browser native popup
       if (!navigator.geolocation) {
         throw new Error("Geolocation is not supported by your browser");
       }
@@ -84,7 +83,7 @@ export function ARNavigation({ slots }: ARNavigationProps) {
             if (err.code === err.TIMEOUT) msg = "Location request timed out.";
             reject(new Error(msg));
           },
-          { enableHighAccuracy: true, timeout: 10000 }
+          { enableHighAccuracy: true, timeout: 15000 }
         );
       });
 
@@ -93,10 +92,12 @@ export function ARNavigation({ slots }: ARNavigationProps) {
       console.error('AR Initialization Error:', error);
       
       let friendlyMessage = error.message;
-      if (error.name === 'NotAllowedError') {
-        friendlyMessage = "Permission denied by browser. Please click the camera/location icon in your address bar to reset permissions.";
-      } else if (error.name === 'NotFoundError') {
-        friendlyMessage = "No camera found on this device.";
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        friendlyMessage = "Browser Blocked: Permission was previously denied or blocked. Please click the 'Lock' icon next to the URL in your address bar and reset Camera/Location permissions.";
+      } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+        friendlyMessage = "Hardware Not Found: No camera was detected on this device.";
+      } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+        friendlyMessage = "Hardware Busy: The camera is being used by another application.";
       }
 
       setPermissionError(friendlyMessage);
@@ -112,7 +113,7 @@ export function ARNavigation({ slots }: ARNavigationProps) {
 
     const watchId = navigator.geolocation.watchPosition(
       (pos) => setCurrentPosition(pos),
-      (err) => console.error('Watch error:', err),
+      (err) => console.error('Geolocation watch error:', err),
       { enableHighAccuracy: true }
     );
 
@@ -128,6 +129,7 @@ export function ARNavigation({ slots }: ARNavigationProps) {
     const lat2 = targetSlot.lat;
     const lon2 = targetSlot.lng;
 
+    // Haversine formula
     const R = 6371e3; // metres
     const φ1 = (lat1 * Math.PI) / 180;
     const φ2 = (lat2 * Math.PI) / 180;
@@ -141,6 +143,7 @@ export function ARNavigation({ slots }: ARNavigationProps) {
     const d = R * c;
     setDistance(d);
 
+    // Bearing formula
     const y = Math.sin(Δλ) * Math.cos(φ2);
     const x = Math.cos(φ1) * Math.sin(φ2) -
               Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
@@ -162,8 +165,8 @@ export function ARNavigation({ slots }: ARNavigationProps) {
   return (
     <div className="relative h-full w-full overflow-hidden bg-black">
       {/* 
-          IMPORTANT: The video element is ALWAYS rendered in the DOM.
-          This ensures videoRef.current is available immediately when requestPermissions is called.
+          Video element is always present to receive the stream immediately 
+          when requestPermissions is triggered by the user gesture.
       */}
       <video 
         ref={videoRef} 
@@ -173,7 +176,7 @@ export function ARNavigation({ slots }: ARNavigationProps) {
         playsInline 
       />
 
-      {/* OVERLAY: Initial Splash / Request Permissions */}
+      {/* INITIAL STATE: Ask for sensors */}
       {!isSystemActive && !permissionError && (
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black text-white p-8 space-y-8 animate-in fade-in">
           <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(0,212,184,0.1)] relative">
@@ -181,35 +184,35 @@ export function ARNavigation({ slots }: ARNavigationProps) {
             <div className="absolute inset-0 border-2 border-primary/20 rounded-full animate-ping" />
           </div>
           <div className="text-center space-y-4 max-w-xs">
-            <h3 className="text-2xl font-headline font-bold">Initialize HUD</h3>
-            <p className="text-sm text-muted-foreground font-medium">Please allow Camera and Location access when prompted by your browser.</p>
+            <h3 className="text-2xl font-headline font-bold">Launch HUD</h3>
+            <p className="text-sm text-muted-foreground font-medium">Click below to trigger browser permission prompts for Camera and Location.</p>
           </div>
           <Button 
             onClick={requestPermissions} 
             disabled={isInitializing}
-            className="w-full max-w-xs h-14 bg-primary text-primary-foreground font-bold rounded-2xl shadow-xl shadow-primary/20 gap-2"
+            className="w-full max-w-xs h-16 bg-primary text-primary-foreground font-bold rounded-2xl shadow-xl shadow-primary/20 gap-3 text-lg"
           >
             {isInitializing ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Initializing Sensors...
+                Initializing...
               </>
             ) : (
               <>
                 <Zap className="w-5 h-5" />
-                Launch Navigation
+                Start AR Systems
               </>
             )}
           </Button>
         </div>
       )}
 
-      {/* OVERLAY: Error State */}
+      {/* ERROR STATE: Permissions denied or blocked */}
       {permissionError && (
         <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black p-6 text-center space-y-8 animate-in zoom-in-95">
           <XCircle className="w-16 h-16 text-destructive" />
           <div className="space-y-4 max-w-sm">
-            <h2 className="text-2xl font-headline font-bold text-white">System Denied</h2>
+            <h2 className="text-2xl font-headline font-bold text-white">Access Required</h2>
             <p className="text-muted-foreground text-sm">
               VOYIQ requires hardware access to visualize your journey in AR.
             </p>
@@ -221,19 +224,19 @@ export function ARNavigation({ slots }: ARNavigationProps) {
               </AlertDescription>
             </Alert>
             <Button 
-              className="w-full h-12 bg-white/10 text-white hover:bg-white/20 font-bold rounded-xl"
+              className="w-full h-12 bg-white/10 text-white hover:bg-white/20 font-bold rounded-xl gap-2"
               onClick={() => {
                 setPermissionError(null);
                 setIsInitializing(false);
               }}
             >
-              Retry Connection
+              <RefreshCw className="w-4 h-4" /> Retry Connection
             </Button>
           </div>
         </div>
       )}
 
-      {/* AR HUD ELEMENTS (Only visible when active) */}
+      {/* ACTIVE HUD: Sensors online */}
       {isSystemActive && (
         <>
           <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 w-[90%] max-w-sm animate-in slide-in-from-top duration-700">
@@ -243,8 +246,8 @@ export function ARNavigation({ slots }: ARNavigationProps) {
                   <Navigation className="w-5 h-5 text-primary" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[8px] uppercase font-bold text-muted-foreground tracking-widest">Active Target</p>
-                  <p className="text-sm font-bold text-white truncate max-w-[150px]">{targetSlot?.activity || 'Searching...'}</p>
+                  <p className="text-[8px] uppercase font-bold text-muted-foreground tracking-widest">Target Active</p>
+                  <p className="text-sm font-bold text-white truncate max-w-[150px]">{targetSlot?.activity || 'Calculating...'}</p>
                 </div>
               </div>
               <div className="text-right flex-shrink-0">
@@ -256,6 +259,7 @@ export function ARNavigation({ slots }: ARNavigationProps) {
             </div>
           </div>
 
+          {/* COMPASS OVERLAY */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="relative w-64 h-64 border border-primary/20 rounded-full flex items-center justify-center">
               <div className="absolute inset-4 border border-white/5 rounded-full" />
@@ -281,18 +285,18 @@ export function ARNavigation({ slots }: ARNavigationProps) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-primary" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Systems Online</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">HUD Operational</span>
                 </div>
                 <div className="flex gap-2">
                   <Badge className="bg-primary/20 text-primary border-none text-[8px] px-2 py-0.5 uppercase">GPS Lock</Badge>
-                  <Badge className="bg-accent/20 text-accent border-none text-[8px] px-2 py-0.5 uppercase">HUD Active</Badge>
+                  <Badge className="bg-accent/20 text-accent border-none text-[8px] px-2 py-0.5 uppercase">Sensors On</Badge>
                 </div>
               </div>
               <p className="text-xs font-medium text-white/90 truncate">{targetSlot?.location}</p>
             </div>
           </div>
 
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-20">
             <div className="w-full h-[1px] bg-primary/20 absolute animate-[scan_3s_linear_infinite]" />
           </div>
         </>
