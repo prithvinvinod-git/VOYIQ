@@ -21,7 +21,7 @@ interface ARNavigationProps {
 }
 
 declare global {
-  interface Window {
+  interface window {
     google: any;
     initMap: () => void;
   }
@@ -76,7 +76,7 @@ export function ARNavigation({ slots }: ARNavigationProps) {
 
     const script = document.createElement('script');
     script.id = 'google-maps-api';
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry,places`;
+    script.src = `https://maps.googleapis.com/api/js?key=${apiKey}&libraries=geometry,places`;
     script.async = true;
     script.defer = true;
     script.onload = () => setIsMapsLoaded(true);
@@ -182,6 +182,7 @@ export function ARNavigation({ slots }: ARNavigationProps) {
             const firstStep = leg.steps[0];
             
             setNextInstruction(firstStep.instructions.replace(/<[^>]*>?/gm, ''));
+            // Override the approx distance with high-accuracy walking distance
             setDistance(leg.distance.value);
 
             // Update Street View Preview safely
@@ -203,8 +204,8 @@ export function ARNavigation({ slots }: ARNavigationProps) {
                 console.warn("StreetView init failed:", svErr);
               }
             }
-          } else if (status === 'REQUEST_DENIED' || status === 'OVER_QUERY_LIMIT') {
-            setPermissionError("Google Maps Services (Directions/Street View) are not enabled. Please enable them in your Google Cloud Console for this API key.");
+          } else if (status === 'REQUEST_DENIED' || status === 'OVER_QUERY_LIMIT' || status === 'NOT_FOUND') {
+            console.warn("Directions request limited or denied. Falling back to approximate distance.");
           } else {
             console.warn("Directions request failed with status:", status);
           }
@@ -215,7 +216,7 @@ export function ARNavigation({ slots }: ARNavigationProps) {
     }
   }, [currentPosition, targetSlot, isSystemActive, isMapsLoaded]);
 
-  // Calculate Bearing for the Arrow
+  // Calculate Bearing and Immediate Approx Distance (Haversine)
   useEffect(() => {
     if (!currentPosition || !targetSlot) return;
     const lat1 = currentPosition.coords.latitude;
@@ -223,11 +224,30 @@ export function ARNavigation({ slots }: ARNavigationProps) {
     const lat2 = targetSlot.lat;
     const lon2 = targetSlot.lng;
 
+    // 1. Calculate Bearing
     const y = Math.sin((lon2 - lon1) * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180);
     const x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180) -
               Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos((lon2 - lon1) * Math.PI / 180);
     const brng = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
     setBearing(brng);
+
+    // 2. Calculate Approx Distance (Haversine Formula)
+    // This provides an immediate non-zero value while APIs load
+    const R = 6371e3; // Earth radius in metres
+    const φ1 = lat1 * Math.PI/180;
+    const φ2 = lat2 * Math.PI/180;
+    const Δφ = (lat2-lat1) * Math.PI/180;
+    const Δλ = (lon2-lon1) * Math.PI/180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    const d = R * c; // in metres
+    
+    // Only set the approximate distance if we haven't received a precise one yet (prevent 0 flash)
+    setDistance(prev => (prev === 0 ? d : prev));
   }, [currentPosition, targetSlot]);
 
   useEffect(() => {
@@ -316,7 +336,9 @@ export function ARNavigation({ slots }: ARNavigationProps) {
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm font-bold text-accent">{distance > 1000 ? `${(distance/1000).toFixed(1)}km` : `${Math.round(distance)}m`}</p>
+                <p className="text-sm font-bold text-accent">
+                  {distance === 0 ? "..." : distance > 1000 ? `${(distance/1000).toFixed(1)}km` : `${Math.round(distance)}m`}
+                </p>
                 <p className="text-[8px] text-muted-foreground uppercase font-bold">Distance</p>
               </div>
             </div>
