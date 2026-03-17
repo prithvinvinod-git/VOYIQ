@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Navigation, MapPin, AlertCircle, Loader2, Scan, Camera, ShieldCheck, XCircle } from "lucide-react";
+import { Navigation, MapPin, AlertCircle, Loader2, Scan, Camera, ShieldCheck, XCircle, Zap } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,13 +21,14 @@ interface ARNavigationProps {
 
 export function ARNavigation({ slots }: ARNavigationProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [isSystemActive, setIsSystemActive] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [hasLocationPermission, setHasLocationPermission] = useState<boolean | null>(null);
   const [currentPosition, setCurrentPosition] = useState<GeolocationPosition | null>(null);
   const [bearing, setBearing] = useState<number>(0);
   const [distance, setDistance] = useState<number>(0);
   const [targetSlot, setTargetSlot] = useState<Slot | null>(null);
-  const [isInitializing, setIsInitializing] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(false);
   const [permissionError, setPermissionError] = useState<string | null>(null);
 
   // Find the next unchecked slot as the target
@@ -41,7 +42,7 @@ export function ARNavigation({ slots }: ARNavigationProps) {
     setPermissionError(null);
 
     try {
-      // 1. Request Camera
+      // 1. Request Camera - This triggers the browser popup
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { facingMode: 'environment' } 
       });
@@ -50,17 +51,18 @@ export function ARNavigation({ slots }: ARNavigationProps) {
         videoRef.current.srcObject = stream;
       }
 
-      // 2. Request Geolocation
+      // 2. Request Geolocation - This triggers the browser popup
       if (!navigator.geolocation) {
         throw new Error("Geolocation is not supported by your browser");
       }
 
-      return new Promise<void>((resolve, reject) => {
+      await new Promise<void>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             setCurrentPosition(pos);
             setHasLocationPermission(true);
             setIsInitializing(false);
+            setIsSystemActive(true);
             resolve();
           },
           (err) => {
@@ -69,31 +71,20 @@ export function ARNavigation({ slots }: ARNavigationProps) {
             setIsInitializing(false);
             reject(err);
           },
-          { enableHighAccuracy: true, timeout: 5000 }
+          { enableHighAccuracy: true, timeout: 10000 }
         );
       });
     } catch (error: any) {
       console.error('Permission error:', error);
       setHasCameraPermission(false);
-      setPermissionError(error.message || "Camera access denied. Please check your permissions.");
+      setPermissionError(error.message || "Access denied. Please check your browser settings.");
       setIsInitializing(false);
     }
   };
 
-  useEffect(() => {
-    requestPermissions();
-
-    return () => {
-      if (videoRef.current?.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
-        stream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, []);
-
   // Continuous Position Tracking
   useEffect(() => {
-    if (!hasLocationPermission) return;
+    if (!hasLocationPermission || !isSystemActive) return;
 
     const watchId = navigator.geolocation.watchPosition(
       (pos) => setCurrentPosition(pos),
@@ -102,7 +93,7 @@ export function ARNavigation({ slots }: ARNavigationProps) {
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [hasLocationPermission]);
+  }, [hasLocationPermission, isSystemActive]);
 
   // Calculate Bearing and Distance
   useEffect(() => {
@@ -134,13 +125,51 @@ export function ARNavigation({ slots }: ARNavigationProps) {
     setBearing(brng);
   }, [currentPosition, targetSlot]);
 
-  if (isInitializing) {
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (videoRef.current?.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
+
+  if (!isSystemActive && !permissionError) {
     return (
-      <div className="h-full flex flex-col items-center justify-center bg-black text-white p-8 space-y-6">
-        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        <div className="text-center space-y-2">
-          <h3 className="text-xl font-headline font-bold">Initializing HUD...</h3>
-          <p className="text-xs text-muted-foreground uppercase tracking-widest">Checking hardware & sensor integrity</p>
+      <div className="h-full flex flex-col items-center justify-center bg-black text-white p-8 space-y-8">
+        <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(0,212,184,0.1)] relative">
+          <Scan className="w-12 h-12 text-primary" />
+          <div className="absolute inset-0 border-2 border-primary/20 rounded-full animate-ping" />
+        </div>
+        <div className="text-center space-y-4 max-w-xs">
+          <h3 className="text-2xl font-headline font-bold">Launch HUD</h3>
+          <p className="text-sm text-muted-foreground font-medium">Initialize high-precision AR tracking systems for your journey.</p>
+        </div>
+        <Button 
+          onClick={requestPermissions} 
+          disabled={isInitializing}
+          className="w-full max-w-xs h-14 bg-primary text-primary-foreground font-bold rounded-2xl shadow-xl shadow-primary/20 gap-2"
+        >
+          {isInitializing ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Checking Sensors...
+            </>
+          ) : (
+            <>
+              <Zap className="w-5 h-5" />
+              Initialize HUD Systems
+            </>
+          )}
+        </Button>
+        <div className="grid grid-cols-2 gap-4 w-full max-w-xs">
+          <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase">
+            <Camera className="w-3 h-3" /> Camera Ready
+          </div>
+          <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase">
+            <MapPin className="w-3 h-3" /> GPS Ready
+          </div>
         </div>
       </div>
     );
@@ -149,25 +178,27 @@ export function ARNavigation({ slots }: ARNavigationProps) {
   if (permissionError) {
     return (
       <div className="h-full flex flex-col items-center justify-center bg-black p-6 text-center space-y-8">
-        <XCircle className="w-16 h-16 text-destructive animate-pulse" />
+        <XCircle className="w-16 h-16 text-destructive" />
         <div className="space-y-4 max-w-sm">
-          <h2 className="text-2xl font-headline font-bold text-white">Access Denied</h2>
+          <h2 className="text-2xl font-headline font-bold text-white">System Error</h2>
           <p className="text-muted-foreground text-sm">
-            The AR HUD requires camera and high-accuracy GPS permissions to visualize your journey.
+            Permission denied. VOYIQ requires Camera and GPS access to visualize your journey in AR.
           </p>
           <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-left">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Required Systems</AlertTitle>
+            <AlertTitle>Diagnostics</AlertTitle>
             <AlertDescription className="text-xs">
-              - Camera (Visual HUD)<br/>
-              - Location (High-Accuracy GPS)
+              {permissionError}
             </AlertDescription>
           </Alert>
           <Button 
-            className="w-full h-12 bg-primary text-primary-foreground font-bold"
-            onClick={() => window.location.reload()}
+            className="w-full h-12 bg-white/10 text-white hover:bg-white/20 font-bold rounded-xl"
+            onClick={() => {
+              setPermissionError(null);
+              setIsInitializing(false);
+            }}
           >
-            Retry Permission Request
+            Try Again
           </Button>
         </div>
       </div>
@@ -176,6 +207,7 @@ export function ARNavigation({ slots }: ARNavigationProps) {
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-black">
+      {/* Video element is always present to avoid ref issues */}
       <video 
         ref={videoRef} 
         className="absolute inset-0 w-full h-full object-cover" 
@@ -229,12 +261,12 @@ export function ARNavigation({ slots }: ARNavigationProps) {
         <div className="glass-card bg-black/60 backdrop-blur-xl border-white/10 p-5 rounded-[2rem] space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-primary" />
-              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Location Identified</span>
+              <ShieldCheck className="w-4 h-4 text-primary" />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Systems Online</span>
             </div>
             <div className="flex gap-2">
-              <Badge className="bg-primary/20 text-primary border-none text-[8px] px-2 py-0.5 uppercase">GPS Active</Badge>
-              <Badge className="bg-accent/20 text-accent border-none text-[8px] px-2 py-0.5 uppercase">Motion Sync</Badge>
+              <Badge className="bg-primary/20 text-primary border-none text-[8px] px-2 py-0.5 uppercase">GPS Lock</Badge>
+              <Badge className="bg-accent/20 text-accent border-none text-[8px] px-2 py-0.5 uppercase">HUD Active</Badge>
             </div>
           </div>
           <p className="text-xs font-medium text-white/90 truncate">{targetSlot?.location}</p>
