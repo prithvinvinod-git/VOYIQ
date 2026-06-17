@@ -12,6 +12,21 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { BackgroundGradientAnimation } from "@/components/ui/background-gradient-animation";
+import { CardStack, type CardStackItem } from "@/components/ui/card-stack";
+import { LiquidButton } from "@/components/ui/liquid-glass-button";
+import { LumaSpin } from "@/components/ui/luma-spin";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverDescription,
+  PopoverBody,
+  PopoverFooter,
+} from "@/components/ui/popover";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Sparkles,
   MapPin,
@@ -40,6 +55,9 @@ import {
   Map,
   Coins,
   Mail,
+  Settings,
+  LogOut,
+  LayoutDashboard,
 } from "lucide-react";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -587,6 +605,52 @@ export default function LandingPage() {
     return () => clearInterval(timer);
   }, [testimonials.length]);
 
+  /* ── Famous Destinations (CardStack) ── */
+  const destinations: CardStackItem[] = useMemo(() => [
+    {
+      id: 1,
+      title: "Santorini, Greece",
+      description: "Iconic whitewashed villages cascading down volcanic cliffs above the Aegean.",
+      imageSrc: "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=800&q=80",
+      tag: "Island Escape",
+    },
+    {
+      id: 2,
+      title: "Kyoto, Japan",
+      description: "Ancient temples, bamboo groves, and seasonal cherry blossoms in harmony.",
+      imageSrc: "https://images.unsplash.com/photo-1492571350019-22de08371fd3?w=800&q=80",
+      tag: "Cultural Journey",
+    },
+    {
+      id: 3,
+      title: "Machu Picchu, Peru",
+      description: "Lost Incan citadel perched high in the Andes, a UNESCO World Heritage marvel.",
+      imageSrc: "https://images.unsplash.com/photo-1526392060635-9d6019884377?w=800&q=80",
+      tag: "Adventure",
+    },
+    {
+      id: 4,
+      title: "Amalfi Coast, Italy",
+      description: "Dramatic cliffside villages, azure waters, and world-class Italian cuisine.",
+      imageSrc: "https://images.unsplash.com/photo-1533605788862-af5a2bbfa5e5?w=800&q=80",
+      tag: "Luxury",
+    },
+    {
+      id: 5,
+      title: "Bali, Indonesia",
+      description: "Lush terraced rice fields, sacred temples, and vibrant spiritual culture.",
+      imageSrc: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&q=80",
+      tag: "Tropical",
+    },
+    {
+      id: 6,
+      title: "Dubai, UAE",
+      description: "Futuristic skyline meets golden desert sands and world-record landmarks.",
+      imageSrc: "https://images.unsplash.com/photo-1518684079-3c830dcef090?w=800&q=80",
+      tag: "Luxury",
+    },
+  ], []);
+
   return (
     <div className="flex flex-col min-h-dvh overflow-x-hidden">
       {/* ── SCROLL PROGRESS ─────────────────────────────────────────── */}
@@ -643,22 +707,79 @@ export default function LandingPage() {
 
           {/* CTA cluster */}
           <div className="flex items-center gap-3">
-            <Link href={user ? "/dashboard" : "/auth"}>
-              <Button
-                variant="ghost"
-                className="hidden sm:inline-flex text-muted-foreground hover:text-white hover:bg-white/8 rounded-full px-5"
-              >
-                {user ? "Dashboard" : "Sign In"}
-              </Button>
-            </Link>
+            {/* Profile dropdown for signed-in users; Sign In button for guests */}
+            {user ? (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    className="h-9 w-9 rounded-full overflow-hidden border-2 transition-all hover:border-primary/60"
+                    style={{ border: "2px solid rgba(99,102,241,0.35)" }}
+                    aria-label="Open profile menu"
+                  >
+                    <Avatar className="h-full w-full">
+                      <AvatarImage src={user.photoURL || ""} alt={user.displayName || "User"} />
+                      <AvatarFallback className="text-xs font-bold" style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)", color: "white" }}>
+                        {(user.displayName || user.email || "U").slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-60">
+                  <PopoverHeader>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={user.photoURL || ""} alt={user.displayName || "User"} />
+                        <AvatarFallback className="text-xs font-bold" style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)", color: "white" }}>
+                          {(user.displayName || user.email || "U").slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <PopoverTitle>{user.displayName || "Explorer"}</PopoverTitle>
+                        <PopoverDescription className="truncate">{user.email}</PopoverDescription>
+                      </div>
+                    </div>
+                  </PopoverHeader>
+                  <PopoverBody className="space-y-0.5">
+                    <Link href="/dashboard">
+                      <button className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors text-left">
+                        <LayoutDashboard className="w-4 h-4 text-primary" aria-hidden="true" />
+                        Dashboard
+                      </button>
+                    </Link>
+                    <Link href="/settings">
+                      <button className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors text-left">
+                        <Settings className="w-4 h-4" aria-hidden="true" />
+                        Settings
+                      </button>
+                    </Link>
+                  </PopoverBody>
+                  <PopoverFooter>
+                    <button
+                      onClick={() => router.push("/auth")}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-red-400 hover:text-red-300 hover:bg-red-500/8 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" aria-hidden="true" />
+                      Sign Out
+                    </button>
+                  </PopoverFooter>
+                </PopoverContent>
+              </Popover>
+            ) : (
+              <Link href="/auth">
+                <Button
+                  variant="ghost"
+                  className="hidden sm:inline-flex text-muted-foreground hover:text-white hover:bg-white/8 rounded-full px-5"
+                >
+                  Sign In
+                </Button>
+              </Link>
+            )}
             <Button
               onClick={handleProceed}
               className="btn-shimmer rounded-full px-6 font-bold text-white"
               style={{
-                background:
-                  "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)",
-                boxShadow:
-                  "0 0 28px rgba(99,102,241,0.4), inset 0 1px 0 rgba(255,255,255,0.2)",
+                background: "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)",
+                boxShadow: "0 0 28px rgba(99,102,241,0.4), inset 0 1px 0 rgba(255,255,255,0.2)",
               }}
             >
               {user ? "Plan Adventure" : "Get Started"}
@@ -777,20 +898,22 @@ export default function LandingPage() {
             className="reveal reveal-up flex flex-col sm:flex-row items-center justify-center gap-4"
             style={{ transitionDelay: "0.36s" }}
           >
-            <Button
-              size="lg"
+            <LiquidButton
+              size="xxl"
+              variant="aurora"
               onClick={handleProceed}
-              className="btn-shimmer magnetic-btn h-16 px-12 text-lg rounded-full font-bold text-white relative"
+              className="magnetic-btn text-lg font-bold"
               style={{
-                background:
-                  "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)",
-                boxShadow:
-                  "0 0 48px rgba(99,102,241,0.45), 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.22)",
-              }}
+                background: "linear-gradient(135deg, rgba(99,102,241,0.25) 0%, rgba(139,92,246,0.2) 100%)",
+                color: "white",
+                backdropFilter: "blur(20px)",
+                border: "1px solid rgba(99,102,241,0.4)",
+                boxShadow: "0 0 48px rgba(99,102,241,0.3), 0 8px 32px rgba(0,0,0,0.3)",
+              } as React.CSSProperties}
             >
               Begin Your Journey
               <ArrowRight className="ml-2 w-5 h-5" aria-hidden="true" />
-            </Button>
+            </LiquidButton>
             <Link href="/auth">
               <Button
                 variant="outline"
@@ -974,6 +1097,72 @@ export default function LandingPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════
+          FAMOUS DESTINATIONS — CardStack
+          ══════════════════════════════════════════════════════════════ */}
+      <section
+        className="py-24 relative overflow-hidden"
+        aria-label="Famous travel destinations"
+      >
+        <div
+          className="absolute inset-0"
+          style={{
+            background: "radial-gradient(ellipse 70% 60% at 50% 50%, rgba(99,102,241,0.07) 0%, transparent 70%)",
+            borderTop: "1px solid rgba(255,255,255,0.04)",
+          }}
+          aria-hidden="true"
+        />
+        <Orb size={400} color="violet" style={{ top: "10%", left: "-5%", opacity: 0.28 }} animDelay="-4s" />
+        <Orb size={300} color="emerald" style={{ bottom: "10%", right: "-5%", opacity: 0.22 }} animDelay="-8s" />
+
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <Badge
+              className="mb-5 px-4 py-1.5 text-xs uppercase tracking-widest font-bold inline-flex"
+              style={{
+                background: "rgba(16,185,129,0.12)",
+                border: "1px solid rgba(16,185,129,0.28)",
+                color: "#34D399",
+              }}
+            >
+              Dream Destinations
+            </Badge>
+            <h2 className="text-4xl md:text-5xl font-headline font-bold tracking-tight">
+              The world is{" "}
+              <span className="aurora-text-emerald">waiting for you.</span>
+            </h2>
+            <p className="mt-4 text-lg text-muted-foreground max-w-xl mx-auto">
+              Swipe through iconic destinations and let VOYIQ craft your perfect itinerary.
+            </p>
+          </div>
+
+          <CardStack
+            items={destinations}
+            autoAdvance
+            intervalMs={3200}
+            pauseOnHover
+            showDots
+            cardWidth={540}
+            cardHeight={340}
+            loop
+          />
+
+          <div className="text-center mt-10">
+            <Button
+              onClick={handleProceed}
+              className="rounded-full px-8 font-semibold text-white"
+              style={{
+                background: "linear-gradient(135deg, #10B981, #6366F1)",
+                boxShadow: "0 0 32px rgba(16,185,129,0.3)",
+              }}
+            >
+              Plan a Trip to These Places
+              <ArrowRight className="ml-2 w-4 h-4" aria-hidden="true" />
+            </Button>
           </div>
         </div>
       </section>
