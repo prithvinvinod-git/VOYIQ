@@ -8,6 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { firebaseConfig } from "@/firebase/config";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+declare global {
+  interface Window {
+    google: any;
+  }
+}
+
 interface Slot {
   lat: number;
   lng: number;

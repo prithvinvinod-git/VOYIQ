@@ -6,14 +6,14 @@ export const LumaSpin = ({ className = "" }: { className?: string }) => {
       <span
         className="absolute rounded-[50px]"
         style={{
-          boxShadow: "inset 0 0 0 3px rgba(99,102,241,0.8)",
+          boxShadow: "inset 0 0 0 3px rgba(80,84,200,0.7)",
           animation: "lumaSpin 2.5s infinite",
         }}
       />
       <span
         className="absolute rounded-[50px]"
         style={{
-          boxShadow: "inset 0 0 0 3px rgba(16,185,129,0.8)",
+          boxShadow: "inset 0 0 0 3px rgba(14,155,100,0.7)",
           animation: "lumaSpin 2.5s infinite",
           animationDelay: "-1.25s",
         }}

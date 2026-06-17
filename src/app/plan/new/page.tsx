@@ -34,6 +34,7 @@ import { generatePersonalizedItinerary } from "@/ai/flows/generate-personalized-
 import { Badge } from "@/components/ui/badge";
 import { UserHeader } from "@/components/layout/UserHeader";
 import { PlanSelectionDialog } from "@/components/shared/PlanSelectionDialog";
+import { ProgressiveFluxLoader } from "@/components/ui/progressive-flux-loader";
 import {
   Select,
   SelectContent,
@@ -387,35 +388,45 @@ function TripWizardContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-6 relative overflow-hidden">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-10 relative overflow-hidden px-6">
         {/* Ambient orbs */}
-        <div className="absolute w-96 h-96 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(0,212,184,0.1) 0%, transparent 70%)", filter: "blur(60px)", top: "10%", left: "20%" }} />
-        <div className="absolute w-80 h-80 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(123,97,255,0.08) 0%, transparent 70%)", filter: "blur(60px)", bottom: "10%", right: "20%" }} />
+        <div className="absolute w-[500px] h-[500px] rounded-full pointer-events-none opacity-40"
+          style={{ background: "radial-gradient(circle, rgba(99,102,241,0.35) 0%, transparent 70%)", filter: "blur(80px)", top: "-5%", left: "10%" }} />
+        <div className="absolute w-[400px] h-[400px] rounded-full pointer-events-none opacity-30"
+          style={{ background: "radial-gradient(circle, rgba(139,92,246,0.3) 0%, transparent 70%)", filter: "blur(80px)", bottom: "5%", right: "10%" }} />
 
+        {/* Icon */}
         <div
-          className="w-20 h-20 rounded-3xl flex items-center justify-center mb-2 animate-float-slow"
-          style={{ background: "linear-gradient(135deg, rgba(0,212,184,0.2), rgba(123,97,255,0.1))", border: "1px solid rgba(0,212,184,0.3)", boxShadow: "0 0 40px rgba(0,212,184,0.25)" }}
+          className="w-20 h-20 rounded-3xl flex items-center justify-center animate-float-slow"
+          style={{
+            background: "linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.15))",
+            border: "1px solid rgba(99,102,241,0.35)",
+            boxShadow: "0 0 40px rgba(99,102,241,0.3)",
+          }}
         >
           <Sparkles className="w-9 h-9 text-primary animate-pulse" />
         </div>
-        <h2 className="text-2xl font-headline font-bold text-white">Crafting your journey...</h2>
-        <p className="text-muted-foreground text-sm">Our AI is curating a personalized itinerary.</p>
-        <div className="flex items-center gap-3 mt-4">
-          {["Analysing route", "Optimising budget", "Building itinerary"].map((label, i) => (
-            <div
-              key={label}
-              className="px-4 py-2 rounded-full text-xs font-bold animate-pulse"
-              style={{
-                background: "rgba(0,212,184,0.1)",
-                border: "1px solid rgba(0,212,184,0.2)",
-                color: "#00D4B8",
-                animationDelay: `${i * 0.4}s`,
-              }}
-            >
-              {label}
-            </div>
-          ))}
-        </div>
+
+        {/* Flux loader */}
+        <ProgressiveFluxLoader
+          duration={18}
+          loop={false}
+          showLabel
+          phases={[
+            { at: 0,   label: "Gathering intel..." },
+            { at: 20,  label: "Designing routes..." },
+            { at: 45,  label: "Optimising budget..." },
+            { at: 70,  label: "Curating experiences..." },
+            { at: 90,  label: "Almost ready..." },
+            { at: 100, label: "Ready!" },
+          ]}
+          className="w-full max-w-md"
+          textClassName="text-white"
+        />
+
+        <p className="text-muted-foreground text-sm text-center">
+          Our AI is crafting your personalised itinerary
+        </p>
       </div>
     );
   }
@@ -529,7 +540,7 @@ function TripWizardContent() {
             {/* Chromatic top bar */}
             <div className="h-0.5 w-full" style={{ background: "linear-gradient(90deg, #00D4B8, #7B61FF, #F5A623)" }} />
 
-            <div className="p-8 md:p-10">
+            <div className="p-5 sm:p-8 md:p-10">
               {/* ── STEP 1: Where & When ─────────────────────────────── */}
               {step === 1 && (
                 <div className="space-y-8 animate-fade-in">
@@ -630,7 +641,7 @@ function TripWizardContent() {
 
                   <div className="space-y-3">
                     <Label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.5)" }}>Travel Pace</Label>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       {PACE_OPTIONS.map((p) => (
                         <button
                           key={p.value}

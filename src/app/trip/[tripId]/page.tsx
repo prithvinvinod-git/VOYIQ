@@ -294,32 +294,34 @@ export default function TripDetail() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between md:justify-start gap-3 w-full md:w-auto">
           <span className="text-xs font-bold text-primary">{Math.round(progressValue)}%</span>
-          <Button
-            size="sm"
-            variant="outline"
-            className="rounded-xl gap-2 h-9 font-bold text-xs"
-            style={{ background: "rgba(245,166,35,0.08)", border: "1px solid rgba(245,166,35,0.2)", color: "#F5A623" }}
-            onClick={handleBookFlight}
-          >
-            <Plane className="w-3.5 h-3.5" /> Book Flights
-          </Button>
-          <Button
-            size="sm"
-            className="rounded-xl gap-2 h-9 font-bold text-xs"
-            style={{ background: "rgba(0,212,184,0.12)", border: "1px solid rgba(0,212,184,0.2)", color: "#00D4B8" }}
-            onClick={handleLaunchAR}
-          >
-            <Scan className="w-3.5 h-3.5" /> AR HUD
-          </Button>
+          <div className="flex items-center gap-2 flex-1 md:flex-none justify-end md:justify-start">
+            <Button
+              size="sm"
+              variant="outline"
+              className="rounded-xl gap-1.5 h-9 font-bold text-[10px] sm:text-xs px-2.5 sm:px-3 flex-1 md:flex-none max-w-[140px] md:max-w-none justify-center"
+              style={{ background: "rgba(245,166,35,0.08)", border: "1px solid rgba(245,166,35,0.2)", color: "#F5A623" }}
+              onClick={handleBookFlight}
+            >
+              <Plane className="w-3.5 h-3.5 shrink-0" /> <span className="truncate">Flights</span>
+            </Button>
+            <Button
+              size="sm"
+              className="rounded-xl gap-1.5 h-9 font-bold text-[10px] sm:text-xs px-2.5 sm:px-3 flex-1 md:flex-none max-w-[140px] md:max-w-none justify-center text-white"
+              style={{ background: "rgba(0,212,184,0.12)", border: "1px solid rgba(0,212,184,0.2)", color: "#00D4B8" }}
+              onClick={handleLaunchAR}
+            >
+              <Scan className="w-3.5 h-3.5 shrink-0" /> <span className="truncate">AR HUD</span>
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+      <main className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden">
         {/* Left: itinerary */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 border-r scrollbar-hide" style={{ borderColor: "rgba(255,255,255,0.04)" }}>
+        <div className="flex-1 lg:overflow-y-auto p-4 md:p-6 space-y-6 lg:border-r scrollbar-hide" style={{ borderColor: "rgba(255,255,255,0.04)" }}>
           {/* Day selector */}
           <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
             {itinerary?.map((day) => {
@@ -439,8 +441,8 @@ export default function TripDetail() {
                         >
                           {slot.category}
                         </span>
-                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                          <MapPin className="w-3 h-3" /> {slot.location}
+                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground min-w-0 max-w-full">
+                          <MapPin className="w-3 h-3 shrink-0" /> <span className="truncate">{slot.location}</span>
                         </div>
                       </div>
                     </div>
@@ -470,7 +472,7 @@ export default function TripDetail() {
             </TabsList>
 
             {/* Map tab */}
-            <TabsContent value="map" className="flex-1 mt-0 relative mx-4 mb-4 rounded-2xl overflow-hidden">
+            <TabsContent value="map" className="flex-1 h-[450px] lg:h-auto mt-0 relative mx-4 mb-4 rounded-2xl overflow-hidden">
               <div className="absolute top-3 right-3 z-10">
                 <Button
                   size="sm"

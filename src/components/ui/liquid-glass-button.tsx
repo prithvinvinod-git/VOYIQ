@@ -93,9 +93,9 @@ function LiquidButton({
           inset_-3px_-3px_0.5px_-3px_rgba(255,255,255,0.1),
           inset_1px_1px_1px_-0.5px_rgba(255,255,255,0.25),
           inset_-1px_-1px_1px_-0.5px_rgba(255,255,255,0.15),
-          inset_0_0_6px_6px_rgba(99,102,241,0.08),
-          inset_0_0_2px_2px_rgba(139,92,246,0.06),
-          0_0_20px_rgba(99,102,241,0.2)]"
+          inset_0_0_6px_6px_rgba(80,84,200,0.05),
+          inset_0_0_2px_2px_rgba(110,72,210,0.04),
+          0_0_12px_rgba(80,84,200,0.12)]"
       />
       {/* Backdrop distortion */}
       <div

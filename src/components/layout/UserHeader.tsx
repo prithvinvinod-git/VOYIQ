@@ -13,6 +13,8 @@ import {
   LayoutDashboard,
   Plus,
   Scan,
+  Home,
+  Menu,
 } from "lucide-react";
 import Link from "next/link";
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
@@ -28,6 +30,13 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { PlanSelectionDialog } from "@/components/shared/PlanSelectionDialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 interface UserHeaderProps {
   showBack?: boolean;
@@ -113,10 +122,28 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
 
           {/* Desktop nav links */}
           <div className="hidden md:flex items-center gap-1 ml-4">
+            <Link href="/">
+              <Button
+                variant="ghost"
+                className="gap-2 text-[10px] font-bold uppercase tracking-widest hover:text-primary h-9 rounded-lg text-slate-300"
+              >
+                <Home className="w-3.5 h-3.5" /> Home
+              </Button>
+            </Link>
+
+            <Link href="/dashboard">
+              <Button
+                variant="ghost"
+                className="gap-2 text-[10px] font-bold uppercase tracking-widest hover:text-primary h-9 rounded-lg text-slate-300"
+              >
+                <LayoutDashboard className="w-3.5 h-3.5" /> Dashboard
+              </Button>
+            </Link>
+
             <Link href="/plan/new">
               <Button
                 variant="ghost"
-                className="gap-2 text-[10px] font-bold uppercase tracking-widest hover:text-primary h-9 rounded-lg"
+                className="gap-2 text-[10px] font-bold uppercase tracking-widest hover:text-primary h-9 rounded-lg text-slate-300"
               >
                 <Plus className="w-3.5 h-3.5" /> New Trip
               </Button>
@@ -146,7 +173,7 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
           </div>
         </div>
 
-        {/* Right: user avatar dropdown */}
+        {/* Right: user avatar dropdown + mobile hamburger */}
         <div className="flex items-center gap-3">
           <DropdownMenu modal={false} open={isMenuOpen} onOpenChange={setIsMenuOpen}>
             <DropdownMenuTrigger asChild>
@@ -212,6 +239,9 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
               <div className="px-3 py-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">
                 Account
               </div>
+              <DropdownMenuItem className="cursor-pointer rounded-xl" onClick={() => { setIsMenuOpen(false); router.push("/"); }}>
+                <Home className="mr-2 w-4 h-4" /> Home
+              </DropdownMenuItem>
               <DropdownMenuItem className="cursor-pointer rounded-xl" onClick={() => { setIsMenuOpen(false); router.push("/dashboard"); }}>
                 <LayoutDashboard className="mr-2 w-4 h-4" /> Dashboard
               </DropdownMenuItem>
@@ -235,6 +265,126 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* Mobile hamburger navigation drawer */}
+          <div className="flex md:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-white rounded-xl h-9 w-9 flex items-center justify-center"
+                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
+                >
+                  <Menu className="w-5 h-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent
+                side="right"
+                className="w-72 border-l"
+                style={{
+                  background: "rgba(10,14,30,0.98)",
+                  backdropFilter: "blur(20px)",
+                  borderColor: "rgba(255,255,255,0.1)",
+                  boxShadow: "-10px 0 40px rgba(0,0,0,0.5)",
+                }}
+              >
+                <div className="h-full flex flex-col justify-between pt-6 pb-4">
+                  <div className="space-y-6">
+                    <SheetHeader className="text-left">
+                      <SheetTitle className="text-xl font-headline font-bold text-white flex items-center gap-2">
+                        <Compass className="text-primary w-5 h-5" /> VOYIQ
+                      </SheetTitle>
+                    </SheetHeader>
+
+                    {/* User profile section inside sheet */}
+                    {user && (
+                      <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden relative border border-primary/30">
+                          {user.photoURL ? (
+                            <Image src={user.photoURL} alt="Avatar" width={40} height={40} className="object-cover" />
+                          ) : (
+                            <span className="text-xs font-bold text-white uppercase">
+                              {user.displayName?.[0] || userData?.name?.[0] || "U"}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-xs font-bold text-white truncate">
+                            {user.displayName || userData?.name || "Explorer"}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground truncate">{user.email}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Navigation links */}
+                    <div className="flex flex-col gap-2">
+                      <Link href="/" className="w-full">
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start gap-3 h-12 rounded-xl text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-white hover:bg-white/5"
+                        >
+                          <Home className="w-4 h-4 text-slate-400" /> Home
+                        </Button>
+                      </Link>
+
+                      <Link href="/dashboard" className="w-full">
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start gap-3 h-12 rounded-xl text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-white hover:bg-white/5"
+                        >
+                          <LayoutDashboard className="w-4 h-4 text-indigo-400" /> Dashboard
+                        </Button>
+                      </Link>
+
+                      <Link href="/plan/new" className="w-full">
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start gap-3 h-12 rounded-xl text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-white hover:bg-white/5"
+                        >
+                          <Plus className="w-4 h-4 text-emerald-400" /> New Trip
+                        </Button>
+                      </Link>
+
+                      <Button
+                        variant="ghost"
+                        className={`w-full justify-start gap-3 h-12 rounded-xl text-xs font-bold uppercase tracking-wider ${
+                          isPremium ? "text-accent hover:bg-accent/10" : "text-muted-foreground hover:bg-white/5 hover:text-white"
+                        }`}
+                        onClick={handleCollabClick}
+                      >
+                        <Users className="w-4 h-4 text-violet-400" /> Collab Hub
+                        {!isPremium && <Lock className="w-3 h-3 ml-auto opacity-40" />}
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        className={`w-full justify-start gap-3 h-12 rounded-xl text-xs font-bold uppercase tracking-wider ${
+                          isPremium ? "text-primary hover:bg-primary/10" : "text-muted-foreground hover:bg-white/5 hover:text-white"
+                        }`}
+                        onClick={handleARClick}
+                      >
+                        <Scan className="w-4 h-4 text-cyan-400" /> AR HUD
+                        {!isPremium && <Lock className="w-3 h-3 ml-auto opacity-40" />}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Logout button at bottom of mobile sheet */}
+                  {user && (
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start gap-3 h-12 rounded-xl text-xs font-bold uppercase tracking-wider text-destructive hover:bg-destructive/10"
+                      onClick={handleLogout}
+                    >
+                      <LogOut className="w-4 h-4" /> Sign Out
+                    </Button>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </div>
 

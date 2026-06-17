@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BackgroundGradientAnimation } from "@/components/ui/background-gradient-animation";
+import { PixelHero } from "@/components/ui/pixel-perfect-hero";
 import { CardStack, type CardStackItem } from "@/components/ui/card-stack";
 import { LiquidButton } from "@/components/ui/liquid-glass-button";
 import { LumaSpin } from "@/components/ui/luma-spin";
@@ -75,10 +76,10 @@ import {
   useScrollRevealContainer,
 } from "@/hooks/useScrollReveal";
 
-/* ══════════════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    SCROLL PROGRESS BAR
-   SKILL.md §3: Performance — debounce-throttle on scroll events
-   ══════════════════════════════════════════════════════════════════════ */
+   SKILL.md Â§3: Performance â€” debounce-throttle on scroll events
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function ScrollProgressBar() {
   const [progress, setProgress] = useState(0);
 
@@ -109,9 +110,9 @@ function ScrollProgressBar() {
   );
 }
 
-/* ══════════════════════════════════════════════════════════════════════
-   AURORA ORB — decorative background sphere
-   ══════════════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   AURORA ORB â€” decorative background sphere
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function Orb({
   size,
   color,
@@ -124,11 +125,11 @@ function Orb({
   animDelay?: string;
 }) {
   const colorMap = {
-    indigo: "radial-gradient(circle, rgba(99,102,241,0.45) 0%, transparent 70%)",
-    violet: "radial-gradient(circle, rgba(139,92,246,0.4) 0%, transparent 70%)",
-    emerald: "radial-gradient(circle, rgba(16,185,129,0.32) 0%, transparent 70%)",
-    rose: "radial-gradient(circle, rgba(244,114,182,0.3) 0%, transparent 70%)",
-    sky: "radial-gradient(circle, rgba(56,189,248,0.28) 0%, transparent 70%)",
+    indigo: "radial-gradient(circle, rgba(99,102,241,0.22) 0%, transparent 70%)",
+    violet: "radial-gradient(circle, rgba(139,92,246,0.18) 0%, transparent 70%)",
+    emerald: "radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 70%)",
+    rose: "radial-gradient(circle, rgba(244,114,182,0.13) 0%, transparent 70%)",
+    sky: "radial-gradient(circle, rgba(56,189,248,0.12) 0%, transparent 70%)",
   };
   return (
     <div
@@ -148,16 +149,18 @@ function Orb({
   );
 }
 
-/* ══════════════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    MAGNETIC 3D CARD
-   SKILL.md §7: Animation — transform/opacity only, spring-physics feel
-   ══════════════════════════════════════════════════════════════════════ */
+   SKILL.md Â§7: Animation â€” transform/opacity only, spring-physics feel
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function Card3D({
   children,
   className = "",
+  style,
 }: {
   children: React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -188,6 +191,7 @@ function Card3D({
       style={{
         transition: "transform 0.45s cubic-bezier(0.23,1,0.32,1)",
         willChange: "transform",
+        ...style,
       }}
     >
       {children}
@@ -195,10 +199,10 @@ function Card3D({
   );
 }
 
-/* ══════════════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    TYPEWRITER EFFECT
-   SKILL.md §7: Animation — motion conveys meaning, interruptible
-   ══════════════════════════════════════════════════════════════════════ */
+   SKILL.md Â§7: Animation â€” motion conveys meaning, interruptible
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function TypewriterText({
   words,
   className = "",
@@ -260,10 +264,10 @@ function TypewriterText({
   );
 }
 
-/* ══════════════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    ANIMATED COUNTER
-   SKILL.md §7: Animation — stagger + motion conveys meaning
-   ══════════════════════════════════════════════════════════════════════ */
+   SKILL.md Â§7: Animation â€” stagger + motion conveys meaning
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function AnimatedNumber({
   target,
   suffix = "",
@@ -312,9 +316,9 @@ function AnimatedNumber({
   );
 }
 
-/* ══════════════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    WIREFRAME GLOBE (SVG decorative)
-   ══════════════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function WireframeGlobe({ size = 360 }: { size?: number }) {
   return (
     <svg
@@ -355,9 +359,9 @@ function WireframeGlobe({ size = 360 }: { size?: number }) {
   );
 }
 
-/* ══════════════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    MAIN LANDING PAGE
-   ══════════════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 export default function LandingPage() {
   const router = useRouter();
   const { user } = useUser();
@@ -365,7 +369,7 @@ export default function LandingPage() {
   const [isPlanDialogOpen, setIsPlanDialogOpen] = useState(false);
   const heroImg = PlaceHolderImages.find((img) => img.id === "hero-travel");
 
-  /* ── Firebase data (unchanged) ── */
+  /* â”€â”€ Firebase data (unchanged) â”€â”€ */
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return doc(firestore, "users", user.uid);
@@ -385,14 +389,14 @@ export default function LandingPage() {
   const isPremium = userData?.isPremium || false;
   const isLimitReached = !isPremium && tripCount >= 4;
 
-  /* ── Auth-aware routing (unchanged) ── */
+  /* â”€â”€ Auth-aware routing (unchanged) â”€â”€ */
   const handleProceed = () => {
     if (!user) { router.push("/auth"); return; }
     if (isLimitReached) { setIsPlanDialogOpen(true); }
     else { router.push("/plan/new"); }
   };
 
-  /* ── Scroll-reveal refs ── */
+  /* â”€â”€ Scroll-reveal refs â”€â”€ */
   const revealHeroBadge = useScrollReveal({ threshold: 0.1 });
   const revealHeroTitle = useScrollReveal({ threshold: 0.1 });
   const revealHeroSub = useScrollReveal({ threshold: 0.1 });
@@ -406,7 +410,7 @@ export default function LandingPage() {
   const revealTestimonials = useScrollRevealContainer();
   const revealCTA = useScrollReveal();
 
-  /* ── Feature data ── */
+  /* â”€â”€ Feature data â”€â”€ */
   const features = useMemo(
     () => [
       {
@@ -467,7 +471,7 @@ export default function LandingPage() {
     []
   );
 
-  /* ── How It Works steps ── */
+  /* â”€â”€ How It Works steps â”€â”€ */
   const steps = [
     {
       num: "01",
@@ -499,7 +503,7 @@ export default function LandingPage() {
     },
   ];
 
-  /* ── Benefits ── */
+  /* â”€â”€ Benefits â”€â”€ */
   const benefits = [
     {
       icon: Globe,
@@ -539,13 +543,13 @@ export default function LandingPage() {
     },
   ];
 
-  /* ── Testimonials ── */
+  /* â”€â”€ Testimonials â”€â”€ */
   const testimonials = [
     {
       quote:
-        "VOYIQ completely redefined my approach to travel. The AI curation is impeccable — it saved me 20+ hours of research.",
+        "VOYIQ completely redefined my approach to travel. The AI curation is impeccable â€” it saved me 20+ hours of research.",
       author: "Sarah Jenkins",
-      role: "Digital Nomad · 47 trips planned",
+      role: "Digital Nomad Â· 47 trips planned",
       initials: "SJ",
       stars: 5,
       color: "#6366F1",
@@ -554,7 +558,7 @@ export default function LandingPage() {
       quote:
         "The BudgetSync feature alone is worth it. I always know exactly where my money is going, even across 5 different currencies.",
       author: "Marcus Chen",
-      role: "Business Traveler · 31 trips planned",
+      role: "Business Traveler Â· 31 trips planned",
       initials: "MC",
       stars: 5,
       color: "#10B981",
@@ -563,7 +567,7 @@ export default function LandingPage() {
       quote:
         "Planning group trips used to be a nightmare. VOYIQ's collaboration tools made our 8-person Bali trip effortless.",
       author: "Priya Anand",
-      role: "Travel Blogger · 89 trips planned",
+      role: "Travel Blogger Â· 89 trips planned",
       initials: "PA",
       stars: 5,
       color: "#8B5CF6",
@@ -572,14 +576,14 @@ export default function LandingPage() {
       quote:
         "I've tried every travel app out there. Nothing comes close to the intelligence VOYIQ brings to itinerary planning.",
       author: "James O'Brien",
-      role: "Adventure Seeker · 62 trips planned",
+      role: "Adventure Seeker Â· 62 trips planned",
       initials: "JO",
       stars: 5,
       color: "#F472B6",
     },
   ];
 
-  /* ── Marquee items ── */
+  /* â”€â”€ Marquee items â”€â”€ */
   const marqueeItems = [
     { icon: Plane, label: "Smart Itineraries" },
     { icon: Wallet, label: "BudgetSync" },
@@ -595,7 +599,7 @@ export default function LandingPage() {
     { icon: RefreshCw, label: "Dynamic Replanning" },
   ];
 
-  /* ── Testimonial carousel state ── */
+  /* â”€â”€ Testimonial carousel state â”€â”€ */
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   useEffect(() => {
     const timer = setInterval(
@@ -605,7 +609,7 @@ export default function LandingPage() {
     return () => clearInterval(timer);
   }, [testimonials.length]);
 
-  /* ── Famous Destinations (CardStack) ── */
+  /* â”€â”€ Famous Destinations (CardStack) â”€â”€ */
   const destinations: CardStackItem[] = useMemo(() => [
     {
       id: 1,
@@ -653,10 +657,10 @@ export default function LandingPage() {
 
   return (
     <div className="flex flex-col min-h-dvh overflow-x-hidden">
-      {/* ── SCROLL PROGRESS ─────────────────────────────────────────── */}
+      {/* â”€â”€ SCROLL PROGRESS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <ScrollProgressBar />
 
-      {/* ── HEADER ──────────────────────────────────────────────────── */}
+      {/* â”€â”€ HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <header className="fixed top-0 w-full z-50 nav-aurora" role="banner">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           {/* Logo */}
@@ -693,6 +697,7 @@ export default function LandingPage() {
               { href: "#features", label: "Features" },
               { href: "#how-it-works", label: "How It Works" },
               { href: "#why-voyiq", label: "Why VOYIQ" },
+              { href: "/pricing", label: "Pricing" },
             ].map(({ href, label }) => (
               <Link
                 key={href}
@@ -779,7 +784,7 @@ export default function LandingPage() {
               className="btn-shimmer rounded-full px-6 font-bold text-white"
               style={{
                 background: "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)",
-                boxShadow: "0 0 28px rgba(99,102,241,0.4), inset 0 1px 0 rgba(255,255,255,0.2)",
+                boxShadow: "0 0 16px rgba(99,102,241,0.25), inset 0 1px 0 rgba(255,255,255,0.15)",
               }}
             >
               {user ? "Plan Adventure" : "Get Started"}
@@ -789,233 +794,25 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* ══════════════════════════════════════════════════════════════
-          HERO SECTION
-          ══════════════════════════════════════════════════════════════ */}
-      <section
-        className="relative pt-32 pb-16 md:pt-52 md:pb-28 overflow-hidden aurora-bg dot-grid-bg"
-        aria-label="Hero"
-      >
-        {/* Orbs */}
-        <Orb size={700} color="indigo" style={{ top: "-15%", left: "-8%", opacity: 0.65 }} animDelay="0s" />
-        <Orb size={500} color="violet" style={{ top: "25%", right: "-12%", opacity: 0.5 }} animDelay="-4s" />
-        <Orb size={350} color="emerald" style={{ bottom: "5%", left: "38%", opacity: 0.38 }} animDelay="-8s" />
-        <Orb size={250} color="rose" style={{ top: "60%", left: "15%", opacity: 0.3 }} animDelay="-12s" />
-
-        {/* Floating particles */}
-        {Array.from({ length: 16 }).map((_, i) => (
-          <div
-            key={i}
-            className="particle"
-            aria-hidden="true"
-            style={{
-              left: `${5 + i * 6}%`,
-              bottom: `${8 + (i % 5) * 13}%`,
-              "--duration": `${5 + (i % 5) * 1.8}s`,
-              "--delay": `-${i * 0.6}s`,
-              width: i % 3 === 0 ? "4px" : "2px",
-              height: i % 3 === 0 ? "4px" : "2px",
-              background:
-                i % 3 === 0
-                  ? "rgba(99,102,241,0.8)"
-                  : i % 3 === 1
-                  ? "rgba(139,92,246,0.7)"
-                  : "rgba(16,185,129,0.7)",
-            } as React.CSSProperties}
-          />
-        ))}
-
-        {/* Globe decoration — desktop */}
-        <div
-          className="hidden lg:block absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none"
-          aria-hidden="true"
-        >
-          <WireframeGlobe size={380} />
-        </div>
-
-        <div className="container mx-auto px-4 text-center relative z-10">
-          {/* Badge */}
-          <div
-            ref={revealHeroBadge as React.RefCallback<HTMLDivElement>}
-            className="reveal reveal-scale inline-flex items-center gap-2 px-5 py-2 rounded-full mb-10"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(99,102,241,0.14), rgba(139,92,246,0.1))",
-              border: "1px solid rgba(99,102,241,0.28)",
-              boxShadow: "0 0 32px rgba(99,102,241,0.12)",
-              transitionDelay: "0.05s",
-            }}
-          >
-            <Sparkles
-              className="w-3.5 h-3.5 text-primary animate-pulse-subtle"
-              aria-hidden="true"
-            />
-            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              Next-Generation Travel Intelligence
-            </span>
-          </div>
-
-          {/* Headline */}
-          <h1
-            ref={revealHeroTitle as React.RefCallback<HTMLHeadingElement>}
-            className="reveal reveal-up text-5xl sm:text-7xl md:text-8xl lg:text-[100px] font-headline font-extrabold mb-6 tracking-tighter leading-[0.86] text-balance"
-            style={{ transitionDelay: "0.12s" }}
-          >
-            EXPLORE THE
-            <br />
-            <span className="aurora-text animate-hero-headline" style={{ animationDelay: "0.4s" }}>
-              WORLD SMARTER.
-            </span>
-          </h1>
-
-          {/* Typewriter subtitle */}
-          <p
-            ref={revealHeroSub as React.RefCallback<HTMLParagraphElement>}
-            className="reveal reveal-up text-lg md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-4 leading-relaxed font-medium"
-            style={{ transitionDelay: "0.22s" }}
-          >
-            AI-powered planning for
-          </p>
-          <p
-            className="reveal reveal-up text-2xl md:text-3xl font-headline font-bold mb-12"
-            style={{ transitionDelay: "0.28s", opacity: 1 }}
-          >
-            <TypewriterText
-              words={[
-                "solo adventurers.",
-                "group explorers.",
-                "business travelers.",
-                "luxury voyagers.",
-                "budget backpackers.",
-              ]}
-              className="aurora-text"
-            />
-          </p>
-
-          {/* CTA Buttons */}
-          <div
-            ref={revealHeroBtns as React.RefCallback<HTMLDivElement>}
-            className="reveal reveal-up flex flex-col sm:flex-row items-center justify-center gap-4"
-            style={{ transitionDelay: "0.36s" }}
-          >
-            <LiquidButton
-              size="xxl"
-              variant="aurora"
-              onClick={handleProceed}
-              className="magnetic-btn text-lg font-bold"
-              style={{
-                background: "linear-gradient(135deg, rgba(99,102,241,0.25) 0%, rgba(139,92,246,0.2) 100%)",
-                color: "white",
-                backdropFilter: "blur(20px)",
-                border: "1px solid rgba(99,102,241,0.4)",
-                boxShadow: "0 0 48px rgba(99,102,241,0.3), 0 8px 32px rgba(0,0,0,0.3)",
-              } as React.CSSProperties}
-            >
-              Begin Your Journey
-              <ArrowRight className="ml-2 w-5 h-5" aria-hidden="true" />
-            </LiquidButton>
-            <Link href="/auth">
-              <Button
-                variant="outline"
-                size="lg"
-                className="h-16 px-10 text-lg rounded-full backdrop-blur-sm font-semibold border-white/12 hover:border-primary/40 hover:bg-primary/8 transition-all duration-300"
-                style={{
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.11)",
-                  boxShadow:
-                    "inset 0 1px 0 rgba(255,255,255,0.08), 0 8px 24px rgba(0,0,0,0.3)",
-                }}
-              >
-                <Globe className="mr-2 w-4 h-4" aria-hidden="true" />
-                Join the Community
-              </Button>
-            </Link>
-          </div>
-
-          {/* Trust badges */}
-          <div
-            className="flex flex-wrap items-center justify-center gap-6 mt-12 text-sm text-muted-foreground"
-            style={{ transitionDelay: "0.45s" }}
-          >
-            {[
-              { icon: ShieldCheck, label: "SOC2 Secured" },
-              { icon: Star, label: "4.9★ Rating" },
-              { icon: Users, label: "10k+ Travelers" },
-            ].map(({ icon: Icon, label }) => (
-              <div key={label} className="flex items-center gap-1.5">
-                <Icon className="w-4 h-4 text-primary" aria-hidden="true" />
-                <span>{label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Hero Dashboard Image */}
-        <div
-          ref={revealHeroImg as React.RefCallback<HTMLDivElement>}
-          className="reveal reveal-scale container mx-auto px-4 mt-20"
-          style={{ transitionDelay: "0.5s" }}
-        >
-          <Card3D
-            className="relative max-w-6xl mx-auto aurora-prism"
-            style={{ borderRadius: "2rem", overflow: "hidden" } as React.CSSProperties}
-          >
-            <div
-              className="relative"
-              style={{ borderRadius: "2rem", overflow: "hidden" }}
-            >
-              <Image
-                src={heroImg?.imageUrl || ""}
-                alt="VOYIQ AI Travel Dashboard showing itinerary and budget tracking"
-                width={1200}
-                height={620}
-                className="w-full object-cover aspect-video"
-                data-ai-hint="luxury travel dashboard"
-                priority
-              />
-              {/* Gradient overlay */}
-              <div
-                className="absolute inset-0"
-                style={{
-                  background:
-                    "linear-gradient(to top, rgba(6,8,20,0.9) 0%, transparent 45%, rgba(6,8,20,0.15) 100%)",
-                }}
-                aria-hidden="true"
-              />
-              {/* Feature chips at bottom */}
-              <div className="absolute bottom-6 left-6 right-6 flex flex-wrap gap-3 justify-center">
-                {[
-                  "Interactive Mapping",
-                  "Real-time BudgetSync",
-                  "AI Chat Companion",
-                  "Collaborative Planning",
-                  "PDF Export",
-                ].map((label) => (
-                  <div
-                    key={label}
-                    className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold"
-                    style={{
-                      background: "rgba(99,102,241,0.15)",
-                      backdropFilter: "blur(12px)",
-                      border: "1px solid rgba(99,102,241,0.3)",
-                    }}
-                  >
-                    <CheckCircle
-                      className="w-3 h-3 text-primary"
-                      aria-hidden="true"
-                    />
-                    {label}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Card3D>
-        </div>
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+          HERO SECTION â€” PixelPerfect
+          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+      <section aria-label="Hero" className="relative">
+        <PixelHero
+          word1="Travel"
+          word2="Refined."
+          description="AI-crafted itineraries personalised to your budget, style, and pace. Plan your next adventure in under 60 seconds."
+          primaryCta="Begin Your Journey"
+          primaryCtaMobile="Get Started"
+          secondaryCta="Join the Community"
+          secondaryCtaMobile="Join"
+          onPrimaryClick={handleProceed}
+          secondaryHref="/auth"
+        />
       </section>
-
-      {/* ══════════════════════════════════════════════════════════════
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
           STATS BAR
-          ══════════════════════════════════════════════════════════════ */}
+          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <section
         className="py-16 relative overflow-hidden"
         aria-label="Key statistics"
@@ -1057,10 +854,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
           MARQUEE STRIP
-          SKILL.md §7: marquee — transform only, pauseable on hover
-          ══════════════════════════════════════════════════════════════ */}
+          SKILL.md Â§7: marquee â€” transform only, pauseable on hover
+          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <section
         className="py-8 relative overflow-hidden"
         aria-label="Feature highlights"
@@ -1101,9 +898,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════
-          FAMOUS DESTINATIONS — CardStack
-          ══════════════════════════════════════════════════════════════ */}
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+          FAMOUS DESTINATIONS â€” CardStack
+          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <section
         className="py-24 relative overflow-hidden"
         aria-label="Famous travel destinations"
@@ -1116,8 +913,8 @@ export default function LandingPage() {
           }}
           aria-hidden="true"
         />
-        <Orb size={400} color="violet" style={{ top: "10%", left: "-5%", opacity: 0.28 }} animDelay="-4s" />
-        <Orb size={300} color="emerald" style={{ bottom: "10%", right: "-5%", opacity: 0.22 }} animDelay="-8s" />
+        <Orb size={400} color="violet" style={{ top: "10%", left: "-5%", opacity: 0.15 }} animDelay="-4s" />
+        <Orb size={300} color="emerald" style={{ bottom: "10%", right: "-5%", opacity: 0.12 }} animDelay="-8s" />
 
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -1152,32 +949,30 @@ export default function LandingPage() {
           />
 
           <div className="text-center mt-10">
-            <Button
+            <LiquidButton
               onClick={handleProceed}
-              className="rounded-full px-8 font-semibold text-white"
-              style={{
-                background: "linear-gradient(135deg, #10B981, #6366F1)",
-                boxShadow: "0 0 32px rgba(16,185,129,0.3)",
-              }}
+              variant="aurora"
+              size="xl"
+              className="font-semibold"
             >
               Plan a Trip to These Places
               <ArrowRight className="ml-2 w-4 h-4" aria-hidden="true" />
-            </Button>
+            </LiquidButton>
           </div>
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
           BENTO FEATURES GRID
-          SKILL.md §5: Layout — visual-hierarchy, container-width
-          ══════════════════════════════════════════════════════════════ */}
+          SKILL.md Â§5: Layout â€” visual-hierarchy, container-width
+          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <section
         id="features"
         className="py-32 relative overflow-hidden"
         aria-label="Features"
       >
-        <Orb size={550} color="violet" style={{ top: "5%", right: "-10%", opacity: 0.35 }} animDelay="-3s" />
-        <Orb size={400} color="indigo" style={{ bottom: "10%", left: "-8%", opacity: 0.3 }} animDelay="-7s" />
+        <Orb size={550} color="violet" style={{ top: "5%", right: "-10%", opacity: 0.18 }} animDelay="-3s" />
+        <Orb size={400} color="indigo" style={{ bottom: "10%", left: "-8%", opacity: 0.15 }} animDelay="-7s" />
 
         <div className="container mx-auto px-4">
           {/* Section header */}
@@ -1259,10 +1054,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════
-          HOW IT WORKS — Stepper Timeline
-          SKILL.md §9: Navigation — multi-step-progress
-          ══════════════════════════════════════════════════════════════ */}
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+          HOW IT WORKS â€” Stepper Timeline
+          SKILL.md Â§9: Navigation â€” multi-step-progress
+          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <section
         id="how-it-works"
         className="py-32 relative overflow-hidden"
@@ -1351,20 +1146,20 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
           BENEFITS SECTION
-          ══════════════════════════════════════════════════════════════ */}
+          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <section
         id="why-voyiq"
         className="py-32 relative overflow-hidden"
         aria-label="Why choose VOYIQ"
       >
-        <Orb size={500} color="indigo" style={{ bottom: "0%", right: "-8%", opacity: 0.32 }} animDelay="-6s" />
+        <Orb size={500} color="indigo" style={{ bottom: "0%", right: "-8%", opacity: 0.14 }} animDelay="-6s" />
 
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
 
-            {/* Left — benefit cards */}
+            {/* Left â€” benefit cards */}
             <div
               ref={revealBenefits as React.RefCallback<HTMLDivElement>}
               className="space-y-8 stagger-children"
@@ -1387,7 +1182,7 @@ export default function LandingPage() {
                 </h2>
                 <p className="text-lg text-muted-foreground leading-relaxed">
                   VOYIQ understands your travel philosophy to curate experiences
-                  that resonate deeply — no generic suggestions.
+                  that resonate deeply â€” no generic suggestions.
                 </p>
               </div>
 
@@ -1436,9 +1231,9 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Right — 3D testimonial showcase */}
+            {/* Right â€” 3D testimonial showcase */}
             <div className="relative">
-              <Orb size={320} color="violet" style={{ top: "15%", right: "5%", opacity: 0.45 }} animDelay="-2s" />
+              <Orb size={320} color="violet" style={{ top: "15%", right: "5%", opacity: 0.18 }} animDelay="-2s" />
               <Card3D>
                 <div
                   className="aurora-prism p-8 rounded-3xl relative overflow-hidden"
@@ -1549,9 +1344,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════
-          SOCIAL PROOF — Avatar stack + rolling testimonials
-          ══════════════════════════════════════════════════════════════ */}
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+          SOCIAL PROOF â€” Avatar stack + rolling testimonials
+          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <section
         className="py-20 relative overflow-hidden"
         aria-label="Community testimonials"
@@ -1653,7 +1448,7 @@ export default function LandingPage() {
                               className="text-xs"
                               style={{ color: t.color }}
                             >
-                              {t.role.split(" · ")[1]}
+                              {t.role.split(" Â· ")[1]}
                             </p>
                           </div>
                         </div>
@@ -1667,9 +1462,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
           CTA SECTION
-          ══════════════════════════════════════════════════════════════ */}
+          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <section
         className="py-32 relative overflow-hidden"
         aria-label="Get started call to action"
@@ -1686,12 +1481,12 @@ export default function LandingPage() {
         <Orb
           size={500}
           color="indigo"
-          style={{ top: "-30%", left: "50%", transform: "translateX(-50%)", opacity: 0.45 }}
+          style={{ top: "-30%", left: "50%", transform: "translateX(-50%)", opacity: 0.2 }}
         />
         <Orb
           size={300}
           color="emerald"
-          style={{ bottom: "-10%", right: "15%", opacity: 0.3 }}
+          style={{ bottom: "-10%", right: "15%", opacity: 0.14 }}
           animDelay="-5s"
         />
 
@@ -1707,7 +1502,7 @@ export default function LandingPage() {
               color: "#818CF8",
             }}
           >
-            Start Today — Free Forever
+            Start Today â€” Free Forever
           </Badge>
 
           <h2 className="text-4xl md:text-7xl font-headline font-extrabold mb-6 tracking-tight text-balance">
@@ -1720,26 +1515,19 @@ export default function LandingPage() {
             entirely yours.
           </p>
           <p className="text-sm text-muted-foreground mb-12">
-            No credit card required · Free plan available · Cancel anytime
+            No credit card required Â· Free plan available Â· Cancel anytime
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button
-              size="lg"
+            <LiquidButton
+              size="xxl"
               onClick={handleProceed}
-              className="btn-shimmer magnetic-btn h-16 px-14 text-xl rounded-full font-bold text-white"
-              style={{
-                background:
-                  "linear-gradient(135deg, #6366F1 0%, #8B5CF6 60%, #10B981 100%)",
-                backgroundSize: "200% 200%",
-                boxShadow:
-                  "0 0 60px rgba(99,102,241,0.45), 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.22)",
-                animation: "aurora-sweep 6s ease infinite",
-              }}
+              variant="aurora"
+              className="btn-shimmer magnetic-btn font-bold"
             >
               {user ? "Plan Your Adventure" : "Begin Free Exploration"}
               <ArrowRight className="ml-2 w-5 h-5" aria-hidden="true" />
-            </Button>
+            </LiquidButton>
 
             <Link href="/auth">
               <Button
@@ -1758,10 +1546,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════
-          FOOTER — Multi-column with newsletter
-          SKILL.md §9: Navigation — destructive-nav-separation
-          ══════════════════════════════════════════════════════════════ */}
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+          FOOTER â€” Multi-column with newsletter
+          SKILL.md Â§9: Navigation â€” destructive-nav-separation
+          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <footer
         className="relative pt-16 pb-8"
         style={{
@@ -1885,11 +1673,11 @@ export default function LandingPage() {
           <hr className="hr-gradient mb-8" />
 
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground">
-            <p>© 2024 VOYIQ AI. Crafting the future of travel.</p>
+            <p>Â© 2024 VOYIQ AI. Crafting the future of travel.</p>
             <div className="flex items-center gap-2">
               <div
                 className="w-1.5 h-1.5 rounded-full bg-emerald-400"
-                style={{ boxShadow: "0 0 6px rgba(16,185,129,0.8)" }}
+                style={{ boxShadow: "0 0 4px rgba(16,185,129,0.5)" }}
                 aria-hidden="true"
               />
               <span>All systems operational</span>
@@ -1898,7 +1686,7 @@ export default function LandingPage() {
         </div>
       </footer>
 
-      {/* ── Plan selection dialog (unchanged) ── */}
+      {/* â”€â”€ Plan selection dialog (unchanged) â”€â”€ */}
       <PlanSelectionDialog
         open={isPlanDialogOpen}
         onOpenChange={setIsPlanDialogOpen}
