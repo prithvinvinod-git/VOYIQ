@@ -260,5 +260,5 @@ To request a commercial license or partnership inquiry, please contact the repos
 ---
 
 <div align="center">
-  <sub>Built with ❤️ by <a href="https://github.com/prithvinvinod">Prithvin Vinod</a></sub>
+  <sub>Built by <a href="https://github.com/prithvinvinod-git">Prithvin Vinod</a></sub>
 </div>
