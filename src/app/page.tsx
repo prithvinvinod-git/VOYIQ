@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BackgroundGradientAnimation } from "@/components/ui/background-gradient-animation";
 import { PixelHero } from "@/components/ui/pixel-perfect-hero";
+import BlurText from "@/components/ui/blur-text";
 import { CardStack, type CardStackItem } from "@/components/ui/card-stack";
 import { LiquidButton } from "@/components/ui/liquid-glass-button";
 import { LumaSpin } from "@/components/ui/luma-spin";
@@ -808,6 +809,7 @@ export default function LandingPage() {
           secondaryCtaMobile="Join"
           onPrimaryClick={handleProceed}
           secondaryHref="/auth"
+          splineUrl="https://prod.spline.design/BdY6Unnf7hakmSKR/scene.splinecode"
         />
       </section>
       {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -928,10 +930,22 @@ export default function LandingPage() {
             >
               Dream Destinations
             </Badge>
-            <h2 className="text-4xl md:text-5xl font-headline font-bold tracking-tight">
-              The world is{" "}
-              <span className="aurora-text-emerald">waiting for you.</span>
-            </h2>
+            <div className="text-4xl md:text-5xl font-headline font-bold tracking-tight flex flex-wrap justify-center gap-x-[0.25em]">
+              <BlurText
+                text="The world is"
+                delay={150}
+                animateBy="words"
+                direction="top"
+                className="text-white"
+              />
+              <BlurText
+                text="waiting for you."
+                delay={150}
+                animateBy="words"
+                direction="top"
+                className="aurora-text-emerald"
+              />
+            </div>
             <p className="mt-4 text-lg text-muted-foreground max-w-xl mx-auto">
               Swipe through iconic destinations and let VOYIQ craft your perfect itinerary.
             </p>

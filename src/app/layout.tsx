@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from "@/firebase/client-provider";
+import { ClickSparkProvider } from "@/components/ui/click-spark-provider";
 
 export const metadata: Metadata = {
   title: 'VOYIQ — AI-Powered Travel Intelligence',
@@ -25,10 +26,12 @@ export default function RootLayout({
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossOrigin="" />
       </head>
       <body className="font-body antialiased bg-background text-foreground min-h-dvh" suppressHydrationWarning>
-        <FirebaseClientProvider>
-          {children}
-        </FirebaseClientProvider>
-        <Toaster />
+        <ClickSparkProvider>
+          <FirebaseClientProvider>
+            {children}
+          </FirebaseClientProvider>
+          <Toaster />
+        </ClickSparkProvider>
       </body>
     </html>
   );

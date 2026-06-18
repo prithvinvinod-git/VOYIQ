@@ -1,162 +1,113 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, Globe, Brain, Zap, Shield } from "lucide-react";
+import { ArrowRight, Globe, Brain, Zap, Shield, Sparkles, MapPin, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
+import dynamic from "next/dynamic";
 
 /* ─────────────────────────────────────────────────────────────────
- * BRAND LOGOS — contextualised for VOYIQ
+ * Lazy-load GradientBlinds to keep SSR clean
  * ─────────────────────────────────────────────────────────────────*/
-
-const BRAND_LOGOS = [
-  () => (
-    <div className="flex items-center gap-2 text-foreground/60 hover:text-foreground/90 transition-all duration-300 opacity-60 hover:opacity-100">
-      <Globe className="w-5 h-5" />
-      <span className="font-bold text-sm tracking-tight">150+ Countries</span>
-    </div>
-  ),
-  () => (
-    <div className="flex items-center gap-2 text-foreground/60 hover:text-foreground/90 transition-all duration-300 opacity-60 hover:opacity-100">
-      <Brain className="w-5 h-5" />
-      <span className="font-bold text-sm tracking-tight">GPT-4 Powered</span>
-    </div>
-  ),
-  () => (
-    <div className="flex items-center gap-2 text-foreground/60 hover:text-foreground/90 transition-all duration-300 opacity-60 hover:opacity-100">
-      <Zap className="w-5 h-5" />
-      <span className="font-bold text-sm tracking-tight">Instant Planning</span>
-    </div>
-  ),
-  () => (
-    <div className="flex items-center gap-2 text-foreground/60 hover:text-foreground/90 transition-all duration-300 opacity-60 hover:opacity-100">
-      <Shield className="w-5 h-5" />
-      <span className="font-bold text-sm tracking-tight">Secure & Private</span>
-    </div>
-  ),
-];
+const GradientBlinds = dynamic(() => import("./GradientBlinds"), { ssr: false });
 
 /* ─────────────────────────────────────────────────────────────────
- * PIXEL CANVAS ENGINE
+ * SPLINE VIEWER — web component wrapper
  * ─────────────────────────────────────────────────────────────────*/
+function SplineViewer({ url }: { url: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [loaded, setLoaded] = useState(false);
 
-type Pixel = {
-  x: number; y: number; color: string; ctx: CanvasRenderingContext2D;
-  speed: number; size: number; sizeStep: number; minSize: number;
-  maxSizeInt: number; maxSize: number; delay: number; counter: number;
-  counterStep: number; isIdle: boolean; isReverse: boolean; isShimmer: boolean;
-  draw: () => void; appear: () => void; disappear: () => void; shimmer: () => void;
-};
-
-function createPixel(
-  ctx: CanvasRenderingContext2D,
-  canvas: HTMLCanvasElement,
-  x: number, y: number, color: string, baseSpeed: number, delay: number
-): Pixel {
-  const rand = (min: number, max: number) => Math.random() * (max - min) + min;
-  const p: Pixel = {
-    x, y, color, ctx,
-    speed: rand(0.08, 0.4) * baseSpeed,
-    size: 0, sizeStep: rand(0.12, 0.28), minSize: 0.5, maxSizeInt: 2,
-    maxSize: rand(0.5, 2), delay, counter: 0,
-    counterStep: rand(1.8, 3.2) + (canvas.width + canvas.height) * 0.008,
-    isIdle: false, isReverse: false, isShimmer: false,
-    draw() {
-      const offset = p.maxSizeInt * 0.5 - p.size * 0.5;
-      ctx.fillStyle = p.color;
-      ctx.fillRect(p.x + offset, p.y + offset, p.size, p.size);
-    },
-    appear() {
-      p.isIdle = false;
-      if (p.counter <= p.delay) { p.counter += p.counterStep; return; }
-      if (p.size >= p.maxSize) p.isShimmer = true;
-      if (p.isShimmer) p.shimmer(); else p.size += p.sizeStep;
-      p.draw();
-    },
-    disappear() {
-      p.isShimmer = false; p.counter = 0;
-      if (p.size <= 0) { p.isIdle = true; return; }
-      p.size -= 0.1; p.draw();
-    },
-    shimmer() {
-      if (p.size >= p.maxSize) p.isReverse = true;
-      else if (p.size <= p.minSize) p.isReverse = false;
-      if (p.isReverse) p.size -= p.speed; else p.size += p.speed;
-    },
-  };
-  return p;
-}
-
-function PixelCanvas({ colors, gap = 6, speed = 30 }: { colors: string[]; gap?: number; speed?: number }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const pixelsRef = useRef<Pixel[]>([]);
-  const animationRef = useRef<number>(0);
-  const lastFrameRef = useRef(performance.now());
-  const reducedMotionRef = useRef(false);
-
-  const init = useCallback(() => {
-    const canvas = canvasRef.current;
-    const wrap = wrapRef.current;
-    if (!canvas || !wrap || colors.length === 0) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    const { width, height } = wrap.getBoundingClientRect();
-    const w = Math.floor(width), h = Math.floor(height);
-    canvas.width = w; canvas.height = h;
-    canvas.style.width = `${w}px`; canvas.style.height = `${h}px`;
-    const effectiveSpeed = reducedMotionRef.current ? 0 : Math.min(speed, 100) * 0.001;
-    const pixels: Pixel[] = [];
-    for (let x = 0; x < w; x += gap) {
-      for (let y = 0; y < h; y += gap) {
-        const color = colors[Math.floor(Math.random() * colors.length)];
-        const dx = x - w / 2, dy = y - h / 2;
-        const delay = reducedMotionRef.current ? 0 : Math.sqrt(dx * dx + dy * dy) * 0.65;
-        pixels.push(createPixel(ctx, canvas, x, y, color, effectiveSpeed, delay));
-      }
+  useEffect(() => {
+    // Inject the Spline viewer script once
+    const existingScript = document.querySelector(
+      'script[src*="splinetool/viewer"]'
+    );
+    if (!existingScript) {
+      const script = document.createElement("script");
+      script.type = "module";
+      script.src =
+        "https://unpkg.com/@splinetool/viewer@1.12.97/build/spline-viewer.js";
+      script.onload = () => setLoaded(true);
+      document.head.appendChild(script);
+    } else {
+      setLoaded(true);
     }
-    pixelsRef.current = pixels;
-  }, [colors, gap, speed]);
-
-  const animate = useCallback((mode: "appear" | "disappear") => {
-    cancelAnimationFrame(animationRef.current);
-    const frameInterval = 1000 / 60;
-    const loop = () => {
-      animationRef.current = requestAnimationFrame(loop);
-      const now = performance.now();
-      const elapsed = now - lastFrameRef.current;
-      if (elapsed < frameInterval) return;
-      lastFrameRef.current = now - (elapsed % frameInterval);
-      const canvas = canvasRef.current;
-      const ctx = canvas?.getContext("2d");
-      if (!canvas || !ctx) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const pixels = pixelsRef.current;
-      for (const pixel of pixels) pixel[mode]();
-      if (pixels.every((p) => p.isIdle)) cancelAnimationFrame(animationRef.current);
-    };
-    animationRef.current = requestAnimationFrame(loop);
   }, []);
 
   useEffect(() => {
-    reducedMotionRef.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    init();
-    const resizeObserver = new ResizeObserver(() => init());
-    if (wrapRef.current) resizeObserver.observe(wrapRef.current);
-    animate("appear");
-    return () => { resizeObserver.disconnect(); cancelAnimationFrame(animationRef.current); };
-  }, [init, animate]);
+    if (!loaded || !ref.current) return;
+    ref.current.innerHTML = "";
+    const el = document.createElement("spline-viewer") as any;
+    el.setAttribute("url", url);
+    el.style.width = "100%";
+    el.style.height = "100%";
+    el.style.display = "block";
+    el.style.background = "transparent";
+    ref.current.appendChild(el);
+  }, [loaded, url]);
 
   return (
-    <div ref={wrapRef} className="absolute inset-0 overflow-hidden">
-      <canvas ref={canvasRef} className="block w-full h-full" />
+    <div
+      ref={ref}
+      className="w-full h-full"
+      aria-hidden="true"
+    />
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────
+ * BRAND FEATURE PILLS — mobile showcase row
+ * ─────────────────────────────────────────────────────────────────*/
+const FEATURE_PILLS = [
+  { icon: Globe, label: "150+ Countries", color: "#6366F1" },
+  { icon: Brain, label: "Gemini AI", color: "#8B5CF6" },
+  { icon: Zap, label: "60s Planning", color: "#10B981" },
+  { icon: Shield, label: "Secure & Private", color: "#F472B6" },
+  { icon: MapPin, label: "Live Maps", color: "#38BDF8" },
+  { icon: Wallet, label: "BudgetSync", color: "#FBBF24" },
+];
+
+/* ─────────────────────────────────────────────────────────────────
+ * FLOATING STAT BADGE — appears over the Spline scene
+ * ─────────────────────────────────────────────────────────────────*/
+function StatBadge({
+  value,
+  label,
+  color,
+  style,
+}: {
+  value: string;
+  label: string;
+  color: string;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <div
+      className="relative pointer-events-none select-none w-max block"
+      style={{
+        backdropFilter: "blur(12px)",
+        background: "rgba(6,8,20,0.72)",
+        border: `1px solid ${color}30`,
+        borderRadius: "14px",
+        padding: "10px 16px",
+        boxShadow: `0 0 20px ${color}22, inset 0 1px 0 rgba(255,255,255,0.08)`,
+        ...style,
+      }}
+    >
+      <div
+        className="text-xl font-black leading-none"
+        style={{ color }}
+      >
+        {value}
+      </div>
+      <div className="text-[11px] text-white/50 font-medium mt-0.5 leading-tight">{label}</div>
     </div>
   );
 }
 
 /* ─────────────────────────────────────────────────────────────────
- * HERO COMPONENT — VOYIQ contextualised
+ * HERO COMPONENT
  * ─────────────────────────────────────────────────────────────────*/
-
 export interface PixelHeroProps {
   word1?: string;
   word2?: string;
@@ -168,159 +119,475 @@ export interface PixelHeroProps {
   onPrimaryClick?: () => void;
   onSecondaryClick?: () => void;
   secondaryHref?: string;
+  splineUrl?: string;
 }
 
 export function PixelHero({
   word1 = "Travel",
   word2 = "Refined.",
-  description = "AI-crafted itineraries personalised to you. Plan your next adventure in under 60 seconds.",
-  primaryCta = "Start Planning Free",
-  primaryCtaMobile = "Start Free",
-  secondaryCta = "Watch Demo",
-  secondaryCtaMobile = "Demo",
+  description = "AI-crafted itineraries personalised to your budget, style, and pace. Plan your next adventure in under 60 seconds.",
+  primaryCta = "Begin Your Journey",
+  primaryCtaMobile = "Get Started",
+  secondaryCta = "Join the Community",
+  secondaryCtaMobile = "Join",
   onPrimaryClick,
   onSecondaryClick,
-  secondaryHref = "#features",
+  secondaryHref = "/auth",
+  splineUrl,
 }: PixelHeroProps) {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [themeColors, setThemeColors] = useState<string[]>([]);
+  const [pillIdx, setPillIdx] = useState(0);
 
   useEffect(() => {
-    if (typeof document === "undefined") return;
-    const div = document.createElement("div");
-    document.body.appendChild(div);
-    div.className = "text-muted-foreground";
-    const muted = getComputedStyle(div).color;
-    div.className = "text-primary";
-    const primary = getComputedStyle(div).color;
-    document.body.removeChild(div);
-    // Aurora pixel palette: mostly muted with occasional primary accent
-    setThemeColors([muted, muted, muted, muted, primary, muted]);
-    const t = setTimeout(() => setIsLoaded(true), 50);
+    const t = setTimeout(() => setIsLoaded(true), 80);
     return () => clearTimeout(t);
   }, []);
 
+  // Cycle active pill highlight on mobile
+  useEffect(() => {
+    const iv = setInterval(
+      () => setPillIdx((i) => (i + 1) % FEATURE_PILLS.length),
+      2200
+    );
+    return () => clearInterval(iv);
+  }, []);
+
+  const hasSpline = !!splineUrl;
+
   return (
-    <div className="relative w-full min-h-[100dvh] bg-background flex flex-col justify-between md:justify-center md:gap-6 py-8 md:py-0 px-2 sm:px-6 overflow-hidden select-none isolate">
+    <div className="relative w-full min-h-[100dvh] bg-background overflow-hidden isolate">
+      {/* ── Keyframes ────────────────────────────────────────────── */}
       <style>{`
-        @keyframes marquee-voyiq {
+        @keyframes hero-pill-marquee {
           0%   { transform: translateX(0%); }
           100% { transform: translateX(-50%); }
         }
-        .animate-marquee-voyiq { animation: marquee-voyiq 20s linear infinite; }
+        .hero-pill-marquee { animation: hero-pill-marquee 22s linear infinite; }
+
+        @keyframes hero-badge-float {
+          0%, 100% { transform: translateY(0px) rotate(-2deg); }
+          50%       { transform: translateY(-8px) rotate(1deg); }
+        }
+        .hero-badge-float { animation: hero-badge-float 5s ease-in-out infinite; }
+        .hero-badge-float-slow { animation: hero-badge-float 7s ease-in-out infinite reverse; }
+
+        @keyframes voyiq-shimmer-text {
+          0%   { background-position: 200% center; }
+          100% { background-position: 0% center; }
+        }
         .voyiq-glass-text {
           color: transparent;
-          background: linear-gradient(135deg,
-            rgba(255,255,255,1) 0%,
+          background: linear-gradient(
+            135deg,
+            rgba(255,255,255,1)   0%,
             rgba(255,255,255,0.4) 25%,
             rgba(255,255,255,0.1) 45%,
             rgba(255,255,255,0.9) 55%,
             rgba(255,255,255,0.2) 75%,
-            rgba(255,255,255,1) 100%
+            rgba(255,255,255,1)   100%
           );
           background-size: 200% auto;
           -webkit-background-clip: text;
           background-clip: text;
-          -webkit-text-stroke: 1.5px rgba(255,255,255,0.25);
-          filter: drop-shadow(0 15px 35px rgba(0,0,0,0.4)) drop-shadow(0 5px 10px rgba(0,0,0,0.2));
-          animation: shimmer-voyiq 8s linear infinite;
+          -webkit-text-stroke: 1.5px rgba(255,255,255,0.2);
+          filter: drop-shadow(0 12px 28px rgba(0,0,0,0.4));
+          animation: voyiq-shimmer-text 8s linear infinite;
         }
-        @keyframes shimmer-voyiq {
-          0%   { background-position: 200% center; }
-          100% { background-position: 0% center; }
+
+        @keyframes spline-reveal {
+          from { opacity: 0; transform: scale(0.92) translateX(20px); }
+          to   { opacity: 1; transform: scale(1) translateX(0); }
         }
+        .spline-reveal { animation: spline-reveal 1.1s cubic-bezier(0.23,1,0.32,1) forwards; animation-delay: 0.4s; opacity: 0; }
+
+        /* Mobile scroll-snap pill row */
+        .mobile-pill-scroll {
+          display: flex;
+          gap: 10px;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+          padding-bottom: 2px;
+        }
+        .mobile-pill-scroll::-webkit-scrollbar { display: none; }
+        .mobile-pill-scroll > * { scroll-snap-align: start; flex-shrink: 0; }
       `}</style>
 
-      {/* Pixel canvas background */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        {themeColors.length > 0 && <PixelCanvas colors={themeColors} gap={6} speed={30} />}
-        {/* Radial vignette so content stays readable */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,var(--background)_80%)] opacity-85" />
-        {/* Extra aurora at top */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full opacity-20 blur-3xl pointer-events-none"
-          style={{ background: "radial-gradient(ellipse, rgba(99,102,241,0.7), rgba(139,92,246,0.4), transparent)" }} />
+      {/* ══════════════════════════════════════════════════════════
+          GRADIENT BLINDS BACKGROUND (full bleed)
+          ════════════════════════════════════════════════════════ */}
+      <div className="absolute inset-0 z-0" aria-hidden="true">
+        <GradientBlinds
+          gradientColors={["#0a0c23", "#1a1040", "#6366F1", "#4f46e5", "#0a0c23"]}
+          angle={12}
+          noise={0.18}
+          blindCount={10}
+          blindMinWidth={80}
+          spotlightRadius={0.6}
+          spotlightSoftness={0.85}
+          spotlightOpacity={0.7}
+          mouseDampening={0.18}
+          distortAmount={1.2}
+          shineDirection="left"
+          mixBlendMode="normal"
+        />
+        {/* Dark vignette overlay so text stays legible */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse 90% 80% at 50% 50%, rgba(6,8,20,0.15) 0%, rgba(6,8,20,0.65) 60%, rgba(6,8,20,0.88) 100%)",
+          }}
+        />
+        {/* Bottom fade into the rest of the page */}
+        <div
+          className="absolute bottom-0 left-0 right-0 h-32"
+          style={{
+            background: "linear-gradient(to bottom, transparent, hsl(234,45%,5%))",
+          }}
+        />
       </div>
 
-      {/* Heading */}
-      <div className="flex flex-col items-center justify-center text-center order-1 mt-28 sm:mt-16 md:mt-0 pointer-events-none w-full relative z-10">
-        <h1 className="voyiq-glass-text flex flex-row items-center justify-center gap-1.5 sm:gap-4 lg:gap-6 px-1 w-full flex-wrap text-[2.8rem] xs:text-[3.2rem] sm:text-6xl md:text-8xl lg:text-9xl leading-none">
-          <span className="font-serif italic font-medium">{word1}</span>
-          <span className="font-sans font-extrabold tracking-tighter">{word2}</span>
-        </h1>
+      {/* ══════════════════════════════════════════════════════════
+          FLOATING AURORA ORBS
+          ════════════════════════════════════════════════════════ */}
+      <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
+        <div
+          className="absolute rounded-full"
+          style={{
+            width: 500,
+            height: 500,
+            top: "-10%",
+            left: "-5%",
+            background: "radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%)",
+            filter: "blur(72px)",
+            animation: "orb-drift 16s ease-in-out infinite",
+          }}
+        />
+        {/* Small intense glow at the top-left viewport corner */}
+        <div
+          className="absolute rounded-full"
+          style={{
+            width: 180,
+            height: 180,
+            top: "2%",
+            left: "2%",
+            background: "radial-gradient(circle, rgba(139,92,246,0.3) 0%, transparent 70%)",
+            filter: "blur(44px)",
+            animation: "orb-drift 10s ease-in-out infinite",
+            animationDelay: "-3s",
+          }}
+        />
+        <div
+          className="absolute rounded-full"
+          style={{
+            width: 400,
+            height: 400,
+            top: "30%",
+            right: hasSpline ? "42%" : "10%",
+            background: "radial-gradient(circle, rgba(139,92,246,0.14) 0%, transparent 70%)",
+            filter: "blur(60px)",
+            animation: "orb-drift 20s ease-in-out infinite",
+            animationDelay: "-6s",
+          }}
+        />
+        <div
+          className="absolute rounded-full"
+          style={{
+            width: 300,
+            height: 300,
+            bottom: "15%",
+            left: "30%",
+            background: "radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)",
+            filter: "blur(56px)",
+            animation: "orb-drift 14s ease-in-out infinite",
+            animationDelay: "-10s",
+          }}
+        />
       </div>
 
-      {/* Description + mobile marquee */}
-      <div className="flex flex-col items-center justify-center text-center my-auto md:my-0 order-2 px-1 w-full pointer-events-none relative z-10">
-        <p className="text-sm sm:text-lg md:text-xl font-light text-foreground/80 max-w-[95%] sm:max-w-md md:max-w-xl px-1 leading-relaxed">
-          {description}
-        </p>
-
-        {/* Mobile marquee */}
-        <div className="block md:hidden w-full mt-12 pointer-events-auto">
-          <div className="text-[11px] uppercase tracking-wider text-muted-foreground/70 font-medium mb-4">
-            Built for every explorer
+      {/* ══════════════════════════════════════════════════════════
+          MAIN HERO CONTENT
+          ════════════════════════════════════════════════════════ */}
+      <div
+        className={cn(
+          "relative z-10 w-full min-h-[100dvh] flex flex-col",
+          // Desktop: two-column row layout
+          hasSpline ? "lg:flex-row lg:items-center" : "items-center justify-center"
+        )}
+      >
+        {/* ── LEFT COLUMN — Text Content ────────────────────────── */}
+        <div
+          className={cn(
+            "flex flex-col justify-center px-5 sm:px-8 md:px-12",
+            // Mobile: stack vertically with top padding for the nav
+            "pt-28 pb-8 md:pt-32 md:pb-12",
+            // Desktop with Spline: take 50% width, center vertically
+            hasSpline
+              ? "lg:w-1/2 lg:pt-0 lg:pb-0 lg:pl-16 lg:pr-6 lg:min-h-[100dvh]"
+              : "w-full max-w-3xl mx-auto text-center"
+          )}
+        >
+          {/* ── Trust pill ── */}
+          <div
+            className={cn(
+              "inline-flex items-center gap-2 mb-6 self-start",
+              !hasSpline && "self-center"
+            )}
+            style={{
+              opacity: isLoaded ? 1 : 0,
+              transform: isLoaded ? "translateY(0)" : "translateY(-12px)",
+              transition: "opacity 0.7s ease, transform 0.7s ease",
+            }}
+          >
+            <span
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide"
+              style={{
+                background: "rgba(99,102,241,0.12)",
+                border: "1px solid rgba(99,102,241,0.3)",
+                color: "#a5b4fc",
+              }}
+            >
+              <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+              Powered by Gemini AI
+            </span>
           </div>
-          <div className="relative w-full overflow-hidden [mask-image:linear-gradient(to_right,transparent,white_15%,white_85%,transparent)]">
-            <div className="flex w-max gap-10 py-1 animate-marquee-voyiq">
-              <div className="flex gap-10 items-center">{BRAND_LOGOS.map((Logo, i) => <Logo key={i} />)}</div>
-              <div className="flex gap-10 items-center" aria-hidden="true">{BRAND_LOGOS.map((Logo, i) => <Logo key={`c-${i}`} />)}</div>
+
+          {/* ── Headline ── */}
+          <h1
+            className={cn(
+              "voyiq-glass-text font-headline leading-[1.0] tracking-tight mb-5",
+              // Mobile: large but not huge
+              "text-[3.2rem] xs:text-[3.8rem] sm:text-6xl",
+              // Desktop: very large
+              "md:text-7xl lg:text-[5.5rem] xl:text-[6.5rem]",
+              !hasSpline && "text-center"
+            )}
+            style={{
+              opacity: isLoaded ? 1 : 0,
+              transform: isLoaded ? "translateY(0)" : "translateY(28px)",
+              transition: "opacity 0.9s ease, transform 0.9s ease",
+              transitionDelay: "0.1s",
+            }}
+          >
+            <span className="font-serif italic font-medium block sm:inline">{word1}</span>
+            <span className="font-sans font-extrabold block sm:inline sm:ml-3">{word2}</span>
+          </h1>
+
+          {/* ── Description ── */}
+          <p
+            className={cn(
+              "text-white/65 leading-relaxed mb-8 max-w-md",
+              "text-base sm:text-lg md:text-xl",
+              !hasSpline && "text-center mx-auto"
+            )}
+            style={{
+              opacity: isLoaded ? 1 : 0,
+              transform: isLoaded ? "translateY(0)" : "translateY(20px)",
+              transition: "opacity 0.9s ease, transform 0.9s ease",
+              transitionDelay: "0.2s",
+            }}
+          >
+            {description}
+          </p>
+
+          {/* ── CTA Buttons ── */}
+          <div
+            className={cn(
+              "flex flex-row flex-wrap gap-3 mb-10",
+              !hasSpline && "justify-center"
+            )}
+            style={{
+              opacity: isLoaded ? 1 : 0,
+              transform: isLoaded ? "translateY(0)" : "translateY(16px)",
+              transition: "opacity 0.9s ease, transform 0.9s ease",
+              transitionDelay: "0.3s",
+            }}
+          >
+            {/* Primary CTA */}
+            <button
+              onClick={onPrimaryClick}
+              className="relative inline-flex items-center gap-2 rounded-2xl px-5 py-3 sm:px-7 sm:py-3.5 text-sm sm:text-base font-bold text-white shadow-lg transition-all duration-200 hover:scale-[1.03] active:scale-[0.97] cursor-pointer"
+              style={{
+                background: "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)",
+                boxShadow: "0 0 28px rgba(99,102,241,0.45), inset 0 1px 1px rgba(255,255,255,0.25)",
+              }}
+            >
+              <span className="inline sm:hidden">{primaryCtaMobile}</span>
+              <span className="hidden sm:inline">{primaryCta}</span>
+              <ArrowRight className="w-4 h-4" aria-hidden="true" />
+            </button>
+
+            {/* Secondary CTA */}
+            {onSecondaryClick ? (
+              <button
+                onClick={onSecondaryClick}
+                className="relative inline-flex items-center gap-2 rounded-2xl px-5 py-3 sm:px-7 sm:py-3.5 text-sm sm:text-base font-semibold text-white/80 transition-all duration-200 hover:scale-[1.03] hover:text-white active:scale-[0.97] cursor-pointer"
+                style={{
+                  background: "rgba(255,255,255,0.07)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  backdropFilter: "blur(12px)",
+                }}
+              >
+                <span className="inline sm:hidden">{secondaryCtaMobile}</span>
+                <span className="hidden sm:inline">{secondaryCta}</span>
+              </button>
+            ) : (
+              <a
+                href={secondaryHref}
+                className="relative inline-flex items-center gap-2 rounded-2xl px-5 py-3 sm:px-7 sm:py-3.5 text-sm sm:text-base font-semibold text-white/80 transition-all duration-200 hover:scale-[1.03] hover:text-white active:scale-[0.97]"
+                style={{
+                  background: "rgba(255,255,255,0.07)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  backdropFilter: "blur(12px)",
+                }}
+              >
+                <span className="inline sm:hidden">{secondaryCtaMobile}</span>
+                <span className="hidden sm:inline">{secondaryCta}</span>
+              </a>
+            )}
+          </div>
+
+          {/* ══════════════════════════════════════════════
+              MOBILE FEATURE PILLS (scrollable row)
+              Only visible on < lg when spline is present,
+              or always when no spline
+              ══════════════════════════════════════════ */}
+          <div
+            className={cn(
+              "mb-6",
+              hasSpline ? "lg:hidden" : "block"
+            )}
+            style={{
+              opacity: isLoaded ? 1 : 0,
+              transition: "opacity 1s ease",
+              transitionDelay: "0.45s",
+            }}
+          >
+            <p className="text-[11px] uppercase tracking-widest text-white/35 font-semibold mb-3">
+              Built for every explorer
+            </p>
+            <div className="mobile-pill-scroll pb-2">
+              {FEATURE_PILLS.map((pill, i) => (
+                <div
+                  key={i}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-300"
+                  style={{
+                    background:
+                      pillIdx === i
+                        ? `${pill.color}22`
+                        : "rgba(255,255,255,0.04)",
+                    border: `1px solid ${pillIdx === i ? pill.color + "50" : "rgba(255,255,255,0.08)"}`,
+                    color: pillIdx === i ? pill.color : "rgba(255,255,255,0.45)",
+                  }}
+                >
+                  <pill.icon className="w-3.5 h-3.5" aria-hidden="true" />
+                  {pill.label}
+                </div>
+              ))}
             </div>
           </div>
+
+
         </div>
+
+        {/* ── RIGHT COLUMN — Spline 3D Scene ───────────────────── */}
+        {hasSpline && (
+          <div
+            className={cn(
+              // Mobile: full-width strip with fixed height below the text
+              "relative w-full h-[300px] xs:h-[340px] sm:h-[400px]",
+              // Desktop: right half, full viewport height
+              "lg:w-1/2 lg:h-auto lg:min-h-[100dvh] lg:flex lg:items-center lg:justify-center lg:overflow-visible"
+            )}
+            aria-hidden="true"
+          >
+            {/* Spline scene — scaled and clipped to hide watermark */}
+            <div className="spline-reveal absolute inset-0 overflow-hidden pointer-events-none">
+              <div className="absolute w-[118%] h-[118%] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                <SplineViewer url={splineUrl!} />
+              </div>
+            </div>
+
+            {/* Small glow effect at top left of Right Column */}
+            <div
+              className="absolute pointer-events-none rounded-full"
+              style={{
+                width: "250px",
+                height: "250px",
+                top: "5%",
+                left: "5%",
+                background: "radial-gradient(circle, rgba(139,92,246,0.22) 0%, transparent 70%)",
+                filter: "blur(40px)",
+                zIndex: 1,
+              }}
+            />
+
+            {/* Floating stat badges — desktop only */}
+            <div
+              className="hidden lg:block hero-badge-float absolute z-20"
+              style={{ top: "18%", left: "4%" }}
+            >
+              <StatBadge value="50K+" label="Itineraries Created" color="#6366F1" />
+            </div>
+            <div
+              className="hidden lg:block hero-badge-float-slow absolute z-20"
+              style={{ bottom: "22%", right: "8%" }}
+            >
+              <StatBadge value="4.9★" label="User Rating" color="#FBBF24" />
+            </div>
+            <div
+              className="hidden lg:block absolute z-20"
+              style={{
+                bottom: "38%",
+                left: "12%",
+                animation: "hero-badge-float 8s ease-in-out infinite",
+                animationDelay: "-3s",
+              }}
+            >
+              <StatBadge value="60s" label="Trip Generated" color="#10B981" />
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* CTA buttons */}
+      {/* ══════════════════════════════════════════════════════════
+          DESKTOP LOGO STRIP (bottom of hero, hidden on mobile)
+          ════════════════════════════════════════════════════════ */}
       <div
         className={cn(
-          "pointer-events-auto flex flex-row items-center justify-center gap-3 mt-4 md:mt-10 mb-4 md:mb-0 order-4 md:order-3 transition-all duration-1000 transform px-1 relative z-10",
-          isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+          "hidden md:flex absolute bottom-8 left-0 right-0 z-10 flex-col items-center gap-3",
+          hasSpline ? "lg:hidden" : ""
         )}
-        style={{ transitionDelay: "450ms" }}
+        style={{
+          opacity: isLoaded ? 1 : 0,
+          transform: isLoaded ? "translateY(0)" : "translateY(10px)",
+          transition: "opacity 1s ease, transform 1s ease",
+          transitionDelay: "0.6s",
+        }}
       >
-        <button
-          onClick={onPrimaryClick}
-          className="relative inline-flex h-10 md:h-12 items-center justify-center gap-1.5 md:gap-2 rounded-xl px-4 md:px-8 text-xs md:text-sm font-semibold text-white shadow-lg ring-1 ring-indigo-500/30 transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-          style={{ background: "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)", boxShadow: "0 0 28px rgba(99,102,241,0.4), inset 0 1px 1px rgba(255,255,255,0.3)" }}
-        >
-          <span className="inline md:hidden">{primaryCtaMobile}</span>
-          <span className="hidden md:inline">{primaryCta}</span>
-          <ArrowRight className="w-3.5 h-3.5 md:w-4 md:h-4" />
-        </button>
-
-        {onSecondaryClick ? (
-          <button
-            onClick={onSecondaryClick}
-            className="relative inline-flex h-10 md:h-12 items-center justify-center gap-1.5 md:gap-2 rounded-xl bg-gradient-to-b from-card/80 to-card px-4 md:px-8 text-xs md:text-sm font-semibold text-card-foreground shadow-sm ring-1 ring-border/40 backdrop-blur-md transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-          >
-            <span className="inline md:hidden">{secondaryCtaMobile}</span>
-            <span className="hidden md:inline">{secondaryCta}</span>
-          </button>
-        ) : (
-          <a
-            href={secondaryHref}
-            className="relative inline-flex h-10 md:h-12 items-center justify-center gap-1.5 md:gap-2 rounded-xl bg-gradient-to-b from-card/80 to-card px-4 md:px-8 text-xs md:text-sm font-semibold text-card-foreground shadow-sm ring-1 ring-border/40 backdrop-blur-md transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-          >
-            <span className="inline md:hidden">{secondaryCtaMobile}</span>
-            <span className="hidden md:inline">{secondaryCta}</span>
-          </a>
-        )}
-      </div>
-
-      {/* Desktop marquee */}
-      <div
-        className={cn(
-          "hidden md:flex absolute bottom-8 left-0 right-0 w-full z-10 pointer-events-auto flex-col items-center justify-center gap-4 transition-all duration-1000 transform order-3 md:order-4",
-          isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-        )}
-        style={{ transitionDelay: "600ms" }}
-      >
-        <span className="text-xs uppercase tracking-wider text-muted-foreground/70 font-medium select-none">
+        <span className="text-[11px] uppercase tracking-widest text-white/30 font-medium">
           Built for every kind of explorer
         </span>
         <div className="relative w-full max-w-3xl overflow-hidden [mask-image:linear-gradient(to_right,transparent,white_15%,white_85%,transparent)]">
-          <div className="flex w-max gap-16 py-3 animate-marquee-voyiq">
-            <div className="flex gap-16 items-center">{BRAND_LOGOS.map((Logo, i) => <Logo key={i} />)}</div>
-            <div className="flex gap-16 items-center" aria-hidden="true">{BRAND_LOGOS.map((Logo, i) => <Logo key={`c-${i}`} />)}</div>
+          <div className="flex w-max hero-pill-marquee gap-14 py-2">
+            <div className="flex gap-14 items-center">
+              {FEATURE_PILLS.map((p, i) => (
+                <div key={i} className="flex items-center gap-2 opacity-50 hover:opacity-90 transition-opacity">
+                  <p.icon className="w-4 h-4" style={{ color: p.color }} aria-hidden="true" />
+                  <span className="text-sm font-semibold text-white/70">{p.label}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-14 items-center" aria-hidden="true">
+              {FEATURE_PILLS.map((p, i) => (
+                <div key={`c-${i}`} className="flex items-center gap-2 opacity-50 hover:opacity-90 transition-opacity">
+                  <p.icon className="w-4 h-4" style={{ color: p.color }} aria-hidden="true" />
+                  <span className="text-sm font-semibold text-white/70">{p.label}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

@@ -310,6 +310,16 @@
   background-clip: text;
 }
 
+/* Fix for gradient text when used with nested elements like motion.span in BlurText */
+.aurora-text span,
+.aurora-text-warm span,
+.aurora-text-cool span,
+.aurora-text-emerald span {
+  background: inherit !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+}
+
 /* =====================================================
    3D CARD SYSTEM
    SKILL.md §7: Animation — transform/opacity only
@@ -860,3 +870,9 @@
   border: 1px solid currentColor;
   animation: ring-pulse 2s cubic-bezier(0.23, 1, 0.32, 1) infinite;
 }
+
+/* Ensure spline-viewer background transparency */
+spline-viewer {
+  background: transparent !important;
+}
+
