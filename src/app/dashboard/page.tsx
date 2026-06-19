@@ -3,6 +3,9 @@
 import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Plus,
   MapPin,
@@ -14,11 +17,13 @@ import {
   Loader2,
   FileText,
   ArrowRight,
+  ArrowUpRight,
   Flame,
   Trophy,
   Globe,
   TrendingUp,
   Clock,
+  Route,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -46,6 +51,7 @@ import { PlanSelectionDialog } from "@/components/shared/PlanSelectionDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useScrollReveal, useScrollRevealContainer } from "@/hooks/useScrollReveal";
 import { LumaSpin } from "@/components/ui/luma-spin";
+import { Area, AreaChart, ResponsiveContainer } from "recharts";
 
 interface Trip {
   id: string;
@@ -59,6 +65,58 @@ interface Trip {
   ownerId?: string;
   authorizedUserIds?: string[];
   createdAt?: string;
+}
+
+/* ── Count-up hook ─────────────────────────────────────────────────── */
+function useCountUp(target: number, duration = 1000) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    let start: number | null = null;
+    const step = (ts: number) => {
+      if (!start) start = ts;
+      const elapsed = ts - start;
+      const progress = Math.min(elapsed / duration, 1);
+      setVal(Math.floor(progress * target));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, [target, duration]);
+  return target === 0 ? 0 : val;
+}
+
+/* ── Sparkline trend data (stable per card) ────────────────────────── */
+const sparklineData = [
+  [40, 55, 48, 72, 65, 80, 75, 90, 85, 95],
+  [20, 30, 25, 40, 38, 50, 45, 60, 55, 65],
+  [60, 55, 70, 65, 75, 72, 82, 78, 88, 85],
+  [30, 45, 40, 55, 50, 60, 58, 68, 70, 78],
+];
+
+function Sparkline({ data, color }: { data: number[]; color: string }) {
+  const chartData = data.map((v, i) => ({ i, v }));
+  return (
+    <div className="h-10 w-full mt-2">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={chartData}>
+          <defs>
+            <linearGradient id={`grad-${color.replace("#", "")}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.35} />
+              <stop offset="100%" stopColor={color} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <Area
+            type="monotone"
+            dataKey="v"
+            stroke={color}
+            strokeWidth={1.5}
+            fill={`url(#grad-${color.replace("#", "")})`}
+            dot={false}
+            isAnimationActive={false}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
 }
 
 /* ── 3D tilt card ──────────────────────────────────────────────────── */
@@ -110,6 +168,7 @@ function StatCard({
   color,
   glow,
   border,
+  sparkIdx = 0,
 }: {
   title: string;
   value: string;
@@ -118,32 +177,76 @@ function StatCard({
   color: string;
   glow: string;
   border: string;
+  sparkIdx?: number;
 }) {
+  const numericValue = parseInt(value.replace(/[^0-9]/g, ""), 10) || 0;
+  const animatedVal = useCountUp(numericValue);
+
+  const displayValue = value.includes("XP")
+    ? `${animatedVal} XP`
+    : value.includes("Days")
+      ? `${animatedVal} Days`
+      : value.includes("★")
+        ? `${animatedVal}★`
+        : value.includes("%")
+          ? `${animatedVal}%`
+          : animatedVal.toString();
+
   return (
     <TiltCard>
-      <div
-        className="p-6 rounded-3xl h-full"
+      <Card
+        className="h-full border-0 rounded-3xl overflow-hidden"
         style={{
           background: `linear-gradient(135deg, ${glow} 0%, rgba(10,12,35,0.9) 100%)`,
-          border: `1px solid ${border}`,
           boxShadow: `0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)`,
         }}
       >
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            {title}
-          </span>
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center"
-            style={{ background: glow, border: `1px solid ${border}` }}
-          >
-            <Icon className="w-4 h-4" style={{ color }} />
+        <CardContent className="p-5 flex flex-col h-full">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              {title}
+            </span>
+            <div
+              className="w-8 h-8 rounded-xl flex items-center justify-center"
+              style={{ background: glow, border: `1px solid ${border}` }}
+            >
+              <Icon className="w-3.5 h-3.5" style={{ color }} />
+            </div>
+          </div>
+          <div className="text-2xl font-headline font-extrabold text-white mb-0.5 tabular-nums">
+            {displayValue}
+          </div>
+          {sub && <p className="text-[11px] text-muted-foreground font-medium">{sub}</p>}
+          <div className="mt-auto pt-1">
+            <Sparkline data={sparklineData[sparkIdx % sparklineData.length]} color={color} />
+          </div>
+        </CardContent>
+      </Card>
+    </TiltCard>
+  );
+}
+
+/* ── Trip card skeleton ────────────────────────────────────────────── */
+function TripCardSkeleton() {
+  return (
+    <div className="rounded-3xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.06)" }}>
+      <div className="flex flex-col sm:flex-row gap-0">
+        <Skeleton className="sm:w-48 h-44 sm:h-auto rounded-none" />
+        <div className="flex-1 p-5 space-y-4">
+          <Skeleton className="h-5 w-3/4" />
+          <div className="flex gap-4">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-3 w-20" />
+            <Skeleton className="h-3 w-28" />
+          </div>
+          <Skeleton className="h-1.5 w-full" />
+          <div className="flex gap-2">
+            <Skeleton className="h-9 flex-1 rounded-xl" />
+            <Skeleton className="h-9 w-9 rounded-xl" />
           </div>
         </div>
-        <div className="text-2xl font-headline font-extrabold text-white mb-1">{value}</div>
-        {sub && <p className="text-xs text-muted-foreground font-medium">{sub}</p>}
       </div>
-    </TiltCard>
+    </div>
   );
 }
 
@@ -151,21 +254,9 @@ function StatCard({
 function EmptyTrips({ onNew }: { onNew: () => void }) {
   return (
     <div className="col-span-2">
-      <div
-        className="py-24 text-center rounded-3xl flex flex-col items-center"
-        style={{
-          background: "rgba(255,255,255,0.02)",
-          border: "1px dashed rgba(255,255,255,0.1)",
-        }}
-      >
-        <div
-          className="w-20 h-20 rounded-3xl flex items-center justify-center mb-6"
-          style={{
-            background: "rgba(99,102,241,0.08)",
-            border: "1px solid rgba(99,102,241,0.15)",
-          }}
-        >
-          <Globe className="text-primary w-9 h-9 opacity-60" />
+      <div className="aurora-card py-24 text-center rounded-3xl flex flex-col items-center border-dashed border-white/10">
+        <div className="glass-shallow w-20 h-20 rounded-3xl flex items-center justify-center mb-6">
+          <Route className="text-primary w-9 h-9 opacity-70" />
         </div>
         <h3 className="text-2xl font-headline font-bold mb-3 text-white">
           No adventures yet
@@ -495,6 +586,7 @@ export default function Dashboard() {
               color: "#6366F1",
               glow: "rgba(99,102,241,0.15)",
               border: "rgba(99,102,241,0.25)",
+              sparkIdx: 0,
             },
             {
               title: "Journey Streak",
@@ -504,6 +596,7 @@ export default function Dashboard() {
               color: "#F59E0B",
               glow: "rgba(245,158,11,0.12)",
               border: "rgba(245,158,11,0.22)",
+              sparkIdx: 1,
             },
             {
               title: "Destinations",
@@ -513,6 +606,7 @@ export default function Dashboard() {
               color: "#10B981",
               glow: "rgba(16,185,129,0.12)",
               border: "rgba(16,185,129,0.22)",
+              sparkIdx: 2,
             },
             {
               title: "Activities Done",
@@ -522,6 +616,7 @@ export default function Dashboard() {
               color: "#8B5CF6",
               glow: "rgba(139,92,246,0.12)",
               border: "rgba(139,92,246,0.22)",
+              sparkIdx: 3,
             },
           ].map((s) => (
             <div key={s.title} className="reveal reveal-up">
@@ -532,54 +627,57 @@ export default function Dashboard() {
 
         {/* ── XP Progress bar ── */}
         {stats.explorationScore > 0 && (
-          <div
-            className="mb-12 p-5 rounded-2xl"
+          <Card
+            className="mb-12 border-0 rounded-2xl"
             style={{
               background: "rgba(99,102,241,0.06)",
               border: "1px solid rgba(99,102,241,0.15)",
             }}
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-primary" />
-                <span className="text-sm font-bold text-white">
-                  Level {stats.currentLevel} → Level {stats.currentLevel + 1}
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-bold text-white">
+                    Level {stats.currentLevel} → Level {stats.currentLevel + 1}
+                  </span>
+                </div>
+                <span className="text-xs text-muted-foreground font-medium">
+                  {stats.xpRemaining} XP remaining
                 </span>
               </div>
-              <span className="text-xs text-muted-foreground font-medium">
-                {stats.xpRemaining} XP remaining
-              </span>
-            </div>
-            <div
-              className="h-2 rounded-full overflow-hidden"
-              style={{ background: "rgba(255,255,255,0.06)" }}
-            >
-              <div
-                className="h-full rounded-full transition-all duration-700"
-                style={{
-                  width: `${stats.levelProgress}%`,
-                  background: "linear-gradient(90deg, #6366F1, #8B5CF6, #a78bfa)",
-                  boxShadow: "0 0 10px rgba(99,102,241,0.6)",
-                }}
-              />
-            </div>
-          </div>
+              <div className="relative h-2">
+                <Progress
+                  value={stats.levelProgress}
+                  className="h-2 bg-white/5 [&>div]:bg-gradient-to-r [&>div]:from-[#6366F1] [&>div]:via-[#8B5CF6] [&>div]:to-[#a78bfa]"
+                  style={{ boxShadow: "inset 0 1px 2px rgba(0,0,0,0.3)" }}
+                />
+                <div
+                  className="absolute inset-0 rounded-full pointer-events-none"
+                  style={{ boxShadow: "0 0 10px rgba(99,102,241,0.6)" }}
+                />
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* ── Trip grid ── */}
         <div className="mb-14">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-headline font-bold text-white">
+            <h2 className="text-xl font-headline font-bold text-white flex items-center gap-2">
               Active Journeys
+              <span className="text-[10px] font-bold text-muted-foreground bg-white/5 px-2.5 py-1 rounded-full border border-white/10">
+                {trips.length} / {isPremium ? "∞" : "4"}
+              </span>
             </h2>
-            <span className="text-xs text-muted-foreground font-medium">
-              {trips.length} / {isPremium ? "∞" : "4"} trips
-            </span>
           </div>
 
           {isTripsLoading ? (
-            <div className="flex items-center justify-center py-20">
-              <LumaSpin />
+            <div
+              className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+            >
+              <TripCardSkeleton />
+              <TripCardSkeleton />
             </div>
           ) : (
             <div
@@ -591,12 +689,11 @@ export default function Dashboard() {
                   <div key={trip.id} className="reveal reveal-up">
                     <Link href={`/trip/${trip.id}`}>
                       <TiltCard>
-                        <div
-                          className="rounded-3xl overflow-hidden group transition-all duration-300"
+                        <Card
+                          className="border-0 rounded-3xl overflow-hidden group transition-all duration-300"
                           style={{
                             background:
                               "linear-gradient(135deg, rgba(99,102,241,0.07) 0%, rgba(10,12,35,0.75) 100%)",
-                            border: "1px solid rgba(255,255,255,0.08)",
                             boxShadow:
                               "0 20px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07)",
                           }}
@@ -641,7 +738,7 @@ export default function Dashboard() {
                             </div>
 
                             {/* Content */}
-                            <div className="flex-1 p-5 flex flex-col justify-between min-w-0">
+                            <CardContent className="flex-1 p-5 flex flex-col justify-between min-w-0">
                               <div>
                                 <h3 className="text-lg font-bold text-white mb-3 truncate pr-2">
                                   {trip.destination}
@@ -675,18 +772,14 @@ export default function Dashboard() {
                                     <span>Itinerary Completion</span>
                                     <span>{Math.round(trip.health || 0)}%</span>
                                   </div>
-                                  <div
-                                    className="h-1.5 rounded-full overflow-hidden"
-                                    style={{ background: "rgba(255,255,255,0.06)" }}
-                                  >
+                                  <div className="relative h-1.5">
+                                    <Progress
+                                      value={trip.health || 0}
+                                      className="h-1.5 bg-white/5 [&>div]:bg-gradient-to-r [&>div]:from-[#6366F1] [&>div]:to-[#8B5CF6]"
+                                    />
                                     <div
-                                      className="h-full rounded-full transition-all duration-700"
-                                      style={{
-                                        width: `${trip.health || 0}%`,
-                                        background:
-                                          "linear-gradient(90deg, #6366F1, #8B5CF6)",
-                                        boxShadow: "0 0 8px rgba(99,102,241,0.5)",
-                                      }}
+                                      className="absolute inset-0 rounded-full pointer-events-none"
+                                      style={{ boxShadow: "0 0 8px rgba(99,102,241,0.5)" }}
                                     />
                                   </div>
                                 </div>
@@ -721,9 +814,9 @@ export default function Dashboard() {
                                   </div>
                                 </div>
                               </div>
-                            </div>
+                            </CardContent>
                           </div>
-                        </div>
+                        </Card>
                       </TiltCard>
                     </Link>
                   </div>

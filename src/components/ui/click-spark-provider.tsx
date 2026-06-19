@@ -8,7 +8,7 @@ export function ClickSparkProvider({ children }: { children: React.ReactNode }) 
       sparkColor="#8B5CF6"
       sparkSize={12}
       sparkRadius={22}
-      sparkCount={10}
+      sparkCount={4}
       duration={500}
       easing="ease-out"
       extraScale={1.2}

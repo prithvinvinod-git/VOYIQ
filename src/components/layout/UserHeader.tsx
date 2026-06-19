@@ -42,9 +42,15 @@ interface UserHeaderProps {
   showBack?: boolean;
   backHref?: string;
   title?: string;
+  logoHref?: string;
 }
 
-export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
+export function UserHeader({
+  showBack,
+  backHref,
+  title,
+  logoHref = "/dashboard",
+}: UserHeaderProps) {
   const { user } = useUser();
   const auth = useAuth();
   const firestore = useFirestore();
@@ -105,7 +111,7 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
             </Link>
           )}
 
-          <Link href="/dashboard" className="flex items-center gap-2.5 group">
+          <Link href={logoHref} className="flex items-center gap-2.5 group">
             <div
               className="w-8 h-8 rounded-lg flex items-center justify-center"
               style={{
@@ -173,8 +179,31 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
           </div>
         </div>
 
-        {/* Right: user avatar dropdown + mobile hamburger */}
+        {/* Right: auth actions or user menu */}
         <div className="flex items-center gap-3">
+          {!user ? (
+            <>
+              <Link href="/auth" className="hidden sm:block">
+                <Button
+                  variant="ghost"
+                  className="text-muted-foreground hover:text-white hover:bg-white/8 rounded-lg h-9 px-4 text-xs font-bold uppercase tracking-widest"
+                >
+                  Sign In
+                </Button>
+              </Link>
+              <Link href="/auth">
+                <Button
+                  className="rounded-lg h-9 px-4 text-xs font-bold uppercase tracking-widest text-white"
+                  style={{
+                    background: "linear-gradient(135deg, hsl(172 100% 42%), hsl(172 100% 30%))",
+                    boxShadow: "0 0 16px rgba(0,212,184,0.25)",
+                  }}
+                >
+                  Get Started
+                </Button>
+              </Link>
+            </>
+          ) : (
           <DropdownMenu modal={false} open={isMenuOpen} onOpenChange={setIsMenuOpen}>
             <DropdownMenuTrigger asChild>
               <div
@@ -265,6 +294,7 @@ export function UserHeader({ showBack, backHref, title }: UserHeaderProps) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          )}
 
           {/* Mobile hamburger navigation drawer */}
           <div className="flex md:hidden">

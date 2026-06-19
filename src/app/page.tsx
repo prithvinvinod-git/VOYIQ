@@ -3,67 +3,40 @@
 
 import React, {
   useState,
-  useRef,
-  useEffect,
-  useCallback,
   useMemo,
 } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BackgroundGradientAnimation } from "@/components/ui/background-gradient-animation";
 import { PixelHero } from "@/components/ui/pixel-perfect-hero";
-import BlurText from "@/components/ui/blur-text";
 import { CardStack, type CardStackItem } from "@/components/ui/card-stack";
+import SpotlightCard from "@/components/ui/SpotlightCard";
 import { LiquidButton } from "@/components/ui/liquid-glass-button";
-import { LumaSpin } from "@/components/ui/luma-spin";
 import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  PopoverHeader,
-  PopoverTitle,
-  PopoverDescription,
-  PopoverBody,
-  PopoverFooter,
-} from "@/components/ui/popover";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Sparkles,
-  MapPin,
   Wallet,
   MessageSquare,
   Users,
   ArrowRight,
-  ShieldCheck,
   Globe,
   Zap,
   Star,
   Compass,
-  CheckCircle,
   ChevronRight,
-  Navigation,
   Brain,
   Route,
   Download,
   RefreshCw,
   Lock,
-  TrendingUp,
-  Clock,
   Plane,
   Hotel,
   Camera,
   Map,
   Coins,
   Mail,
-  Settings,
-  LogOut,
-  LayoutDashboard,
 } from "lucide-react";
-import Image from "next/image";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { PlanSelectionDialog } from "@/components/shared/PlanSelectionDialog";
+import { UserHeader } from "@/components/layout/UserHeader";
 import {
   useUser,
   useFirestore,
@@ -72,305 +45,17 @@ import {
   useDoc,
 } from "@/firebase";
 import { collection, query, where, doc } from "firebase/firestore";
-import {
-  useScrollReveal,
-  useScrollRevealContainer,
-} from "@/hooks/useScrollReveal";
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   SCROLL PROGRESS BAR
-   SKILL.md Â§3: Performance â€” debounce-throttle on scroll events
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
-function ScrollProgressBar() {
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    let rafId: number;
-    const onScroll = () => {
-      cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(() => {
-        const el = document.documentElement;
-        const pct =
-          (el.scrollTop / (el.scrollHeight - el.clientHeight)) * 100;
-        setProgress(Math.min(pct, 100));
-      });
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      cancelAnimationFrame(rafId);
-    };
-  }, []);
-
-  return (
-    <div
-      className="scroll-progress"
-      style={{ width: `${progress}%` }}
-      aria-hidden="true"
-    />
-  );
-}
-
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   AURORA ORB â€” decorative background sphere
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
-function Orb({
-  size,
-  color,
-  style,
-  animDelay = "0s",
-}: {
-  size: number;
-  color: "indigo" | "violet" | "emerald" | "rose" | "sky";
-  style?: React.CSSProperties;
-  animDelay?: string;
-}) {
-  const colorMap = {
-    indigo: "radial-gradient(circle, rgba(99,102,241,0.22) 0%, transparent 70%)",
-    violet: "radial-gradient(circle, rgba(139,92,246,0.18) 0%, transparent 70%)",
-    emerald: "radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 70%)",
-    rose: "radial-gradient(circle, rgba(244,114,182,0.13) 0%, transparent 70%)",
-    sky: "radial-gradient(circle, rgba(56,189,248,0.12) 0%, transparent 70%)",
-  };
-  return (
-    <div
-      aria-hidden="true"
-      className="absolute pointer-events-none"
-      style={{
-        width: size,
-        height: size,
-        borderRadius: "50%",
-        background: colorMap[color],
-        filter: `blur(${size * 0.38}px)`,
-        animation: `orb-drift ${12 + size / 50}s ease-in-out infinite`,
-        animationDelay: animDelay,
-        ...style,
-      }}
-    />
-  );
-}
-
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   MAGNETIC 3D CARD
-   SKILL.md Â§7: Animation â€” transform/opacity only, spring-physics feel
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
-function Card3D({
-  children,
-  className = "",
-  style,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  style?: React.CSSProperties;
-}) {
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const card = cardRef.current;
-    if (!card) return;
-    const rect = card.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    const dx = (e.clientX - cx) / (rect.width / 2);
-    const dy = (e.clientY - cy) / (rect.height / 2);
-    card.style.transform = `perspective(1200px) rotateY(${dx * 8}deg) rotateX(${-dy * 6}deg) translateZ(18px)`;
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    const card = cardRef.current;
-    if (!card) return;
-    card.style.transform =
-      "perspective(1200px) rotateY(0deg) rotateX(0deg) translateZ(0px)";
-  }, []);
-
-  return (
-    <div
-      ref={cardRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      className={className}
-      style={{
-        transition: "transform 0.45s cubic-bezier(0.23,1,0.32,1)",
-        willChange: "transform",
-        ...style,
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   TYPEWRITER EFFECT
-   SKILL.md Â§7: Animation â€” motion conveys meaning, interruptible
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
-function TypewriterText({
-  words,
-  className = "",
-}: {
-  words: string[];
-  className?: string;
-}) {
-  const [wordIndex, setWordIndex] = useState(0);
-  const [charIndex, setCharIndex] = useState(0);
-  const [deleting, setDeleting] = useState(false);
-  const [showCursor, setShowCursor] = useState(true);
-
-  useEffect(() => {
-    const currentWord = words[wordIndex];
-    const typingSpeed = deleting ? 45 : 90;
-    const pauseAtEnd = !deleting && charIndex === currentWord.length ? 1800 : 0;
-
-    const timeout = setTimeout(
-      () => {
-        if (!deleting && charIndex < currentWord.length) {
-          setCharIndex((c) => c + 1);
-        } else if (!deleting && charIndex === currentWord.length) {
-          setTimeout(() => setDeleting(true), pauseAtEnd);
-        } else if (deleting && charIndex > 0) {
-          setCharIndex((c) => c - 1);
-        } else {
-          setDeleting(false);
-          setWordIndex((w) => (w + 1) % words.length);
-        }
-      },
-      pauseAtEnd > 0 ? pauseAtEnd : typingSpeed
-    );
-
-    return () => clearTimeout(timeout);
-  }, [wordIndex, charIndex, deleting, words]);
-
-  // Cursor blink
-  useEffect(() => {
-    const cursor = setInterval(() => setShowCursor((v) => !v), 530);
-    return () => clearInterval(cursor);
-  }, []);
-
-  return (
-    <span className={className} aria-live="polite">
-      {words[wordIndex].substring(0, charIndex)}
-      <span
-        aria-hidden="true"
-        style={{
-          opacity: showCursor ? 1 : 0,
-          transition: "opacity 0.1s",
-          marginLeft: "2px",
-          borderRight: "3px solid currentColor",
-          display: "inline-block",
-          height: "0.85em",
-          verticalAlign: "middle",
-        }}
-      />
-    </span>
-  );
-}
-
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   ANIMATED COUNTER
-   SKILL.md Â§7: Animation â€” stagger + motion conveys meaning
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
-function AnimatedNumber({
-  target,
-  suffix = "",
-  prefix = "",
-}: {
-  target: number;
-  suffix?: string;
-  prefix?: string;
-}) {
-  const [count, setCount] = useState(0);
-  const started = useRef(false);
-  const nodeRef = useRef<HTMLSpanElement>(null);
-
-  useEffect(() => {
-    const node = nodeRef.current;
-    if (!node) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !started.current) {
-          started.current = true;
-          const duration = 1600;
-          const steps = 60;
-          const inc = target / steps;
-          let cur = 0;
-          const timer = setInterval(() => {
-            cur += inc;
-            if (cur >= target) {
-              setCount(target);
-              clearInterval(timer);
-            } else {
-              setCount(Math.floor(cur));
-            }
-          }, duration / steps);
-        }
-      },
-      { threshold: 0.5 }
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [target]);
-
-  return (
-    <span ref={nodeRef} className="stat-number">
-      {prefix}{count.toLocaleString()}{suffix}
-    </span>
-  );
-}
-
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   WIREFRAME GLOBE (SVG decorative)
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
-function WireframeGlobe({ size = 360 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 360 360"
-      fill="none"
-      aria-hidden="true"
-      className="animate-spin-slow"
-      style={{ opacity: 0.22 }}
-    >
-      {/* Outer circle */}
-      <circle cx="180" cy="180" r="170" stroke="rgba(99,102,241,0.6)" strokeWidth="0.8" />
-      {/* Equator */}
-      <ellipse cx="180" cy="180" rx="170" ry="45" stroke="rgba(99,102,241,0.5)" strokeWidth="0.6" />
-      {/* Tropic ellipses */}
-      <ellipse cx="180" cy="180" rx="170" ry="105" stroke="rgba(139,92,246,0.4)" strokeWidth="0.6" />
-      <ellipse cx="180" cy="180" rx="170" ry="158" stroke="rgba(139,92,246,0.3)" strokeWidth="0.6" />
-      {/* Meridians */}
-      <ellipse cx="180" cy="180" rx="45" ry="170" stroke="rgba(16,185,129,0.45)" strokeWidth="0.6" />
-      <ellipse cx="180" cy="180" rx="105" ry="170" stroke="rgba(16,185,129,0.3)" strokeWidth="0.6" />
-      <line x1="180" y1="10" x2="180" y2="350" stroke="rgba(244,114,182,0.4)" strokeWidth="0.6" />
-      <line x1="10" y1="180" x2="350" y2="180" stroke="rgba(244,114,182,0.35)" strokeWidth="0.6" />
-      {/* Glowing dots at intersections */}
-      {[
-        [180, 135], [225, 155], [225, 205], [180, 225],
-        [135, 205], [135, 155], [180, 65], [180, 295],
-      ].map(([cx, cy], i) => (
-        <circle
-          key={i}
-          cx={cx}
-          cy={cy}
-          r="3"
-          fill={i % 2 === 0 ? "rgba(99,102,241,0.9)" : "rgba(16,185,129,0.9)"}
-        />
-      ))}
-    </svg>
-  );
-}
-
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ═══════════════════════════════════════════════════════════════════
    MAIN LANDING PAGE
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ═══════════════════════════════════════════════════════════════════ */
 export default function LandingPage() {
   const router = useRouter();
   const { user } = useUser();
   const firestore = useFirestore();
   const [isPlanDialogOpen, setIsPlanDialogOpen] = useState(false);
-  const heroImg = PlaceHolderImages.find((img) => img.id === "hero-travel");
 
-  /* â”€â”€ Firebase data (unchanged) â”€â”€ */
+  /* ── Firebase data ── */
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return doc(firestore, "users", user.uid);
@@ -397,76 +82,50 @@ export default function LandingPage() {
     else { router.push("/plan/new"); }
   };
 
-  /* â”€â”€ Scroll-reveal refs â”€â”€ */
-  const revealHeroBadge = useScrollReveal({ threshold: 0.1 });
-  const revealHeroTitle = useScrollReveal({ threshold: 0.1 });
-  const revealHeroSub = useScrollReveal({ threshold: 0.1 });
-  const revealHeroBtns = useScrollReveal({ threshold: 0.1 });
-  const revealHeroImg = useScrollReveal({ threshold: 0.05 });
-  const revealStats = useScrollRevealContainer();
-  const revealFeatures = useScrollRevealContainer();
-  const revealBento = useScrollRevealContainer();
-  const revealStepper = useScrollRevealContainer();
-  const revealBenefits = useScrollRevealContainer();
-  const revealTestimonials = useScrollRevealContainer();
-  const revealCTA = useScrollReveal();
-
-  /* â”€â”€ Feature data â”€â”€ */
+  /* ── Feature data ── */
   const features = useMemo(
     () => [
       {
         icon: Brain,
         title: "AI Travel Brain",
         desc: "Contextual intelligence that learns your travel philosophy and curates hyper-personalized routes.",
-        variant: "aurora-card-indigo",
         accent: "#6366F1",
-        size: "bento-1",
-        large: true,
+        spotlightColor: "rgba(99, 102, 241, 0.25)",
       },
       {
         icon: Wallet,
         title: "BudgetSync",
         desc: "Real-time multi-currency tracking across your entire journey.",
-        variant: "aurora-card-emerald",
         accent: "#10B981",
-        size: "bento-2",
-        large: false,
+        spotlightColor: "rgba(16, 185, 129, 0.25)",
       },
       {
         icon: Users,
         title: "Collaborative",
         desc: "Plan with your crew. Vote, sync costs, and share memories.",
-        variant: "aurora-card-violet",
         accent: "#8B5CF6",
-        size: "bento-3",
-        large: false,
+        spotlightColor: "rgba(139, 92, 246, 0.25)",
       },
       {
         icon: Route,
         title: "SmartItinerary",
         desc: "Day-by-day plans crafted around your pace and preferences.",
-        variant: "aurora-card",
         accent: "#F472B6",
-        size: "bento-4",
-        large: false,
+        spotlightColor: "rgba(244, 114, 182, 0.25)",
       },
       {
         icon: Map,
         title: "Live Map",
         desc: "Interactive mapping with real-time updates.",
-        variant: "aurora-card",
         accent: "#38BDF8",
-        size: "bento-5",
-        large: false,
+        spotlightColor: "rgba(56, 189, 248, 0.25)",
       },
       {
         icon: Download,
         title: "PDF Export",
         desc: "Offline-ready itineraries, anywhere.",
-        variant: "aurora-card",
         accent: "#FBBF24",
-        size: "bento-6",
-        large: false,
+        spotlightColor: "rgba(251, 191, 36, 0.25)",
       },
     ],
     []
@@ -504,47 +163,7 @@ export default function LandingPage() {
     },
   ];
 
-  /* â”€â”€ Benefits â”€â”€ */
-  const benefits = [
-    {
-      icon: Globe,
-      title: "Multi-Currency",
-      desc: "Seamless real-time conversion for 150+ currencies.",
-      color: "#6366F1",
-    },
-    {
-      icon: Zap,
-      title: "Dynamic Replanning",
-      desc: "Weather changes? Schedule shifts? AI adapts instantly.",
-      color: "#8B5CF6",
-    },
-    {
-      icon: ShieldCheck,
-      title: "Enterprise Security",
-      desc: "Your data is protected with bank-grade encryption.",
-      color: "#10B981",
-    },
-    {
-      icon: MapPin,
-      title: "PDF Portability",
-      desc: "Export polished itineraries for offline access anywhere.",
-      color: "#F472B6",
-    },
-    {
-      icon: Clock,
-      title: "24/7 AI Support",
-      desc: "Local insights and travel answers, any time of day.",
-      color: "#38BDF8",
-    },
-    {
-      icon: TrendingUp,
-      title: "Smart Analytics",
-      desc: "Spending breakdowns, trip stats, and travel insights.",
-      color: "#FBBF24",
-    },
-  ];
-
-  /* â”€â”€ Testimonials â”€â”€ */
+  /* ── Testimonials ── */
   const testimonials = [
     {
       quote:
@@ -596,21 +215,10 @@ export default function LandingPage() {
     { icon: Coins, label: "Multi-Currency" },
     { icon: Download, label: "PDF Export" },
     { icon: Lock, label: "Secure Sync" },
-    { icon: Navigation, label: "Real-time Updates" },
     { icon: RefreshCw, label: "Dynamic Replanning" },
   ];
 
-  /* â”€â”€ Testimonial carousel state â”€â”€ */
-  const [activeTestimonial, setActiveTestimonial] = useState(0);
-  useEffect(() => {
-    const timer = setInterval(
-      () => setActiveTestimonial((i) => (i + 1) % testimonials.length),
-      5000
-    );
-    return () => clearInterval(timer);
-  }, [testimonials.length]);
-
-  /* â”€â”€ Famous Destinations (CardStack) â”€â”€ */
+  /* ── Famous Destinations (CardStack) ── */
   const destinations: CardStackItem[] = useMemo(() => [
     {
       id: 1,
@@ -658,146 +266,8 @@ export default function LandingPage() {
 
   return (
     <div className="flex flex-col min-h-dvh overflow-x-hidden">
-      {/* â”€â”€ SCROLL PROGRESS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-      <ScrollProgressBar />
+      <UserHeader logoHref="/" />
 
-      {/* â”€â”€ HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-      <header className="fixed top-0 w-full z-50 nav-aurora" role="banner">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          {/* Logo */}
-          <Link
-            href="/"
-            className="flex items-center gap-2.5 hover:opacity-85 transition-opacity group"
-            aria-label="VOYIQ Home"
-          >
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center relative overflow-hidden"
-              style={{
-                background:
-                  "linear-gradient(135deg, #6366F1, #8B5CF6)",
-                boxShadow:
-                  "0 0 24px rgba(99,102,241,0.45), inset 0 1px 0 rgba(255,255,255,0.2)",
-              }}
-            >
-              <Compass
-                className="text-white w-5 h-5 group-hover:rotate-45 transition-transform duration-500"
-                aria-hidden="true"
-              />
-            </div>
-            <span className="text-xl font-headline font-bold tracking-tight">
-              VOYIQ
-            </span>
-          </Link>
-
-          {/* Nav links */}
-          <nav
-            className="hidden md:flex items-center gap-8 text-sm font-medium"
-            aria-label="Main navigation"
-          >
-            {[
-              { href: "#features", label: "Features" },
-              { href: "#how-it-works", label: "How It Works" },
-              { href: "#why-voyiq", label: "Why VOYIQ" },
-              { href: "/pricing", label: "Pricing" },
-            ].map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                className="text-muted-foreground hover:text-primary transition-colors relative group"
-              >
-                {label}
-                <span className="absolute -bottom-1 left-0 w-0 h-px bg-primary transition-all duration-300 group-hover:w-full" />
-              </Link>
-            ))}
-          </nav>
-
-          {/* CTA cluster */}
-          <div className="flex items-center gap-3">
-            {/* Profile dropdown for signed-in users; Sign In button for guests */}
-            {user ? (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button
-                    className="h-9 w-9 rounded-full overflow-hidden border-2 transition-all hover:border-primary/60"
-                    style={{ border: "2px solid rgba(99,102,241,0.35)" }}
-                    aria-label="Open profile menu"
-                  >
-                    <Avatar className="h-full w-full">
-                      <AvatarImage src={user.photoURL || ""} alt={user.displayName || "User"} />
-                      <AvatarFallback className="text-xs font-bold" style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)", color: "white" }}>
-                        {(user.displayName || user.email || "U").slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent align="end" className="w-60">
-                  <PopoverHeader>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={user.photoURL || ""} alt={user.displayName || "User"} />
-                        <AvatarFallback className="text-xs font-bold" style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)", color: "white" }}>
-                          {(user.displayName || user.email || "U").slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0">
-                        <PopoverTitle>{user.displayName || "Explorer"}</PopoverTitle>
-                        <PopoverDescription className="truncate">{user.email}</PopoverDescription>
-                      </div>
-                    </div>
-                  </PopoverHeader>
-                  <PopoverBody className="space-y-0.5">
-                    <Link href="/dashboard">
-                      <button className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors text-left">
-                        <LayoutDashboard className="w-4 h-4 text-primary" aria-hidden="true" />
-                        Dashboard
-                      </button>
-                    </Link>
-                    <Link href="/settings">
-                      <button className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors text-left">
-                        <Settings className="w-4 h-4" aria-hidden="true" />
-                        Settings
-                      </button>
-                    </Link>
-                  </PopoverBody>
-                  <PopoverFooter>
-                    <button
-                      onClick={() => router.push("/auth")}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-red-400 hover:text-red-300 hover:bg-red-500/8 transition-colors"
-                    >
-                      <LogOut className="w-4 h-4" aria-hidden="true" />
-                      Sign Out
-                    </button>
-                  </PopoverFooter>
-                </PopoverContent>
-              </Popover>
-            ) : (
-              <Link href="/auth">
-                <Button
-                  variant="ghost"
-                  className="hidden sm:inline-flex text-muted-foreground hover:text-white hover:bg-white/8 rounded-full px-5"
-                >
-                  Sign In
-                </Button>
-              </Link>
-            )}
-            <Button
-              onClick={handleProceed}
-              className="btn-shimmer rounded-full px-6 font-bold text-white"
-              style={{
-                background: "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)",
-                boxShadow: "0 0 16px rgba(99,102,241,0.25), inset 0 1px 0 rgba(255,255,255,0.15)",
-              }}
-            >
-              {user ? "Plan Adventure" : "Get Started"}
-              <ArrowRight className="ml-1.5 w-4 h-4" aria-hidden="true" />
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          HERO SECTION â€” PixelPerfect
-          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <section aria-label="Hero" className="relative">
         <PixelHero
           word1="Travel"
@@ -809,43 +279,24 @@ export default function LandingPage() {
           secondaryCtaMobile="Join"
           onPrimaryClick={handleProceed}
           secondaryHref="/auth"
-          splineUrl="https://prod.spline.design/BdY6Unnf7hakmSKR/scene.splinecode"
         />
       </section>
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          STATS BAR
-          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+
       <section
-        className="py-16 relative overflow-hidden"
+        className="py-16 relative overflow-hidden border-y border-white/5"
         aria-label="Key statistics"
       >
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(90deg, rgba(99,102,241,0.04) 0%, rgba(139,92,246,0.04) 50%, rgba(16,185,129,0.04) 100%)",
-            borderTop: "1px solid rgba(255,255,255,0.05)",
-            borderBottom: "1px solid rgba(255,255,255,0.05)",
-          }}
-          aria-hidden="true"
-        />
-        <div
-          ref={revealStats as React.RefCallback<HTMLDivElement>}
-          className="container mx-auto px-4 stagger-children"
-        >
+        <div className="container mx-auto px-4">
           <dl className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
-              { value: 10000, suffix: "+", label: "Travelers Worldwide" },
-              { value: 50000, suffix: "+", label: "Itineraries Created" },
-              { value: 150, suffix: "+", label: "Countries Covered" },
-              { value: 98, suffix: "%", label: "Satisfaction Rate" },
+              { value: "10,000+", label: "Travelers Worldwide" },
+              { value: "50,000+", label: "Itineraries Created" },
+              { value: "150+", label: "Countries Covered" },
+              { value: "98%", label: "Satisfaction Rate" },
             ].map((stat, i) => (
-              <div key={i} className="reveal reveal-up">
+              <div key={i}>
                 <dt className="text-4xl font-headline font-extrabold aurora-text mb-1">
-                  <AnimatedNumber
-                    target={stat.value}
-                    suffix={stat.suffix}
-                  />
+                  {stat.value}
                 </dt>
                 <dd className="text-sm text-muted-foreground font-medium">
                   {stat.label}
@@ -856,68 +307,32 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          MARQUEE STRIP
-          SKILL.md Â§7: marquee â€” transform only, pauseable on hover
-          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <section
-        className="py-8 relative overflow-hidden"
+        className="py-8 border-b border-white/5"
         aria-label="Feature highlights"
-        aria-hidden="true"
       >
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(99,102,241,0.04) 0%, rgba(139,92,246,0.03) 100%)",
-            borderTop: "1px solid rgba(99,102,241,0.1)",
-            borderBottom: "1px solid rgba(99,102,241,0.1)",
-          }}
-        />
-        <div className="marquee-fade overflow-hidden">
-          <div className="flex">
-            <div className="marquee-track">
-              {[...marqueeItems, ...marqueeItems].map((item, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-2.5 px-8 whitespace-nowrap"
-                >
-                  <item.icon
-                    className="w-4 h-4"
-                    style={{ color: i % 3 === 0 ? "#6366F1" : i % 3 === 1 ? "#8B5CF6" : "#10B981" }}
-                  />
-                  <span className="text-sm font-medium text-muted-foreground">
-                    {item.label}
-                  </span>
-                  <span
-                    className="w-1 h-1 rounded-full ml-4"
-                    style={{ background: "rgba(99,102,241,0.5)" }}
-                  />
-                </div>
-              ))}
-            </div>
+        <div className="container mx-auto px-4">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+            {marqueeItems.map((item, i) => (
+              <div
+                key={item.label}
+                className="flex items-center gap-2 text-sm font-medium text-muted-foreground"
+              >
+                <item.icon
+                  className="w-4 h-4"
+                  style={{ color: i % 3 === 0 ? "#6366F1" : i % 3 === 1 ? "#8B5CF6" : "#10B981" }}
+                />
+                {item.label}
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          FAMOUS DESTINATIONS â€” CardStack
-          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <section
-        className="py-24 relative overflow-hidden"
+        className="pt-16 pb-10 relative overflow-hidden border-t border-white/5"
         aria-label="Famous travel destinations"
       >
-        <div
-          className="absolute inset-0"
-          style={{
-            background: "radial-gradient(ellipse 70% 60% at 50% 50%, rgba(99,102,241,0.07) 0%, transparent 70%)",
-            borderTop: "1px solid rgba(255,255,255,0.04)",
-          }}
-          aria-hidden="true"
-        />
-        <Orb size={400} color="violet" style={{ top: "10%", left: "-5%", opacity: 0.15 }} animDelay="-4s" />
-        <Orb size={300} color="emerald" style={{ bottom: "10%", right: "-5%", opacity: 0.12 }} animDelay="-8s" />
-
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <Badge
@@ -930,22 +345,10 @@ export default function LandingPage() {
             >
               Dream Destinations
             </Badge>
-            <div className="text-4xl md:text-5xl font-headline font-bold tracking-tight flex flex-wrap justify-center gap-x-[0.25em]">
-              <BlurText
-                text="The world is"
-                delay={150}
-                animateBy="words"
-                direction="top"
-                className="text-white"
-              />
-              <BlurText
-                text="waiting for you."
-                delay={150}
-                animateBy="words"
-                direction="top"
-                className="aurora-text-emerald"
-              />
-            </div>
+            <h2 className="text-4xl md:text-5xl font-headline font-bold tracking-tight">
+              The world is{" "}
+              <span className="aurora-text-emerald">waiting for you.</span>
+            </h2>
             <p className="mt-4 text-lg text-muted-foreground max-w-xl mx-auto">
               Swipe through iconic destinations and let VOYIQ craft your perfect itinerary.
             </p>
@@ -953,8 +356,6 @@ export default function LandingPage() {
 
           <CardStack
             items={destinations}
-            autoAdvance
-            intervalMs={3200}
             pauseOnHover
             showDots
             cardWidth={540}
@@ -962,7 +363,7 @@ export default function LandingPage() {
             loop
           />
 
-          <div className="text-center mt-10">
+          <div className="text-center mt-6">
             <LiquidButton
               onClick={handleProceed}
               variant="aurora"
@@ -976,21 +377,13 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          BENTO FEATURES GRID
-          SKILL.md Â§5: Layout â€” visual-hierarchy, container-width
-          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <section
         id="features"
-        className="py-32 relative overflow-hidden"
+        className="pt-8 pb-24 relative overflow-hidden border-t border-white/5"
         aria-label="Features"
       >
-        <Orb size={550} color="violet" style={{ top: "5%", right: "-10%", opacity: 0.18 }} animDelay="-3s" />
-        <Orb size={400} color="indigo" style={{ bottom: "10%", left: "-8%", opacity: 0.15 }} animDelay="-7s" />
-
         <div className="container mx-auto px-4">
-          {/* Section header */}
-          <div className="max-w-3xl mb-16 reveal reveal-up">
+          <div className="max-w-3xl mb-10">
             <Badge
               className="mb-6 px-4 py-1.5 text-xs uppercase tracking-widest font-bold"
               style={{
@@ -1011,86 +404,52 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* Bento grid */}
-          <div
-            ref={revealBento as React.RefCallback<HTMLDivElement>}
-            className="bento-grid stagger-children"
-          >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {features.map((f, i) => (
-              <div key={i} className={`reveal reveal-scale ${f.size}`}>
-                <Card3D className="h-full">
+              <div key={i}>
+                <SpotlightCard
+                  className="flex flex-col h-full"
+                  spotlightColor={f.spotlightColor}
+                >
                   <div
-                    className={`h-full p-7 rounded-3xl flex flex-col relative overflow-hidden ${f.variant}`}
-                    style={{ minHeight: f.large ? "260px" : "180px" }}
+                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 flex-shrink-0"
+                    style={{
+                      background: `${f.accent}15`,
+                      border: `1px solid ${f.accent}30`,
+                    }}
                   >
-                    {/* Background glow blot */}
-                    <div
-                      className="absolute top-0 right-0 w-32 h-32 rounded-full pointer-events-none"
-                      style={{
-                        background: `radial-gradient(circle, ${f.accent}22 0%, transparent 70%)`,
-                        filter: "blur(24px)",
-                      }}
+                    <f.icon
+                      className="w-6 h-6"
+                      style={{ color: f.accent }}
                       aria-hidden="true"
                     />
-
-                    <div
-                      className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5 icon-box-aurora flex-shrink-0 relative"
-                      style={{ border: `1px solid ${f.accent}30` }}
-                    >
-                      <f.icon
-                        className="w-7 h-7"
-                        style={{ color: f.accent }}
-                        aria-hidden="true"
-                      />
-                    </div>
-
-                    <h3
-                      className="text-xl font-bold mb-3"
-                      style={{ color: f.large ? "white" : undefined }}
-                    >
-                      {f.title}
-                    </h3>
-                    <p className="text-muted-foreground leading-relaxed text-sm flex-1">
-                      {f.desc}
-                    </p>
-
-                    <div
-                      className="mt-5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest"
-                      style={{ color: f.accent }}
-                    >
-                      Explore <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
-                    </div>
                   </div>
-                </Card3D>
+
+                  <h3 className="text-lg font-bold mb-2">{f.title}</h3>
+                  <p className="text-muted-foreground leading-relaxed text-sm flex-1">
+                    {f.desc}
+                  </p>
+
+                  <div
+                    className="mt-5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest"
+                    style={{ color: f.accent }}
+                  >
+                    Explore <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
+                  </div>
+                </SpotlightCard>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          HOW IT WORKS â€” Stepper Timeline
-          SKILL.md Â§9: Navigation â€” multi-step-progress
-          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <section
         id="how-it-works"
-        className="py-32 relative overflow-hidden"
+        className="py-24 relative overflow-hidden border-t border-white/5"
         aria-label="How VOYIQ works"
       >
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(ellipse 70% 50% at 50% 50%, rgba(99,102,241,0.06) 0%, transparent 70%)",
-            borderTop: "1px solid rgba(255,255,255,0.04)",
-          }}
-          aria-hidden="true"
-        />
-        <Orb size={450} color="emerald" style={{ top: "20%", left: "-5%", opacity: 0.3 }} animDelay="-5s" />
-
         <div className="container mx-auto px-4">
-          {/* Header */}
-          <div className="text-center max-w-3xl mx-auto mb-20">
+          <div className="text-center max-w-3xl mx-auto mb-16">
             <Badge
               className="mb-6 px-4 py-1.5 text-xs uppercase tracking-widest font-bold inline-flex"
               style={{
@@ -1107,11 +466,7 @@ export default function LandingPage() {
             </h2>
           </div>
 
-          {/* Steps */}
-          <div
-            ref={revealStepper as React.RefCallback<HTMLDivElement>}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 stagger-children relative"
-          >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative">
             {/* Connection line on desktop */}
             <div
               className="hidden lg:block absolute top-12 left-[12.5%] right-[12.5%] h-px"
@@ -1123,7 +478,7 @@ export default function LandingPage() {
             />
 
             {steps.map((step, i) => (
-              <div key={i} className="reveal reveal-up flex flex-col items-center text-center">
+              <div key={i} className="flex flex-col items-center text-center">
                 {/* Step badge */}
                 <div className="relative mb-6">
                   <div
@@ -1160,223 +515,11 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          BENEFITS SECTION
-          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <section
-        id="why-voyiq"
-        className="py-32 relative overflow-hidden"
-        aria-label="Why choose VOYIQ"
-      >
-        <Orb size={500} color="indigo" style={{ bottom: "0%", right: "-8%", opacity: 0.14 }} animDelay="-6s" />
-
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-
-            {/* Left â€” benefit cards */}
-            <div
-              ref={revealBenefits as React.RefCallback<HTMLDivElement>}
-              className="space-y-8 stagger-children"
-            >
-              <div className="space-y-5 reveal reveal-left">
-                <Badge
-                  className="mb-2 px-4 py-1.5 text-xs uppercase tracking-widest font-bold"
-                  style={{
-                    background: "rgba(99,102,241,0.12)",
-                    border: "1px solid rgba(99,102,241,0.28)",
-                    color: "#818CF8",
-                  }}
-                >
-                  Why VOYIQ
-                </Badge>
-                <h2 className="text-4xl md:text-5xl font-headline font-bold tracking-tight">
-                  Prioritize the journey,
-                  <br />
-                  <span className="aurora-text">not the planning.</span>
-                </h2>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  VOYIQ understands your travel philosophy to curate experiences
-                  that resonate deeply â€” no generic suggestions.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {benefits.map((item, i) => (
-                  <div
-                    key={i}
-                    className="reveal reveal-up flex gap-4 p-5 rounded-2xl transition-all duration-300 group hover:scale-[1.02]"
-                    style={{
-                      background: "rgba(255,255,255,0.02)",
-                      border: "1px solid rgba(255,255,255,0.06)",
-                      transition: "transform 0.3s cubic-bezier(0.23,1,0.32,1), border-color 0.3s ease, box-shadow 0.3s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = `${item.color}30`;
-                      e.currentTarget.style.boxShadow = `0 0 24px ${item.color}12`;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
-                      e.currentTarget.style.boxShadow = "none";
-                    }}
-                  >
-                    <div
-                      className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
-                      style={{
-                        background: `${item.color}18`,
-                        border: `1px solid ${item.color}28`,
-                      }}
-                    >
-                      <item.icon
-                        className="w-5 h-5"
-                        style={{ color: item.color }}
-                        aria-hidden="true"
-                      />
-                    </div>
-                    <div>
-                      <h4 className="font-bold mb-1 group-hover:text-primary transition-colors text-sm">
-                        {item.title}
-                      </h4>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        {item.desc}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Right â€” 3D testimonial showcase */}
-            <div className="relative">
-              <Orb size={320} color="violet" style={{ top: "15%", right: "5%", opacity: 0.18 }} animDelay="-2s" />
-              <Card3D>
-                <div
-                  className="aurora-prism p-8 rounded-3xl relative overflow-hidden"
-                  style={{ minHeight: "380px" }}
-                >
-                  {/* Rainbow top bar */}
-                  <div
-                    className="absolute top-0 left-0 right-0 h-[2px] rounded-t-3xl"
-                    style={{
-                      background:
-                        "linear-gradient(90deg, #6366F1, #8B5CF6, #10B981, #F472B6)",
-                    }}
-                    aria-hidden="true"
-                  />
-
-                  <div className="flex items-center gap-4 mb-8">
-                    <div
-                      className="w-14 h-14 rounded-2xl flex items-center justify-center"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, rgba(99,102,241,0.25), rgba(99,102,241,0.08))",
-                        border: "1px solid rgba(99,102,241,0.3)",
-                      }}
-                    >
-                      <Star
-                        className="w-7 h-7 fill-primary text-primary"
-                        aria-hidden="true"
-                      />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-white text-lg">
-                        Loved by 10k+ Travelers
-                      </h4>
-                      <div className="flex gap-1 mt-1" role="img" aria-label="5 out of 5 stars">
-                        {Array.from({ length: 5 }).map((_, s) => (
-                          <Star
-                            key={s}
-                            className="w-3.5 h-3.5 text-primary fill-primary"
-                            aria-hidden="true"
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Testimonial text with fade transition */}
-                  <blockquote
-                    className="text-lg italic mb-8 text-white/90 leading-relaxed font-medium"
-                    style={{
-                      transition: "opacity 0.5s ease",
-                      minHeight: "80px",
-                    }}
-                  >
-                    &ldquo;{testimonials[activeTestimonial].quote}&rdquo;
-                  </blockquote>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm text-white"
-                        style={{
-                          background: `linear-gradient(135deg, ${testimonials[activeTestimonial].color}60, ${testimonials[activeTestimonial].color}30)`,
-                          border: `1px solid ${testimonials[activeTestimonial].color}40`,
-                        }}
-                        aria-hidden="true"
-                      >
-                        {testimonials[activeTestimonial].initials}
-                      </div>
-                      <div>
-                        <p className="font-bold text-white text-sm">
-                          {testimonials[activeTestimonial].author}
-                        </p>
-                        <p
-                          className="text-xs font-medium"
-                          style={{ color: testimonials[activeTestimonial].color }}
-                        >
-                          {testimonials[activeTestimonial].role}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Dot indicators */}
-                    <div className="flex gap-1.5" role="tablist" aria-label="Testimonial navigation">
-                      {testimonials.map((_, idx) => (
-                        <button
-                          key={idx}
-                          role="tab"
-                          aria-selected={idx === activeTestimonial}
-                          aria-label={`View testimonial ${idx + 1}`}
-                          onClick={() => setActiveTestimonial(idx)}
-                          className="rounded-full transition-all duration-300"
-                          style={{
-                            width: idx === activeTestimonial ? "20px" : "6px",
-                            height: "6px",
-                            background:
-                              idx === activeTestimonial
-                                ? testimonials[activeTestimonial].color
-                                : "rgba(255,255,255,0.2)",
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </Card3D>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          SOCIAL PROOF â€” Avatar stack + rolling testimonials
-          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-      <section
-        className="py-20 relative overflow-hidden"
+        className="py-20 relative overflow-hidden border-t border-white/5"
         aria-label="Community testimonials"
       >
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(ellipse 60% 50% at 50% 50%, rgba(139,92,246,0.06) 0%, transparent 70%)",
-            borderTop: "1px solid rgba(255,255,255,0.04)",
-            borderBottom: "1px solid rgba(255,255,255,0.04)",
-          }}
-          aria-hidden="true"
-        />
         <div className="container mx-auto px-4">
-          {/* Avatar stack */}
           <div className="text-center mb-12">
             <div
               className="flex items-center justify-center mb-4"
@@ -1416,58 +559,38 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* Dual marquee rows */}
-          <div
-            ref={revealTestimonials as React.RefCallback<HTMLDivElement>}
-            className="space-y-4"
-          >
-            {[false, true].map((reversed, rowIdx) => (
-              <div key={rowIdx} className="overflow-hidden marquee-fade">
-                <div className="flex">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {testimonials.map((t) => (
+              <div
+                key={t.author}
+                className="aurora-card rounded-2xl p-5"
+                style={{ border: `1px solid ${t.color}20` }}
+              >
+                <div className="flex gap-1 mb-3" aria-hidden="true">
+                  {Array.from({ length: t.stars }).map((_, s) => (
+                    <Star
+                      key={s}
+                      className="w-3 h-3 fill-current"
+                      style={{ color: t.color }}
+                    />
+                  ))}
+                </div>
+                <p className="text-sm text-foreground/80 mb-4 leading-relaxed italic">
+                  &ldquo;{t.quote}&rdquo;
+                </p>
+                <div className="flex items-center gap-2.5">
                   <div
-                    className={`flex gap-4 ${reversed ? "marquee-track-reverse" : "marquee-track marquee-slow"}`}
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                    style={{ background: `${t.color}50` }}
+                    aria-hidden="true"
                   >
-                    {[...testimonials, ...testimonials].map((t, i) => (
-                      <div
-                        key={i}
-                        className="flex-shrink-0 aurora-card rounded-2xl p-5"
-                        style={{
-                          width: "320px",
-                          border: `1px solid ${t.color}20`,
-                        }}
-                      >
-                        <div className="flex gap-1 mb-3" aria-hidden="true">
-                          {Array.from({ length: t.stars }).map((_, s) => (
-                            <Star
-                              key={s}
-                              className="w-3 h-3 fill-current"
-                              style={{ color: t.color }}
-                            />
-                          ))}
-                        </div>
-                        <p className="text-sm text-foreground/80 mb-4 leading-relaxed italic">
-                          &ldquo;{t.quote.substring(0, 90)}...&rdquo;
-                        </p>
-                        <div className="flex items-center gap-2.5">
-                          <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                            style={{ background: `${t.color}50` }}
-                            aria-hidden="true"
-                          >
-                            {t.initials}
-                          </div>
-                          <div>
-                            <p className="text-xs font-bold">{t.author}</p>
-                            <p
-                              className="text-xs"
-                              style={{ color: t.color }}
-                            >
-                              {t.role.split(" Â· ")[1]}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                    {t.initials}
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold">{t.author}</p>
+                    <p className="text-xs" style={{ color: t.color }}>
+                      {t.role}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -1476,38 +599,11 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          CTA SECTION
-          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <section
-        className="py-32 relative overflow-hidden"
+        className="py-24 relative overflow-hidden border-t border-white/5"
         aria-label="Get started call to action"
       >
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(ellipse at center, rgba(99,102,241,0.1) 0%, transparent 65%)",
-            borderTop: "1px solid rgba(255,255,255,0.05)",
-          }}
-          aria-hidden="true"
-        />
-        <Orb
-          size={500}
-          color="indigo"
-          style={{ top: "-30%", left: "50%", transform: "translateX(-50%)", opacity: 0.2 }}
-        />
-        <Orb
-          size={300}
-          color="emerald"
-          style={{ bottom: "-10%", right: "15%", opacity: 0.14 }}
-          animDelay="-5s"
-        />
-
-        <div
-          ref={revealCTA as React.RefCallback<HTMLDivElement>}
-          className="reveal reveal-scale container mx-auto px-4 text-center relative z-10"
-        >
+        <div className="container mx-auto px-4 text-center">
           <Badge
             className="mb-8 px-5 py-2 text-xs uppercase tracking-widest font-bold inline-flex"
             style={{
@@ -1537,7 +633,7 @@ export default function LandingPage() {
               size="xxl"
               onClick={handleProceed}
               variant="aurora"
-              className="btn-shimmer magnetic-btn font-bold"
+              className="font-bold"
             >
               {user ? "Plan Your Adventure" : "Begin Free Exploration"}
               <ArrowRight className="ml-2 w-5 h-5" aria-hidden="true" />

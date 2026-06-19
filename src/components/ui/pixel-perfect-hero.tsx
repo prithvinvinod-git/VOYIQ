@@ -120,6 +120,7 @@ export interface PixelHeroProps {
   onSecondaryClick?: () => void;
   secondaryHref?: string;
   splineUrl?: string;
+  lite?: boolean;
 }
 
 export function PixelHero({
@@ -134,25 +135,27 @@ export function PixelHero({
   onSecondaryClick,
   secondaryHref = "/auth",
   splineUrl,
+  lite = false,
 }: PixelHeroProps) {
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(lite);
   const [pillIdx, setPillIdx] = useState(0);
 
   useEffect(() => {
+    if (lite) return;
     const t = setTimeout(() => setIsLoaded(true), 80);
     return () => clearTimeout(t);
-  }, []);
+  }, [lite]);
 
-  // Cycle active pill highlight on mobile
   useEffect(() => {
+    if (lite) return;
     const iv = setInterval(
       () => setPillIdx((i) => (i + 1) % FEATURE_PILLS.length),
       2200
     );
     return () => clearInterval(iv);
-  }, []);
+  }, [lite]);
 
-  const hasSpline = !!splineUrl;
+  const hasSpline = !!splineUrl && !lite;
 
   return (
     <div className="relative w-full min-h-[100dvh] bg-background overflow-hidden isolate">
@@ -219,90 +222,30 @@ export function PixelHero({
           ════════════════════════════════════════════════════════ */}
       <div className="absolute inset-0 z-0" aria-hidden="true">
         <GradientBlinds
-          gradientColors={["#0a0c23", "#1a1040", "#6366F1", "#4f46e5", "#0a0c23"]}
-          angle={12}
-          noise={0.18}
-          blindCount={10}
-          blindMinWidth={80}
+          gradientColors={["#6366F1", "#8B5CF6", "#EC4899", "#F59E0B", "#6366F1"]}
+          angle={0}
+          noise={0.25}
+          blindCount={14}
+          blindMinWidth={60}
           spotlightRadius={0.6}
           spotlightSoftness={0.85}
-          spotlightOpacity={0.7}
+          spotlightOpacity={0.8}
           mouseDampening={0.18}
-          distortAmount={1.2}
+          distortAmount={0.2}
           shineDirection="left"
-          mixBlendMode="normal"
+          mixBlendMode="screen"
         />
-        {/* Dark vignette overlay so text stays legible */}
         <div
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse 90% 80% at 50% 50%, rgba(6,8,20,0.15) 0%, rgba(6,8,20,0.65) 60%, rgba(6,8,20,0.88) 100%)",
+              "radial-gradient(ellipse 90% 80% at 50% 50%, rgba(6,8,20,0.05) 0%, rgba(6,8,20,0.35) 60%, rgba(6,8,20,0.55) 100%)",
           }}
         />
-        {/* Bottom fade into the rest of the page */}
         <div
           className="absolute bottom-0 left-0 right-0 h-32"
           style={{
             background: "linear-gradient(to bottom, transparent, hsl(234,45%,5%))",
-          }}
-        />
-      </div>
-
-      {/* ══════════════════════════════════════════════════════════
-          FLOATING AURORA ORBS
-          ════════════════════════════════════════════════════════ */}
-      <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
-        <div
-          className="absolute rounded-full"
-          style={{
-            width: 500,
-            height: 500,
-            top: "-10%",
-            left: "-5%",
-            background: "radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%)",
-            filter: "blur(72px)",
-            animation: "orb-drift 16s ease-in-out infinite",
-          }}
-        />
-        {/* Small intense glow at the top-left viewport corner */}
-        <div
-          className="absolute rounded-full"
-          style={{
-            width: 180,
-            height: 180,
-            top: "2%",
-            left: "2%",
-            background: "radial-gradient(circle, rgba(139,92,246,0.3) 0%, transparent 70%)",
-            filter: "blur(44px)",
-            animation: "orb-drift 10s ease-in-out infinite",
-            animationDelay: "-3s",
-          }}
-        />
-        <div
-          className="absolute rounded-full"
-          style={{
-            width: 400,
-            height: 400,
-            top: "30%",
-            right: hasSpline ? "42%" : "10%",
-            background: "radial-gradient(circle, rgba(139,92,246,0.14) 0%, transparent 70%)",
-            filter: "blur(60px)",
-            animation: "orb-drift 20s ease-in-out infinite",
-            animationDelay: "-6s",
-          }}
-        />
-        <div
-          className="absolute rounded-full"
-          style={{
-            width: 300,
-            height: 300,
-            bottom: "15%",
-            left: "30%",
-            background: "radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)",
-            filter: "blur(56px)",
-            animation: "orb-drift 14s ease-in-out infinite",
-            animationDelay: "-10s",
           }}
         />
       </div>
@@ -357,7 +300,8 @@ export function PixelHero({
           {/* ── Headline ── */}
           <h1
             className={cn(
-              "voyiq-glass-text font-headline leading-[1.0] tracking-tight mb-5",
+              lite ? "text-white font-headline" : "voyiq-glass-text font-headline",
+              "leading-[1.0] tracking-tight mb-5",
               // Mobile: large but not huge
               "text-[3.2rem] xs:text-[3.8rem] sm:text-6xl",
               // Desktop: very large
