@@ -6,8 +6,10 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { verifyIdToken } from '@/lib/serverAuth';
 
 const GeneratePersonalizedItineraryInputSchema = z.object({
+  idToken: z.string().describe('Firebase ID token for authentication.'),
   origin: z.string().describe('The starting city or airport for the traveler.'),
   destination: z.string().describe('The desired travel destination, e.g., "Paris, France".'),
   startDate: z.string().describe('The start date of the trip in YYYY-MM-DD format.'),
@@ -113,6 +115,7 @@ const generatePersonalizedItineraryFlow = ai.defineFlow(
     outputSchema: GeneratePersonalizedItineraryOutputSchema,
   },
   async (input) => {
+    await verifyIdToken(input.idToken);
     const { output } = await itineraryGenerationPrompt(input);
     if (!output) throw new Error('Failed to generate itinerary.');
     return output;

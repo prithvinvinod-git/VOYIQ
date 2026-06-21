@@ -10,6 +10,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { verifyTripAccess } from '@/lib/serverAuth';
 
 // Define schemas
 const ChatMessageSchema = z.object({
@@ -62,6 +63,7 @@ const NearbyPOISchema = z.object({
 
 
 const AIChatInputSchema = z.object({
+  idToken: z.string().describe('Firebase ID token for authentication.'),
   tripId: z.string().describe('The unique identifier for the trip.'),
   tripContext: TripContextSchema.describe('The full context and details of the current trip.'),
   itinerarySummary: z.string().describe('A summary of the overall trip itinerary.'),
@@ -141,6 +143,9 @@ const provideAIChatAssistanceFlow = ai.defineFlow(
     outputSchema: AIChatOutputSchema,
   },
   async (input) => {
+    // Authenticate user and verify access to this trip
+    await verifyTripAccess(input.idToken, input.tripId);
+
     // Format chat history for the AI model's messages array
     // Genkit 1.x message format uses 'content' property which is an array of parts
     const messages = input.chatHistory.map(msg => ({

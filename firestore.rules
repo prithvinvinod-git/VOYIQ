@@ -36,10 +36,11 @@ service cloud.firestore {
     // --- COLLAB ROOM RULES ---
 
     match /collabRooms/{roomId} {
-      // Allow any signed-in user to read/create/update rooms (for joining)
-      allow read, create, update: if isSignedIn();
+      // Allow any signed-in user to read/create rooms
+      allow read, create: if isSignedIn();
       
-      allow delete: if isSignedIn() && resource.data.createdBy == request.auth.uid;
+      // Only the creator can update or delete the room configuration
+      allow update, delete: if isSignedIn() && resource.data.createdBy == request.auth.uid;
 
       match /members/{userId} {
         // Anyone signed in can check membership to facilitate joining
@@ -77,7 +78,16 @@ service cloud.firestore {
       allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
 
       match /{allSubcollections=**} {
-        allow read, write: if isSignedIn();
+        allow read: if isSignedIn() && (
+          (request.auth.uid in (get(/databases/$(database)/documents/trips/$(tripId)).data.authorizedUserIds || [])) ||
+          (request.auth.uid == get(/databases/$(database)/documents/trips/$(tripId)).data.ownerId) ||
+          (get(/databases/$(database)/documents/trips/$(tripId)).data.collabRoomId != null)
+        );
+        allow write: if isSignedIn() && (
+          (request.auth.uid in (getAfter(/databases/$(database)/documents/trips/$(tripId)).data.authorizedUserIds || [])) ||
+          (request.auth.uid == getAfter(/databases/$(database)/documents/trips/$(tripId)).data.ownerId) ||
+          (getAfter(/databases/$(database)/documents/trips/$(tripId)).data.collabRoomId != null)
+        );
       }
     }
   }

@@ -5,6 +5,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Brain, X, Send, Sparkles, Minimize2 } from "lucide-react";
 import { provideAIChatAssistance } from "@/ai/flows/provide-ai-chat-assistance-flow";
+import { useAuth } from "@/firebase";
 
 interface Message {
   role: "user" | "model";
@@ -12,6 +13,7 @@ interface Message {
 }
 
 export function ChatCompanion({ tripData }: { tripData: any }) {
+  const auth = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([
@@ -43,7 +45,9 @@ export function ChatCompanion({ tripData }: { tripData: any }) {
     setMessages((prev) => [...prev, { role: "user", content: userMsg }]);
     setLoading(true);
     try {
+      const idToken = (await auth.currentUser?.getIdToken()) || "";
       const response = await provideAIChatAssistance({
+        idToken,
         tripId: tripData.id,
         tripContext: {
           destination: tripData.destination,
@@ -66,7 +70,7 @@ export function ChatCompanion({ tripData }: { tripData: any }) {
     } finally {
       setLoading(false);
     }
-  }, [input, loading, messages, tripData]);
+  }, [input, loading, messages, tripData, auth]);
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">

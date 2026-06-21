@@ -39,6 +39,13 @@ next-env.d.ts
 
 .genkit/*
 .env*
+.env*.local
+*.pem
+*.key
+*.pub
+secrets.json
+firebase-key.json
+service-account.json
 
 # firebase
 firebase-debug.log

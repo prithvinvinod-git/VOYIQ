@@ -355,7 +355,8 @@ function TripWizardContent() {
     }
     setLoading(true);
     try {
-      const aiResponse = await generatePersonalizedItinerary({ ...formData, travelStyle: formData.travelStyle as any } as any);
+      const idToken = (await user.getIdToken()) || "";
+      const aiResponse = await generatePersonalizedItinerary({ idToken, ...formData, travelStyle: formData.travelStyle as any } as any);
       const batch = writeBatch(firestore);
       const tripRef = doc(collection(firestore, "trips"));
       const collabId = isCollabMode ? userData?.activeCollabRoomId : null;

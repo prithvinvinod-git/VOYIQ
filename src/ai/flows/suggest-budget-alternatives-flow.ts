@@ -9,8 +9,11 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { verifyIdToken, verifyTripAccess } from '@/lib/serverAuth';
 
 const SuggestBudgetAlternativesInputSchema = z.object({
+  idToken: z.string().describe('Firebase ID token for authentication.'),
+  tripId: z.string().optional().describe('Optional trip ID to verify access.'),
   tripContext: z.object({
     destination: z.string().describe('The destination of the trip.'),
     travelStyle: z.array(z.string()).describe('Array of user-selected travel styles (e.g., Adventure, Culture, Food).'),
@@ -64,6 +67,11 @@ const suggestBudgetAlternativesFlow = ai.defineFlow(
     outputSchema: SuggestBudgetAlternativesOutputSchema,
   },
   async (input) => {
+    if (input.tripId) {
+      await verifyTripAccess(input.idToken, input.tripId);
+    } else {
+      await verifyIdToken(input.idToken);
+    }
     const {output} = await prompt(input);
     return output!;
   }

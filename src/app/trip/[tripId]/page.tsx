@@ -56,7 +56,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SuggestBudgetAlternativesOutput } from "@/ai/flows/suggest-budget-alternatives-flow";
+import { suggestBudgetAlternatives, SuggestBudgetAlternativesOutput } from "@/ai/flows/suggest-budget-alternatives-flow";
 import dynamic from "next/dynamic";
 import { useToast } from "@/hooks/use-toast";
 import { PlanSelectionDialog } from "@/components/shared/PlanSelectionDialog";
@@ -227,6 +227,47 @@ export default function TripDetail() {
     const origin = encodeURIComponent(trip.origin || "");
     const destination = encodeURIComponent(trip.destination || "");
     window.open(`https://www.google.com/travel/flights?q=Flights from ${origin} to ${destination} on ${flightStartStr} returning ${trip.endDate} for ${trip.numTravelers} adults`, "_blank");
+  };
+
+  const handleRunOptimizer = async () => {
+    if (!user || !trip) return;
+
+    // Find the category that is most over budget
+    const overBudget = budgetStats.find(stat => stat.actual > stat.planned);
+    if (!overBudget) {
+      toast({
+        title: "All Good!",
+        description: "Your actual spending is currently within the planned budget for all categories.",
+      });
+      return;
+    }
+
+    setIsAiLoading(true);
+    try {
+      const idToken = await user.getIdToken();
+      const response = await suggestBudgetAlternatives({
+        idToken,
+        tripId: tripId as string,
+        tripContext: {
+          destination: trip.destination,
+          travelStyle: trip.travelStyle || [],
+          pace: trip.pace || "Balanced",
+          dietPref: trip.dietaryPreferences?.[0] || "No preference",
+          numTravelers: trip.numTravelers || 1,
+        },
+        overBudgetCategory: overBudget.category,
+        budgetLimit: overBudget.planned,
+        amountSpent: overBudget.actual,
+        currency: trip.currency || "USD",
+      });
+      setAiSuggestions(response);
+      toast({ title: "Optimizer finished!", description: "AI has generated saving suggestions." });
+    } catch (e: any) {
+      console.error(e);
+      toast({ variant: "destructive", title: "Optimization failed", description: e.message || "Something went wrong." });
+    } finally {
+      setIsAiLoading(false);
+    }
   };
 
   if (isUserLoading || (isTripLoading && !trip)) {
@@ -555,39 +596,77 @@ export default function TripDetail() {
                   </div>
                 </div>
 
-                {aiSuggestions ? (
-                  <div className="space-y-3 animate-fade-in">
-                    {aiSuggestions.alternatives.map((alt, i) => (
-                      <div
-                        key={i}
-                        className="p-5 rounded-3xl"
-                        style={{ background: "rgba(0,212,184,0.05)", border: "1px solid rgba(0,212,184,0.12)" }}
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <span
-                            className="text-[10px] font-bold px-3 py-1 rounded-full"
-                            style={{ background: "rgba(0,212,184,0.12)", color: "#00D4B8", border: "1px solid rgba(0,212,184,0.2)" }}
-                          >
-                            {alt.category}
-                          </span>
-                          <div className="flex items-center gap-1.5 font-bold text-sm" style={{ color: "#F5A623" }}>
-                            <TrendingDown className="w-4 h-4" />
-                            Save ~{trip?.currency} {alt.estimatedSavings}
+                {isAiLoading ? (
+                  <div className="py-16 text-center rounded-3xl" style={{ background: "rgba(255,255,255,0.02)", border: "1px dashed rgba(255,255,255,0.08)" }}>
+                    <Loader2 className="w-10 h-10 text-primary mx-auto mb-4 animate-spin" />
+                    <p className="text-sm text-muted-foreground">Running budget optimization analysis...</p>
+                  </div>
+                ) : aiSuggestions ? (
+                  <div className="space-y-4">
+                    <div className="space-y-3 animate-fade-in">
+                      {aiSuggestions.alternatives.map((alt, i) => (
+                        <div
+                          key={i}
+                          className="p-5 rounded-3xl"
+                          style={{ background: "rgba(0,212,184,0.05)", border: "1px solid rgba(0,212,184,0.12)" }}
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            <span
+                              className="text-[10px] font-bold px-3 py-1 rounded-full"
+                              style={{ background: "rgba(0,212,184,0.12)", color: "#00D4B8", border: "1px solid rgba(0,212,184,0.2)" }}
+                            >
+                              {alt.category}
+                            </span>
+                            <div className="flex items-center gap-1.5 font-bold text-sm" style={{ color: "#F5A623" }}>
+                              <TrendingDown className="w-4 h-4" />
+                              Save ~{trip?.currency} {alt.estimatedSavings}
+                            </div>
                           </div>
+                          <p className="text-sm font-medium leading-relaxed text-white/80">{alt.suggestion}</p>
                         </div>
-                        <p className="text-sm font-medium leading-relaxed text-white/80">{alt.suggestion}</p>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                    <Button
+                      onClick={handleRunOptimizer}
+                      className="w-full h-12 rounded-2xl font-bold gap-2 text-white"
+                      style={{ background: "rgba(0,212,184,0.12)", border: "1px solid rgba(0,212,184,0.2)", color: "#00D4B8" }}
+                    >
+                      <Sparkles className="w-4 h-4" /> Recalculate Suggestions
+                    </Button>
                   </div>
                 ) : (
                   <div
-                    className="py-16 text-center rounded-3xl"
+                    className="py-16 text-center rounded-3xl space-y-4"
                     style={{ background: "rgba(255,255,255,0.02)", border: "1px dashed rgba(255,255,255,0.08)" }}
                   >
-                    <Sparkles className="w-10 h-10 text-primary mx-auto mb-4 opacity-20 animate-pulse" />
-                    <p className="text-sm text-muted-foreground px-8 leading-relaxed">
-                      AI will suggest cheaper alternatives here if you exceed category budgets.
-                    </p>
+                    {budgetStats.some(stat => stat.actual > stat.planned) ? (
+                      <>
+                        <AlertTriangle className="w-10 h-10 text-accent mx-auto opacity-70 animate-pulse" />
+                        <div className="space-y-1">
+                          <p className="text-sm text-white font-bold">Category Budgets Exceeded</p>
+                          <p className="text-xs text-muted-foreground px-8 leading-relaxed">
+                            You have spent more than planned in some categories. Get AI tips to balance it.
+                          </p>
+                        </div>
+                        <Button
+                          onClick={handleRunOptimizer}
+                          className="h-11 px-6 rounded-2xl font-bold gap-2"
+                          style={{ background: "linear-gradient(135deg, hsl(172 100% 42%), hsl(172 100% 35%))", color: "hsl(222 47% 9%)", boxShadow: "0 0 15px rgba(0,212,184,0.3)" }}
+                        >
+                          <Brain className="w-4 h-4" /> Run Budget Optimizer
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-10 h-10 text-primary mx-auto opacity-70" />
+                        <div className="space-y-1">
+                          <p className="text-sm text-white font-bold">Budget is On Track</p>
+                          <p className="text-xs text-muted-foreground px-8 leading-relaxed">
+                            Your actual spending is currently within the planned budget.
+                          </p>
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
               </div>

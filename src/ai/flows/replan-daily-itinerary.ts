@@ -11,6 +11,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { verifyTripAccess } from '@/lib/serverAuth';
 
 // Define the schema for a single itinerary slot
 const ItinerarySlotSchema = z.object({
@@ -28,6 +29,7 @@ const ItinerarySlotSchema = z.object({
 
 // Define the input schema for the replanning flow
 const ReplanDailyItineraryInputSchema = z.object({
+  idToken: z.string().describe('Firebase ID token for authentication.'),
   tripId: z.string().describe('The unique ID of the trip.'),
   dayNumber: z.number().describe('The day number within the trip that needs replanning.'),
   date: z.string().describe('The date of the day being replanned (YYYY-MM-DD format).'),
@@ -68,6 +70,9 @@ const replanDailyItineraryFlow = ai.defineFlow(
     outputSchema: ReplanDailyItineraryOutputSchema,
   },
   async (input) => {
+    // Authenticate user and verify access to this trip
+    await verifyTripAccess(input.idToken, input.tripId);
+
     const { output } = await replanDailyItineraryPrompt(input);
     if (!output) {
       throw new Error('Failed to generate replanned itinerary.');
