@@ -14,9 +14,6 @@ import { collection, query, where, doc } from "firebase/firestore";
 import {
   ArrowRight,
   ArrowLeft,
-  Check,
-  Mail,
-  Link as LinkIcon,
   Star,
   MapPin,
   Brain,
@@ -32,6 +29,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import Image from "next/image";
 import { PlanSelectionDialog } from "@/components/shared/PlanSelectionDialog";
 
 function useCounter(target: number, enabled: boolean, decimals = 0) {
@@ -92,18 +90,23 @@ export default function LandingPage() {
     }
   };
 
-  const [form, setForm] = useState({ name: "", email: "", message: "" });
-  const [submitted, setSubmitted] = useState(false);
-  const [sending, setSending] = useState(false);
+  const [genDeparture, setGenDeparture] = useState("");
+  const [genDestination, setGenDestination] = useState("");
+  const [genTravelers, setGenTravelers] = useState<number | "">("");
+  const [genBudget, setGenBudget] = useState<number | "">("");
+  const [genCurrency, setGenCurrency] = useState("USD");
+  const [genStyles, setGenStyles] = useState<string[]>([]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSending(true);
-    setTimeout(() => {
-      setSubmitted(true);
-      setSending(false);
-      setForm({ name: "", email: "", message: "" });
-    }, 800);
+  const handleGenTrip = () => {
+    if (!user) { router.push("/auth"); return; }
+    const params = new URLSearchParams();
+    if (genDeparture) params.set("origin", genDeparture);
+    if (genDestination) params.set("destination", genDestination);
+    if (genTravelers) params.set("numTravelers", String(genTravelers));
+    if (genBudget) params.set("totalBudget", String(genBudget));
+    if (genCurrency) params.set("currency", genCurrency);
+    if (genStyles.length > 0) params.set("travelStyle", genStyles.join(","));
+    router.push(`/plan/new?${params.toString()}`);
   };
 
   useEffect(() => {
@@ -184,13 +187,7 @@ export default function LandingPage() {
 
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
-  const serviceTags = ["Itinerary", "Flights", "Hotels", "Experiences"];
-  const [selectedServices, setSelectedServices] = useState<string[]>([]);
-  const toggleService = (s: string) => {
-    setSelectedServices((prev) =>
-      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
-    );
-  };
+
 
   const destinations = [
     {
@@ -295,28 +292,20 @@ export default function LandingPage() {
                 href="/"
                 className="flex items-center gap-2 text-[#2f3131] mr-4 sm:mr-8 transition-transform hover:scale-95 active:scale-90"
               >
-                <svg
-                  fill="currentColor"
-                  height="24"
-                  viewBox="0 0 256 256"
-                  width="24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M 256 256 L 128 256 L 0 128 L 128 128 Z M 256 128 L 128 128 L 0 0 L 128 0 Z" />
-                </svg>
-                <span className="font-bold text-[#2f3131] hidden md:block tracking-tight">
+                <Image src="/logo.png" alt="Voyiq" width={28} height={28} className="object-contain" />
+                <span className="font-amoria text-2xl text-[#2f3131] tracking-[0.02em]">
                   Voyiq.
                 </span>
               </Link>
 
               <div className="hidden md:flex items-center gap-6">
-                <a className="text-[16px] leading-[1.5] text-[#444748] hover:text-[#2f3131] transition-colors" href="#">
+                <a className="text-[16px] leading-[1.5] text-[#444748] hover:text-black transition-colors" href="#">
                   Destinations
                 </a>
-                <Link className="text-[16px] leading-[1.5] text-[#444748] hover:text-[#2f3131] transition-colors" href="/pricing">
+                <Link className="text-[16px] leading-[1.5] text-[#444748] hover:text-black transition-colors" href="/pricing">
                   Pricing
                 </Link>
-                <Link className="text-[16px] leading-[1.5] text-[#444748] hover:text-[#2f3131] transition-colors" href="/dashboard">
+                <Link className="text-[16px] leading-[1.5] text-[#444748] hover:text-black transition-colors" href="/dashboard">
                   Dashboard
                 </Link>
               </div>
@@ -351,13 +340,12 @@ export default function LandingPage() {
             )}
 
             <div className="flex-grow" />
-
-            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 w-full max-w-[1280px] mx-auto mt-12 md:mt-0">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 w-full max-w-[1280px] mx-auto">
               <div className="flex-1 max-w-2xl">
-                <h1 className="text-[64px] leading-[1.1] tracking-[-0.04em] font-bold text-white mb-4 drop-shadow-md">
+                <h1 className="text-[80px] leading-[1.05] tracking-[0.02em] font-bold text-white mb-4 drop-shadow-md font-amoria">
                   Travel Refined. Experience{" "}
                   <br />
-                  <span className="font-instrument-serif text-[68px] leading-[1.1] font-light text-[#dbe1ff] italic">
+                  <span className="font-instrument-serif text-[88px] leading-[1.05] font-light text-[#dbe1ff] italic hover:bg-gradient-to-r hover:from-amber-300 hover:via-yellow-200 hover:to-amber-400 hover:bg-clip-text hover:text-transparent transition-all duration-500">
                     Luxury
                   </span>
                 </h1>
@@ -368,98 +356,73 @@ export default function LandingPage() {
                 </p>
               </div>
 
-              <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-6 w-full lg:w-[480px] border border-white/20 text-[#2f3131] flex-shrink-0 relative overflow-hidden">
-                <div
-                  className={`absolute inset-0 bg-white/95 backdrop-blur-md z-20 flex flex-col items-center justify-center transition-opacity duration-500 ${
-                    submitted ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-                  }`}
-                >
-                  <div className="w-16 h-16 bg-[#1d2021] rounded-full flex items-center justify-center mb-4 text-white">
-                    <Check className="w-7 h-7" />
-                  </div>
-                  <h3 className="text-[24px] leading-[1.2] font-semibold text-[#2f3131]">
-                    You&apos;re all set!
-                  </h3>
-                  <p className="text-[16px] leading-[1.5] text-[#c4c7c8] text-center mt-2 px-6">
-                    We&apos;ve received your message and will be in touch shortly.
-                  </p>
-                  <button
-                    onClick={() => setSubmitted(false)}
-                    className="mt-6 px-6 py-2 border border-[#8e9192] rounded-full text-[12px] leading-[1] tracking-[0.05em] font-semibold uppercase text-[#2f3131] hover:bg-[#1d2021] hover:text-white transition-colors"
-                  >
-                    Send another
-                  </button>
-                </div>
-
-                <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-                  <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-[24px] leading-[1.2] font-semibold text-[#2f3131]">
-                      Say hello!
-                    </h2>
+              {/* Trip Generator Card */}
+              <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-6 w-full lg:w-[480px] border border-white/20 flex-shrink-0 relative overflow-hidden">
+                <h2 className="text-[24px] leading-[1.2] font-semibold text-[#2f3131] mb-5">
+                  Generate new trip!
+                </h2>
+                <div className="flex flex-col gap-4">
+                  <input
+                    value={genDeparture}
+                    onChange={(e) => setGenDeparture(e.target.value)}
+                    className="w-full bg-transparent border border-[#444748] rounded-xl px-4 py-3 text-sm text-[#2f3131] placeholder:text-[#636565] focus:border-[#2f3131] transition-colors outline-none"
+                    placeholder="Departure"
+                    type="text"
+                  />
+                  <input
+                    value={genDestination}
+                    onChange={(e) => setGenDestination(e.target.value)}
+                    className="w-full bg-transparent border border-[#444748] rounded-xl px-4 py-3 text-sm text-[#2f3131] placeholder:text-[#636565] focus:border-[#2f3131] transition-colors outline-none"
+                    placeholder="Destination"
+                    type="text"
+                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <input
+                      value={genTravelers || ""}
+                      onChange={(e) => setGenTravelers(parseInt(e.target.value) || ("" as any))}
+                      className="w-full bg-transparent border border-[#444748] rounded-xl px-4 py-3 text-sm text-[#2f3131] placeholder:text-[#636565] focus:border-[#2f3131] transition-colors outline-none"
+                      placeholder="People"
+                      type="number"
+                      min="1"
+                    />
                     <div className="flex gap-2">
-                      <a
-                        href="#"
-                        className="w-8 h-8 rounded-full border border-[#444748] flex items-center justify-center text-[#2f3131] hover:bg-[#1d2021] hover:text-white transition-colors"
-                        aria-label="Email us"
-                      >
-                        <Mail className="w-4 h-4" />
-                      </a>
-                      <a
-                        href="#"
-                        className="w-8 h-8 rounded-full border border-[#444748] flex items-center justify-center text-[#2f3131] hover:bg-[#1d2021] hover:text-white transition-colors"
-                        aria-label="Link"
-                      >
-                        <LinkIcon className="w-4 h-4" />
-                      </a>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <div className="flex-1">
                       <input
-                        value={form.name}
-                        onChange={(e) => setForm({ ...form, name: e.target.value })}
-                        className="w-full bg-transparent border-b border-[#444748] px-0 py-2 text-[16px] leading-[1.5] text-[#2f3131] placeholder:text-[#636565] focus:border-[#2f3131] transition-colors rounded-none resize-none"
-                        placeholder="Name"
-                        required
-                        type="text"
+                        value={genBudget || ""}
+                        onChange={(e) => setGenBudget(parseInt(e.target.value) || ("" as any))}
+                        className="flex-1 bg-transparent border border-[#444748] rounded-xl px-4 py-3 text-sm text-[#2f3131] placeholder:text-[#636565] focus:border-[#2f3131] transition-colors outline-none min-w-0"
+                        placeholder="Budget"
+                        type="number"
+                        min="0"
                       />
-                    </div>
-                    <div className="flex-1">
-                      <input
-                        value={form.email}
-                        onChange={(e) => setForm({ ...form, email: e.target.value })}
-                        className="w-full bg-transparent border-b border-[#444748] px-0 py-2 text-[16px] leading-[1.5] text-[#2f3131] placeholder:text-[#636565] focus:border-[#2f3131] transition-colors rounded-none"
-                        placeholder="Email"
-                        required
-                        type="email"
-                      />
+                      <select
+                        value={genCurrency}
+                        onChange={(e) => setGenCurrency(e.target.value)}
+                        className="w-20 bg-transparent border border-[#444748] rounded-xl px-2 py-3 text-sm text-[#2f3131] focus:border-[#2f3131] transition-colors outline-none"
+                      >
+                        <option value="USD">$</option>
+                        <option value="EUR">€</option>
+                        <option value="GBP">£</option>
+                        <option value="INR">₹</option>
+                      </select>
                     </div>
                   </div>
 
                   <div>
-                    <textarea
-                      value={form.message}
-                      onChange={(e) => setForm({ ...form, message: e.target.value })}
-                      className="w-full bg-transparent border-b border-[#444748] px-0 py-2 text-[16px] leading-[1.5] text-[#2f3131] placeholder:text-[#636565] focus:border-[#2f3131] transition-colors rounded-none resize-none"
-                      placeholder="Tell us about your project..."
-                      required
-                      rows={3}
-                    />
-                  </div>
-
-                  <div className="mt-2">
                     <p className="text-[12px] leading-[1] tracking-[0.05em] font-semibold uppercase text-[#444748] mb-3">
-                      I&apos;m looking for:
+                      Style
                     </p>
-                    <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto hide-scrollbar pb-2">
-                      {serviceTags.map((s) => (
+                    <div className="flex flex-wrap gap-2">
+                      {["Adventure", "Luxury", "Budget", "Culture"].map((s) => (
                         <label key={s} className="cursor-pointer">
                           <input
                             type="checkbox"
                             className="peer sr-only"
-                            checked={selectedServices.includes(s)}
-                            onChange={() => toggleService(s)}
+                            checked={genStyles.includes(s)}
+                            onChange={() => {
+                              setGenStyles((prev) =>
+                                prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
+                              );
+                            }}
                           />
                           <div className="px-4 py-1.5 rounded-full border border-[#444748] text-[#444748] text-[12px] leading-[1] tracking-[0.05em] font-semibold uppercase peer-checked:bg-[#2f3131] peer-checked:text-white peer-checked:border-[#2f3131] transition-all hover:border-[#2f3131]/50">
                             {s}
@@ -470,22 +433,16 @@ export default function LandingPage() {
                   </div>
 
                   <button
-                    type="submit"
-                    disabled={sending}
-                    className="w-full bg-[#111415] text-white py-3 rounded-xl text-[12px] leading-[1] tracking-[0.05em] font-semibold uppercase hover:bg-[#323536] transition-colors mt-2 flex items-center justify-center gap-2 group"
+                    onClick={handleGenTrip}
+                    className="w-full bg-[#111415] text-white py-3 rounded-xl text-[12px] leading-[1] tracking-[0.05em] font-semibold uppercase hover:bg-[#323536] transition-colors mt-1 flex items-center justify-center gap-2 group"
                   >
-                    {sending ? (
-                      "Sending..."
-                    ) : (
-                      <>
-                        Send my message
-                        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                      </>
-                    )}
+                    Generate
+                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                   </button>
-                </form>
+                </div>
               </div>
             </div>
+            <div className="flex-grow" />
           </div>
       </section>
 
@@ -544,13 +501,19 @@ export default function LandingPage() {
                 "SINGAPORE AIR",
                 "MARRIOTT",
               ];
-              return [...brands, ...brands].map((brand, i) => (
-                <div key={i} className="slide">
-                  <span className="text-[24px] leading-[1.2] font-semibold text-[#c4c7c8]/50 font-bold tracking-widest">
-                    {brand}
-                  </span>
-                </div>
-              ));
+              const items: React.ReactNode[] = [];
+              const doubled = [...brands, ...brands];
+              doubled.forEach((brand, i) => {
+                items.push(
+                  <div key={`brand-${i}`} className="slide flex items-center">
+                    <span className="text-[24px] leading-[1.2] font-warren text-[#c4c7c8]/50 tracking-widest mr-10">
+                      {brand}
+                    </span>
+                    <Image src="/spacer.png" alt="" width={24} height={24} className="object-contain opacity-50 mr-10" />
+                  </div>
+                );
+              });
+              return items;
             })()}
           </div>
         </div>
@@ -559,7 +522,7 @@ export default function LandingPage() {
       <section className="py-24 relative z-10 px-5 md:px-16 overflow-hidden" aria-label="Destinations">
         <div className="max-w-[1280px] mx-auto mb-12 flex justify-between items-end reveal-stitch">
           <div>
-            <h2 className="font-instrument-serif text-[68px] leading-[1.1] font-bold text-white mb-2">
+            <h2 className="font-amoria text-[68px] leading-[1.1] font-bold text-white mb-2 tracking-[0.02em]">
               Curated Escapes
             </h2>
             <p className="text-[18px] leading-[1.6] text-[#c4c7c8]">
@@ -640,7 +603,7 @@ export default function LandingPage() {
           <span className="text-[12px] leading-[1] tracking-[0.05em] font-semibold text-[#c4c7c8] tracking-widest uppercase mb-4 inline-block">
             The Toolkit
           </span>
-          <h2 className="font-instrument-serif text-[68px] leading-[1.1] font-bold text-white mb-4">
+          <h2 className="font-amoria text-[68px] leading-[1.1] font-bold text-white mb-4 tracking-[0.02em]">
             Intelligence built in.
           </h2>
           <p className="text-[18px] leading-[1.6] text-[#c4c7c8] max-w-2xl mx-auto">

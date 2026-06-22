@@ -157,8 +157,28 @@ export default function CollabPage() {
   const displayCode = userData?.activeCollabRoomId || activeRoom?.id || "---";
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      <div className="fixed inset-0 pointer-events-none z-0" style={{ backgroundImage: 'radial-gradient(at 0% 0%, rgba(59,130,246,0.08) 0, transparent 50%), radial-gradient(at 100% 100%, rgba(173,198,255,0.05) 0, transparent 50%)' }} />
+    <div className="min-h-screen bg-[#111415] relative overflow-hidden">
+      {/* Video background with reduced opacity */}
+      <div className="absolute top-0 left-0 w-full h-[55vh] overflow-hidden pointer-events-none z-0">
+        <video autoPlay muted loop playsInline className="w-full h-full object-cover object-top opacity-30">
+          <source src="/hf_20260602_150901_c45b90ec-18d7-42ff-90e2-b95d7109e330.mp4" type="video/mp4" />
+        </video>
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `linear-gradient(to bottom,
+              transparent 0%,
+              transparent 25%,
+              rgba(17,20,21,0.08) 40%,
+              rgba(17,20,21,0.2) 55%,
+              rgba(17,20,21,0.5) 70%,
+              rgba(17,20,21,0.75) 82%,
+              #111415 92%,
+              #111415 100%
+            )`,
+          }}
+        />
+      </div>
       <AppNavbar />
 
       {/* Floating live room indicator */}
@@ -262,10 +282,10 @@ export default function CollabPage() {
         </DialogContent>
       </Dialog>
 
-      <main className="flex-grow relative z-10 px-4 md:px-8">
+      <main className="flex-grow relative z-10 px-4 md:px-8 pt-20">
         {!userData?.activeCollabRoomId ? (
           /* ── No room: entry screens ─────────────────────────────── */
-          <div className="flex items-center justify-center min-h-[calc(100vh-5rem)]">
+          <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
             {/* Create */}
             <div className="rounded-2xl p-8 flex flex-col items-center text-center transition-all duration-500 group"
@@ -322,7 +342,7 @@ export default function CollabPage() {
         </div>
         ) : (
           /* ── In room: brainstorm view ────────────────────────────── */
-          <div className="space-y-10 w-full max-w-5xl mx-auto pt-8 pb-12">
+          <div className="space-y-10 w-full max-w-5xl mx-auto pt-16 pb-12">
             {/* Room header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
               <div>

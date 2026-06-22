@@ -15,6 +15,8 @@ export default {
         headline: ['Space Grotesk', 'sans-serif'],
         inter: ['Inter', 'sans-serif'],
         'instrument-serif': ['Instrument Serif', 'serif'],
+        amoria: ['Amoria', 'serif'],
+        warren: ['Warren', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {

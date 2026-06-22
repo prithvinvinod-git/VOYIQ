@@ -1,4 +1,20 @@
 
+@font-face {
+  font-family: 'Amoria';
+  src: url('/AMORIA.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Warren';
+  src: url('/WARREN.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -283,10 +299,10 @@
 }
 .slide {
   height: 100px;
-  width: 250px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 @keyframes fade-in {

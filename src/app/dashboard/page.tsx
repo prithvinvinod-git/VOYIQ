@@ -323,7 +323,29 @@ export default function Dashboard() {
     "Explorer";
 
   return (
-    <div className="min-h-screen bg-[#111415] text-white overflow-x-hidden">
+    <div className="min-h-screen bg-[#111415] text-white overflow-x-hidden relative">
+      {/* Hero video background */}
+      <div className="absolute top-0 left-0 w-full h-[55vh] overflow-hidden pointer-events-none z-0">
+        <video autoPlay muted loop playsInline className="w-full h-full object-cover object-top opacity-30">
+          <source src="/hf_20260602_150901_c45b90ec-18d7-42ff-90e2-b95d7109e330.mp4" type="video/mp4" />
+        </video>
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `linear-gradient(to bottom,
+              transparent 0%,
+              transparent 25%,
+              rgba(17,20,21,0.08) 40%,
+              rgba(17,20,21,0.2) 55%,
+              rgba(17,20,21,0.5) 70%,
+              rgba(17,20,21,0.75) 82%,
+              #111415 92%,
+              #111415 100%
+            )`,
+          }}
+        />
+      </div>
+
       <AppNavbar />
 
       {/* ── Main content ── */}
