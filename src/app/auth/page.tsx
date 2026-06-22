@@ -24,11 +24,10 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 function FloatingParticle({ style }: { style: React.CSSProperties }) {
   return (
     <div
-      className="absolute rounded-full pointer-events-none"
+      className="absolute rounded-full pointer-events-none bg-primary/40"
       style={{
         width: 3,
         height: 3,
-        background: "rgba(0,212,184,0.7)",
         ...style,
       }}
     />
@@ -38,14 +37,10 @@ function FloatingParticle({ style }: { style: React.CSSProperties }) {
 function OrbRing({ size, delay }: { size: number; delay: string }) {
   return (
     <div
-      className="absolute rounded-full pointer-events-none"
+      className="absolute rounded-full pointer-events-none border border-border/30 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
       style={{
         width: size,
         height: size,
-        border: "1px solid rgba(0,212,184,0.15)",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%,-50%)",
         animation: `spin-slow ${16 + size / 60}s linear infinite`,
         animationDelay: delay,
       }}
@@ -135,17 +130,8 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex overflow-hidden relative bg-background">
-      {/* ── LEFT: Visual panel ─────────────────────────────────────── */}
-      <div className="hidden lg:flex lg:w-1/2 relative flex-col items-center justify-center overflow-hidden">
-        {/* Background */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(ellipse at 40% 50%, rgba(0,212,184,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 30%, rgba(123,97,255,0.1) 0%, transparent 50%)",
-          }}
-        />
-
+      {/* LEFT: Visual panel */}
+      <div className="hidden lg:flex lg:w-1/2 relative flex-col items-center justify-center overflow-hidden bg-muted/50 border-r border-border">
         {/* Orbital rings */}
         {[200, 320, 440, 560].map((s, i) => (
           <OrbRing key={i} size={s} delay={`${i * -3}s`} />
@@ -153,18 +139,11 @@ export default function AuthPage() {
 
         {/* Center globe */}
         <div className="relative z-10 flex flex-col items-center">
-          <div
-            className="w-32 h-32 rounded-full flex items-center justify-center mb-8 animate-float-slow"
-            style={{
-              background: "linear-gradient(135deg, rgba(0,212,184,0.25) 0%, rgba(123,97,255,0.2) 100%)",
-              border: "1px solid rgba(0,212,184,0.3)",
-              boxShadow: "0 0 60px rgba(0,212,184,0.3), inset 0 0 40px rgba(0,212,184,0.1)",
-            }}
-          >
+          <div className="w-32 h-32 rounded-full flex items-center justify-center mb-8 bg-primary/10 border border-primary/20">
             <Compass className="w-16 h-16 text-primary" />
           </div>
 
-          <h2 className="text-4xl font-headline font-extrabold text-white mb-3 tracking-tight text-center">
+          <h2 className="text-4xl font-headline font-extrabold text-foreground mb-3 tracking-tight text-center">
             VOYIQ
           </h2>
           <p className="text-muted-foreground text-center max-w-xs leading-relaxed">
@@ -176,14 +155,10 @@ export default function AuthPage() {
             {["AI-Crafted Itineraries", "Real-time Budget Sync", "Collaborative Planning"].map((feat) => (
               <div
                 key={feat}
-                className="flex items-center gap-3 px-5 py-3 rounded-full"
-                style={{
-                  background: "rgba(0,212,184,0.08)",
-                  border: "1px solid rgba(0,212,184,0.18)",
-                }}
+                className="flex items-center gap-3 bg-muted/30 border border-border rounded-full px-5 py-3"
               >
-                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                <span className="text-sm font-medium text-white/80">{feat}</span>
+                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                <span className="text-sm font-medium text-muted-foreground">{feat}</span>
               </div>
             ))}
           </div>
@@ -198,7 +173,7 @@ export default function AuthPage() {
               top: `${15 + (i % 5) * 16}%`,
               animation: `particle-float ${4 + (i % 3) * 2}s ease-in-out ${i * -0.5}s infinite`,
               opacity: 0.5 + (i % 3) * 0.15,
-              background: i % 3 === 0 ? "rgba(0,212,184,0.8)" : i % 3 === 1 ? "rgba(245,166,35,0.7)" : "rgba(123,97,255,0.6)",
+              background: i % 3 === 0 ? "hsl(var(--primary) / 0.8)" : i % 3 === 1 ? "hsl(var(--accent) / 0.7)" : "hsl(var(--primary) / 0.6)",
               width: i % 4 === 0 ? 4 : 2,
               height: i % 4 === 0 ? 4 : 2,
             }}
@@ -206,16 +181,8 @@ export default function AuthPage() {
         ))}
       </div>
 
-      {/* ── RIGHT: Auth form ─────────────────────────────────────────── */}
+      {/* RIGHT: Auth form */}
       <div className="flex-1 flex items-center justify-center p-6 relative">
-        {/* Background glow */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: "radial-gradient(ellipse at 60% 40%, rgba(0,212,184,0.06) 0%, transparent 60%)",
-          }}
-        />
-
         <div className="w-full max-w-md space-y-5 relative z-10">
           <NextLink
             href="/"
@@ -226,7 +193,7 @@ export default function AuthPage() {
           </NextLink>
 
           {configError && (
-            <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive">
+            <Alert variant="destructive" className="bg-destructive/10 border-destructive/20">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Configuration Required</AlertTitle>
               <AlertDescription className="text-xs leading-relaxed">{configError}</AlertDescription>
@@ -234,61 +201,35 @@ export default function AuthPage() {
           )}
 
           {/* Auth card */}
-          <div
-            className="glass-card rounded-3xl overflow-hidden"
-            style={{
-              background: "linear-gradient(135deg, rgba(0,212,184,0.07) 0%, rgba(15,20,40,0.85) 50%, rgba(123,97,255,0.05) 100%)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              boxShadow: "0 30px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.12)",
-            }}
-          >
+          <div className="bg-card border border-border rounded-2xl overflow-hidden">
             {/* Top gradient bar */}
-            <div
-              className="h-0.5 w-full"
-              style={{ background: "linear-gradient(90deg, #00D4B8, #7B61FF, #F5A623)" }}
-            />
+            <div className="bg-gradient-to-r from-sky-500 via-indigo-500 to-violet-500 h-0.5 w-full" />
 
             <div className="p-8">
               {/* Logo */}
               <div className="text-center mb-8">
                 <div className="flex justify-center mb-5">
-                  <div
-                    className="w-14 h-14 rounded-2xl flex items-center justify-center animate-glow-teal"
-                    style={{
-                      background: "linear-gradient(135deg, hsl(172 100% 42%), hsl(172 100% 30%))",
-                      boxShadow: "0 0 30px rgba(0,212,184,0.4), inset 0 1px 0 rgba(255,255,255,0.2)",
-                    }}
-                  >
-                    <Compass className="text-primary-foreground w-8 h-8" />
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-primary text-primary-foreground">
+                    <Compass className="w-8 h-8" />
                   </div>
                 </div>
-                <h1 className="text-3xl font-headline font-bold text-white">Get Started</h1>
+                <h1 className="text-3xl font-headline font-bold text-foreground">Get Started</h1>
                 <p className="text-muted-foreground mt-2 text-sm">Sign in or create an account to begin your journey.</p>
               </div>
 
               <Tabs defaultValue="google" className="w-full">
-                <TabsList
-                  className="grid w-full grid-cols-2 mb-8 p-1 rounded-2xl"
-                  style={{
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                  }}
-                >
-                  <TabsTrigger value="google" className="rounded-xl font-semibold">Google</TabsTrigger>
-                  <TabsTrigger value="email" className="rounded-xl font-semibold">Email</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 mb-8 bg-muted/50 border border-border rounded-xl p-1">
+                  <TabsTrigger value="google" className="rounded-lg font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm">Google</TabsTrigger>
+                  <TabsTrigger value="email" className="rounded-lg font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm">Email</TabsTrigger>
                 </TabsList>
 
                 {/* Google tab */}
                 <TabsContent value="google" className="space-y-4 animate-fade-in">
                   <Button
                     variant="outline"
-                    className="btn-shimmer w-full h-14 flex gap-3 text-base rounded-2xl font-medium"
+                    className="w-full h-14 flex gap-3 text-base rounded-2xl font-medium bg-muted/50 border-border hover:bg-muted/80"
                     onClick={handleGoogleSignIn}
                     disabled={loading}
-                    style={{
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid rgba(255,255,255,0.12)",
-                    }}
                   >
                     {loading ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
@@ -307,26 +248,22 @@ export default function AuthPage() {
                 {/* Email tab */}
                 <TabsContent value="email" className="space-y-4 animate-fade-in">
                   <Tabs defaultValue="login" className="w-full">
-                    <TabsList
-                      className="grid w-full grid-cols-2 mb-6 h-9 rounded-xl"
-                      style={{ background: "rgba(255,255,255,0.04)", border: "none" }}
-                    >
-                      <TabsTrigger value="login" className="text-xs rounded-lg">Log In</TabsTrigger>
-                      <TabsTrigger value="signup" className="text-xs rounded-lg">Sign Up</TabsTrigger>
+                    <TabsList className="grid w-full grid-cols-2 mb-6 h-9 bg-muted/50 border border-border rounded-xl p-1">
+                      <TabsTrigger value="login" className="text-xs rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Log In</TabsTrigger>
+                      <TabsTrigger value="signup" className="text-xs rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Sign Up</TabsTrigger>
                     </TabsList>
 
                     <div className="space-y-4">
                       <TabsContent value="signup" className="space-y-4 mt-0">
                         <div className="space-y-2">
-                          <Label htmlFor="signup-name" className="text-xs font-bold uppercase tracking-widest opacity-60">Full Name</Label>
+                          <Label htmlFor="signup-name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground opacity-60">Full Name</Label>
                           <div className="relative">
                             <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                             <Input
                               id="signup-name"
                               type="text"
                               placeholder="John Doe"
-                              className="pl-11 h-12 rounded-xl"
-                              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}
+                              className="pl-11 h-12 rounded-xl bg-muted/50 border border-border"
                               value={name}
                               onChange={(e) => setName(e.target.value)}
                             />
@@ -335,30 +272,28 @@ export default function AuthPage() {
                       </TabsContent>
 
                       <div className="space-y-2">
-                        <Label htmlFor="email" className="text-xs font-bold uppercase tracking-widest opacity-60">Email Address</Label>
+                        <Label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-muted-foreground opacity-60">Email Address</Label>
                         <div className="relative">
                           <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <Input
                             id="email"
                             type="email"
                             placeholder="name@example.com"
-                            className="pl-11 h-12 rounded-xl"
-                            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}
+                            className="pl-11 h-12 rounded-xl bg-muted/50 border border-border"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                           />
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="password" className="text-xs font-bold uppercase tracking-widest opacity-60">Password</Label>
+                        <Label htmlFor="password" className="text-xs font-bold uppercase tracking-widest text-muted-foreground opacity-60">Password</Label>
                         <div className="relative">
                           <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <Input
                             id="password"
                             type="password"
                             placeholder="••••••••"
-                            className="pl-11 h-12 rounded-xl"
-                            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}
+                            className="pl-11 h-12 rounded-xl bg-muted/50 border border-border"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                           />
@@ -367,26 +302,18 @@ export default function AuthPage() {
 
                       <TabsContent value="login" className="mt-0">
                         <Button
-                          className="btn-shimmer w-full h-12 rounded-xl font-bold mt-2"
+                          className="w-full h-12 rounded-xl font-bold mt-2 bg-primary text-primary-foreground hover:bg-primary/90"
                           onClick={() => handleEmailAuth(false)}
                           disabled={loading}
-                          style={{
-                            background: "linear-gradient(135deg, hsl(172 100% 42%), hsl(172 100% 35%))",
-                            boxShadow: "0 0 24px rgba(0,212,184,0.3)",
-                          }}
                         >
                           {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : "Sign In"}
                         </Button>
                       </TabsContent>
                       <TabsContent value="signup" className="mt-0">
                         <Button
-                          className="btn-shimmer w-full h-12 rounded-xl font-bold mt-2"
+                          className="w-full h-12 rounded-xl font-bold mt-2 bg-primary text-primary-foreground hover:bg-primary/90"
                           onClick={() => handleEmailAuth(true)}
                           disabled={loading}
-                          style={{
-                            background: "linear-gradient(135deg, hsl(172 100% 42%), hsl(172 100% 35%))",
-                            boxShadow: "0 0 24px rgba(0,212,184,0.3)",
-                          }}
                         >
                           {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : "Create Account"}
                         </Button>

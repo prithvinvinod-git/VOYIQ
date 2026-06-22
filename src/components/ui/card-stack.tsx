@@ -140,8 +140,7 @@ export function CardStack<T extends CardStackItem>({
         role="region"
         aria-label="Destination cards"
       >
-        <div className="pointer-events-none absolute inset-x-0 top-6 mx-auto h-48 w-[70%] rounded-full bg-indigo-500/5 blur-3xl" aria-hidden="true" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 mx-auto h-40 w-[76%] rounded-full bg-black/20 blur-3xl" aria-hidden="true" />
+
 
         <div
           className="absolute inset-0 flex items-end justify-center"
@@ -184,16 +183,15 @@ export function CardStack<T extends CardStackItem>({
                 <motion.div
                   key={item.id}
                   className={cn(
-                    "absolute bottom-0 rounded-2xl overflow-hidden shadow-2xl",
+                    "absolute bottom-0 rounded-2xl overflow-hidden",
                     "will-change-transform select-none",
-                    isActive ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
+                    isActive ? "cursor-grab active:cursor-grabbing border border-primary/30" : "cursor-pointer border border-white/10"
                   )}
                   style={{
                     width: cardWidth,
                     height: cardHeight,
                     zIndex,
                     transformStyle: "preserve-3d",
-                    border: isActive ? "1px solid rgba(99,102,241,0.3)" : "1px solid rgba(255,255,255,0.08)",
                   }}
                   initial={reduceMotion ? false : { opacity: 0, y: y + 40, x, rotateZ, rotateX, scale }}
                   animate={{ opacity: 1, x, y: y + lift, rotateZ, rotateX, scale }}
@@ -265,15 +263,10 @@ function DefaultFanCard({ item, active }: { item: CardStackItem; active: boolean
           </div>
         )}
       </div>
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" aria-hidden="true" />
-      {/* Aurora glow on active */}
-      {active && (
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-emerald-500/5" aria-hidden="true" />
-      )}
+      <div className="pointer-events-none absolute inset-0 bg-black/40" aria-hidden="true" />
       <div className="relative z-10 flex h-full flex-col justify-end p-6">
         {item.tag && (
-          <span className="mb-2 inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
-            style={{ background: "rgba(99,102,241,0.3)", color: "#a5b4fc", border: "1px solid rgba(99,102,241,0.4)" }}>
+          <span className="mb-2 inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-primary/30 text-primary border border-primary/30">
             {item.tag}
           </span>
         )}

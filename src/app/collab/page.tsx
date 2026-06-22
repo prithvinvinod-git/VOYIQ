@@ -2,10 +2,9 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { UserHeader } from "@/components/layout/UserHeader";
+import { AppNavbar } from "@/components/layout/AppNavbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   Users,
@@ -132,7 +131,7 @@ export default function CollabPage() {
       await deleteDocumentNonBlocking(memberRef);
       await updateDocumentNonBlocking(doc(firestore, "users", user.uid), { activeCollabRoomId: null });
       toast({ title: "Left Room", description: "You've left the collaborative session." });
-    } catch (e) { console.error(e); }
+    } catch (e: any) { toast({ variant: "destructive", title: "Error", description: e.message || "Failed to leave room." }); }
   };
 
   const copyCode = () => {
@@ -159,34 +158,20 @@ export default function CollabPage() {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Ambient background */}
-      <div className="fixed inset-0 pointer-events-none -z-0">
-        <div className="absolute w-[500px] h-[500px] rounded-full" style={{ background: "radial-gradient(circle, rgba(0,212,184,0.05) 0%, transparent 70%)", filter: "blur(80px)", top: "-100px", right: "-100px" }} />
-        <div className="absolute w-[400px] h-[400px] rounded-full" style={{ background: "radial-gradient(circle, rgba(123,97,255,0.04) 0%, transparent 70%)", filter: "blur(80px)", bottom: "-100px", left: "10%" }} />
-      </div>
-
-      <UserHeader showBack backHref="/dashboard" title="Collaboration Hub" />
+      <div className="fixed inset-0 pointer-events-none z-0" style={{ backgroundImage: 'radial-gradient(at 0% 0%, rgba(59,130,246,0.08) 0, transparent 50%), radial-gradient(at 100% 100%, rgba(173,198,255,0.05) 0, transparent 50%)' }} />
+      <AppNavbar />
 
       {/* Floating live room indicator */}
       {userData?.activeCollabRoomId && (
         <>
           <div className="fixed top-20 right-4 z-40 flex flex-col items-end gap-2 animate-fade-in">
             <button onClick={() => setIsMemberListOpen(true)} className="hover:scale-105 transition-transform active:scale-95">
-              <div
-                className="p-3 rounded-2xl flex items-center gap-3 cursor-pointer"
-                style={{
-                  background: "rgba(10,14,30,0.9)",
-                  backdropFilter: "blur(20px)",
-                  border: "1px solid rgba(0,212,184,0.2)",
-                  boxShadow: "0 8px 30px rgba(0,0,0,0.5), 0 0 20px rgba(0,212,184,0.08)",
-                }}
-              >
+              <div className="p-3 rounded-2xl flex items-center gap-3 cursor-pointer glass-panel border-blue-500/20">
                 <div className="flex -space-x-2">
                   {members?.slice(0, 4).map((m) => (
                     <div
                       key={m.id}
-                      className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center"
-                      style={{ border: "2px solid rgba(10,14,30,0.9)", background: "rgba(0,212,184,0.15)" }}
+                      className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-primary/10 border-2 border-card"
                       title={m.name}
                     >
                       {m.photoURL ? (
@@ -197,7 +182,7 @@ export default function CollabPage() {
                     </div>
                   ))}
                   {(members?.length || 0) > 4 && (
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-[9px] font-bold" style={{ border: "2px solid rgba(10,14,30,0.9)", background: "rgba(255,255,255,0.08)", color: "white" }}>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-[9px] font-bold bg-muted/50 border-2 border-card text-muted-foreground">
                       +{members!.length - 4}
                     </div>
                   )}
@@ -207,7 +192,7 @@ export default function CollabPage() {
                     <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                     <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Live</p>
                   </div>
-                  <p className="text-xs font-headline font-bold text-white">{displayCode}</p>
+                  <p className="text-xs font-headline font-bold text-foreground">{displayCode}</p>
                 </div>
               </div>
             </button>
@@ -218,19 +203,11 @@ export default function CollabPage() {
 
       {/* Member list dialog */}
       <Dialog open={isMemberListOpen} onOpenChange={setIsMemberListOpen}>
-        <DialogContent
-          className="sm:max-w-md rounded-3xl border-none"
-          style={{
-            background: "rgba(10,14,30,0.97)",
-            backdropFilter: "blur(30px)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            boxShadow: "0 30px 80px rgba(0,0,0,0.7)",
-          }}
-        >
-          <div className="h-0.5 w-full -mt-6 mb-6" style={{ background: "linear-gradient(90deg, #00D4B8, #7B61FF, #F5A623)" }} />
+        <DialogContent className="sm:max-w-md bg-card border border-border rounded-2xl">
+          <div className="bg-gradient-to-r from-sky-500 via-indigo-500 to-violet-500 h-0.5 w-full" />
           <DialogHeader>
             <DialogTitle className="text-2xl font-headline font-bold flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(0,212,184,0.12)", border: "1px solid rgba(0,212,184,0.2)" }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-primary/10 border border-primary/20">
                 <Users className="w-5 h-5 text-primary" />
               </div>
               Room Members
@@ -244,11 +221,10 @@ export default function CollabPage() {
             {members?.map((m) => (
               <div
                 key={m.id}
-                className="flex items-center justify-between p-3 rounded-2xl transition-all duration-200"
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
+                className="flex items-center justify-between p-3 rounded-2xl transition-all duration-200 bg-muted/50 border border-border"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center" style={{ background: "rgba(0,212,184,0.1)", border: "1px solid rgba(0,212,184,0.15)" }}>
+                  <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-primary/10 border border-primary/20">
                     {m.photoURL ? (
                       <Image src={m.photoURL} alt={m.name} width={40} height={40} className="object-cover" />
                     ) : (
@@ -256,10 +232,10 @@ export default function CollabPage() {
                     )}
                   </div>
                   <div>
-                    <div className="flex items-center gap-2 text-sm font-bold text-white">
+                    <div className="flex items-center gap-2 text-sm font-bold text-foreground">
                       {m.name}
                       {m.id === user?.uid && (
-                        <span className="text-[8px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(0,212,184,0.12)", border: "1px solid rgba(0,212,184,0.2)", color: "#00D4B8" }}>You</span>
+                        <span className="text-[8px] font-bold px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary">You</span>
                       )}
                     </div>
                     <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-0.5">
@@ -268,16 +244,15 @@ export default function CollabPage() {
                     </div>
                   </div>
                 </div>
-                <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#00D4B8", boxShadow: "0 0 8px rgba(0,212,184,0.6)" }} />
+                <div className="w-2 h-2 rounded-full animate-pulse bg-primary" />
               </div>
             ))}
           </div>
 
-          <div className="flex gap-3 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+          <div className="flex gap-3 pt-4 border-t border-border">
             <Button variant="ghost" className="flex-1 h-11 rounded-2xl" onClick={() => setIsMemberListOpen(false)}>Close</Button>
             <Button
-              className="h-11 px-6 rounded-2xl font-bold gap-2"
-              style={{ background: "linear-gradient(135deg, hsl(172 100% 42%), hsl(172 100% 35%))", color: "hsl(222 47% 9%)" }}
+              className="h-11 px-6 rounded-2xl font-bold gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
               onClick={copyCode}
             >
               {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
@@ -287,118 +262,91 @@ export default function CollabPage() {
         </DialogContent>
       </Dialog>
 
-      <main className="container mx-auto px-4 pt-10 pb-28 relative z-10">
+      <main className="flex-grow relative z-10 px-4 md:px-8">
         {!userData?.activeCollabRoomId ? (
           /* ── No room: entry screens ─────────────────────────────── */
-          <div className="max-w-2xl mx-auto space-y-14 py-8">
-            <div className="text-center space-y-5 animate-fade-in">
-              <div
-                className="w-24 h-24 rounded-3xl flex items-center justify-center mx-auto animate-float-slow"
-                style={{ background: "linear-gradient(135deg, rgba(0,212,184,0.2), rgba(123,97,255,0.1))", border: "1px solid rgba(0,212,184,0.3)", boxShadow: "0 0 50px rgba(0,212,184,0.2)" }}
-              >
-                <Users className="text-primary w-12 h-12" />
+          <div className="flex items-center justify-center min-h-[calc(100vh-5rem)]">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
+            {/* Create */}
+            <div className="rounded-2xl p-8 flex flex-col items-center text-center transition-all duration-500 group"
+              style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.1)' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.borderColor = 'rgba(59,130,246,0.3)'; e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 20px 40px -15px rgba(0,0,0,0.5), 0 0 15px rgba(59,130,246,0.1)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
+            >
+              <div className="mb-6 p-6 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 group-hover:scale-110 transition-transform duration-500">
+                <Radio className="w-10 h-10" />
               </div>
-              <h1 className="text-4xl md:text-5xl font-headline font-bold text-white">Plan Together.</h1>
-              <p className="text-muted-foreground text-lg max-w-md mx-auto leading-relaxed">
-                Create a live session and invite your travel crew to brainstorm in real time.
-              </p>
+              <h2 className="text-2xl font-headline font-bold text-white mb-3">Start New Session</h2>
+              <p className="text-sm text-white/60 mb-8 max-w-[240px]">Initialize a private workspace and invite your crew to co-create in real-time.</p>
+              <Button
+                className="w-full mt-auto h-12 rounded-xl font-bold gap-2 bg-blue-500 hover:bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                onClick={handleCreateRoom}
+                disabled={isJoining}
+              >
+                {isJoining ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Radio className="w-4 h-4" /> Create Room</>}
+              </Button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Create */}
-              <div
-                className="p-7 rounded-3xl space-y-5 transition-all duration-300 hover:scale-[1.01]"
-                style={{ background: "linear-gradient(135deg, rgba(0,212,184,0.07) 0%, rgba(10,14,30,0.7) 100%)", border: "1px solid rgba(0,212,184,0.15)", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}
-              >
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "rgba(0,212,184,0.12)", border: "1px solid rgba(0,212,184,0.2)" }}>
-                  <Plus className="text-primary w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-headline font-bold text-white mb-1">Start New Session</h3>
-                  <p className="text-sm text-muted-foreground">Generate a private room code and invite your crew.</p>
-                </div>
-                <Button
-                  className="btn-shimmer w-full h-12 rounded-2xl font-bold gap-2"
-                  onClick={handleCreateRoom}
-                  disabled={isJoining}
-                  style={{ background: "linear-gradient(135deg, hsl(172 100% 42%), hsl(172 100% 35%))", color: "hsl(222 47% 9%)", boxShadow: "0 0 20px rgba(0,212,184,0.3)" }}
-                >
-                  {isJoining ? <Loader2 className="w-4 h-4 animate-spin" /> : <Radio className="w-4 h-4" />}
-                  Create Room
-                </Button>
+            {/* Join */}
+            <div className="rounded-2xl p-8 flex flex-col items-center text-center transition-all duration-500 group"
+              style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.1)' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.borderColor = 'rgba(59,130,246,0.3)'; e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 20px 40px -15px rgba(0,0,0,0.5), 0 0 15px rgba(59,130,246,0.1)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
+            >
+              <div className="mb-6 p-6 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 group-hover:scale-110 transition-transform duration-500">
+                <Hash className="w-10 h-10" />
               </div>
-
-              {/* Join */}
-              <div
-                className="p-7 rounded-3xl space-y-5 transition-all duration-300 hover:scale-[1.01]"
-                style={{ background: "linear-gradient(135deg, rgba(123,97,255,0.07) 0%, rgba(10,14,30,0.7) 100%)", border: "1px solid rgba(123,97,255,0.15)", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}
-              >
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "rgba(123,97,255,0.12)", border: "1px solid rgba(123,97,255,0.2)" }}>
-                  <Hash className="text-purple-400 w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-headline font-bold text-white mb-1">Join Existing Room</h3>
-                  <p className="text-sm text-muted-foreground">Enter a code shared by your travel partner.</p>
-                </div>
-                <div className="space-y-3">
-                  <input
+              <h2 className="text-2xl font-headline font-bold text-white mb-3">Join Existing Room</h2>
+              <p className="text-sm text-white/60 mb-8 max-w-[240px]">Enter a session code to join an active exploration hub with your team.</p>
+              <div className="w-full mb-4">
+                <div className="relative rounded-xl border border-white/10 bg-white/5 transition-all focus-within:border-blue-500/50">
+                  <Input
                     type="text"
-                    placeholder="Enter code (e.g. A7B2X)"
-                    className="w-full h-12 px-4 rounded-2xl text-sm font-bold uppercase text-center text-white placeholder:text-muted-foreground/60 outline-none transition-all duration-200 tracking-widest"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}
+                    placeholder="Enter room code..."
+                    className="w-full bg-transparent border-none py-4 px-6 text-white placeholder:text-white/40 text-sm text-center tracking-widest uppercase font-bold"
                     value={roomCode}
                     onChange={(e) => setRoomCode(e.target.value)}
-                    onFocus={(e) => { (e.target as HTMLInputElement).style.borderColor = "rgba(123,97,255,0.4)"; }}
-                    onBlur={(e) => { (e.target as HTMLInputElement).style.borderColor = "rgba(255,255,255,0.1)"; }}
                   />
-                  <Button
-                    variant="outline"
-                    className="w-full h-12 rounded-2xl font-bold gap-2"
-                    style={{ background: "rgba(123,97,255,0.1)", border: "1px solid rgba(123,97,255,0.25)", color: "#a78bfa" }}
-                    onClick={handleJoinRoom}
-                    disabled={isJoining || !roomCode}
-                  >
-                    {isJoining ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
-                    Join Session
-                  </Button>
                 </div>
               </div>
+              <Button
+                variant="outline"
+                className="w-full h-12 rounded-xl font-bold gap-2 border border-white/20 bg-white/5 text-white hover:bg-white/10 backdrop-blur-sm"
+                onClick={handleJoinRoom}
+                disabled={isJoining || !roomCode}
+              >
+                {isJoining ? <Loader2 className="w-4 h-4 animate-spin" /> : <><ArrowRight className="w-4 h-4" /> Join Session</>}
+              </Button>
             </div>
           </div>
+        </div>
         ) : (
           /* ── In room: brainstorm view ────────────────────────────── */
-          <div className="space-y-12">
+          <div className="space-y-10 w-full max-w-5xl mx-auto pt-8 pb-12">
             {/* Room header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
               <div>
                 <div className="flex items-center gap-3 mb-2">
-                  <Badge
-                    className="text-[10px] font-bold px-3 py-1.5 uppercase tracking-widest"
-                    style={{ background: "rgba(0,212,184,0.1)", border: "1px solid rgba(0,212,184,0.2)", color: "#00D4B8" }}
-                  >
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse mr-1.5" />
+                  <Badge className="bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-bold px-3 py-1.5 uppercase tracking-widest">
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse mr-1.5" />
                     {members?.length || 0} Online
                   </Badge>
-                  <button onClick={copyCode} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-white transition-colors">
-                    Code: <span className="font-bold text-accent">{displayCode}</span>
-                    {copied ? <Check className="w-3 h-3 text-primary" /> : <Copy className="w-3 h-3" />}
+                  <button onClick={copyCode} className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors">
+                    Code: <span className="font-bold text-blue-400">{displayCode}</span>
+                    {copied ? <Check className="w-3 h-3 text-blue-400" /> : <Copy className="w-3 h-3" />}
                   </button>
                 </div>
                 <h2 className="text-3xl md:text-4xl font-headline font-bold text-white">Group Brainstorm</h2>
               </div>
               <div className="flex gap-3">
                 <Link href="/plan/new?collab=true">
-                  <Button
-                    className="btn-shimmer h-11 px-6 rounded-2xl font-bold gap-2"
-                    style={{ background: "linear-gradient(135deg, hsl(172 100% 42%), hsl(172 100% 35%))", color: "hsl(222 47% 9%)", boxShadow: "0 0 16px rgba(0,212,184,0.3)" }}
-                  >
+                  <Button className="h-11 px-6 rounded-xl font-bold gap-2 bg-blue-500 hover:bg-blue-600 text-white shadow-lg shadow-blue-500/20">
                     <Plus className="w-4 h-4" /> Add Room Trip
                   </Button>
                 </Link>
                 <Button
                   variant="ghost"
-                  className="h-11 px-4 rounded-2xl gap-2 font-bold"
-                  style={{ color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)" }}
+                  className="h-11 px-4 rounded-xl gap-2 font-bold text-red-400 border border-red-400/30 hover:bg-red-500/10"
                   onClick={handleLeaveRoom}
                 >
                   <LogOut className="w-4 h-4" /> Leave
@@ -412,25 +360,26 @@ export default function CollabPage() {
                 Object.entries(groupedTrips).map(([userName, trips]: [string, any]) => (
                   <div key={userName} className="space-y-5">
                     <div className="flex items-center gap-3">
-                      <div className="w-1 h-5 rounded-full" style={{ background: "linear-gradient(180deg, #00D4B8, #7B61FF)" }} />
-                      <h3 className="text-lg font-bold text-white">{userName}&apos;s Ideas</h3>
+                      <div className="bg-gradient-to-r from-blue-500 via-cyan-400 to-violet-500 h-1 w-10 rounded-full" />
+                      <h3 className="text-lg font-bold text-white/80">{userName}&apos;s Ideas</h3>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                       {trips.map((trip: any) => (
                         <Link key={trip.id} href={`/trip/${trip.id}`}>
-                          <div
-                            className="p-5 rounded-3xl transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 cursor-pointer"
-                            style={{ background: "linear-gradient(135deg, rgba(0,212,184,0.05) 0%, rgba(10,14,30,0.7) 100%)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 12px 40px rgba(0,0,0,0.4)" }}
+                          <div className="p-5 rounded-2xl transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 cursor-pointer"
+                            style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.1)' }}
+                            onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(59,130,246,0.3)'; e.currentTarget.style.boxShadow = '0 0 15px rgba(59,130,246,0.1)' }}
+                            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.boxShadow = 'none' }}
                           >
                             <div className="flex justify-between items-start mb-4">
                               <h4 className="font-bold text-white">{trip.destination}</h4>
-                              <span className="text-[9px] font-bold px-2 py-1 rounded-full" style={{ background: "rgba(0,212,184,0.1)", color: "#00D4B8", border: "1px solid rgba(0,212,184,0.2)" }}>
+                              <span className="text-[9px] font-bold px-2 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
                                 {trip.status}
                               </span>
                             </div>
-                            <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                              <span className="flex items-center gap-1"><MapPin className="w-3 h-3 text-accent" />{trip.destination}</span>
-                              <span className="flex items-center gap-1"><Sparkles className="w-3 h-3 text-primary" />AI Plan Ready</span>
+                            <div className="flex flex-wrap items-center gap-3 text-xs text-white/50">
+                              <span className="flex items-center gap-1"><MapPin className="w-3 h-3 text-blue-400" />{trip.destination}</span>
+                              <span className="flex items-center gap-1"><Sparkles className="w-3 h-3 text-cyan-400" />AI Plan Ready</span>
                             </div>
                           </div>
                         </Link>
@@ -439,18 +388,14 @@ export default function CollabPage() {
                   </div>
                 ))
               ) : (
-                <div
-                  className="py-24 text-center rounded-3xl"
-                  style={{ background: "rgba(255,255,255,0.02)", border: "1px dashed rgba(255,255,255,0.08)" }}
+                <div className="py-20 text-center rounded-2xl"
+                  style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(24px)', border: '1px dashed rgba(255,255,255,0.15)' }}
                 >
-                  <Sparkles className="w-12 h-12 mx-auto mb-5 animate-pulse" style={{ color: "rgba(0,212,184,0.4)" }} />
+                  <Sparkles className="w-12 h-12 mx-auto mb-5 text-blue-400/40" />
                   <h3 className="text-xl font-headline font-bold mb-3 text-white">No Room Trips Yet</h3>
-                  <p className="text-muted-foreground mb-8 max-w-sm mx-auto">Any trip created while in this room will appear here for everyone.</p>
+                  <p className="text-white/50 mb-8 max-w-sm mx-auto">Any trip created while in this room will appear here for everyone.</p>
                   <Link href="/plan/new?collab=true">
-                    <Button
-                      className="h-12 px-8 rounded-2xl font-bold"
-                      style={{ background: "rgba(0,212,184,0.12)", border: "1px solid rgba(0,212,184,0.25)", color: "#00D4B8" }}
-                    >
+                    <Button className="h-12 px-8 rounded-xl font-bold bg-blue-500 hover:bg-blue-600 text-white shadow-lg shadow-blue-500/20">
                       <Plus className="mr-2 w-4 h-4" /> Create Room Idea
                     </Button>
                   </Link>

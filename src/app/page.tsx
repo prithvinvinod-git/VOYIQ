@@ -1,42 +1,8 @@
-
 "use client";
 
-import React, {
-  useState,
-  useMemo,
-} from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { PixelHero } from "@/components/ui/pixel-perfect-hero";
-import { CardStack, type CardStackItem } from "@/components/ui/card-stack";
-import SpotlightCard from "@/components/ui/SpotlightCard";
-import { LiquidButton } from "@/components/ui/liquid-glass-button";
-import {
-  Wallet,
-  MessageSquare,
-  Users,
-  ArrowRight,
-  Globe,
-  Zap,
-  Star,
-  Compass,
-  ChevronRight,
-  Brain,
-  Route,
-  Download,
-  RefreshCw,
-  Lock,
-  Plane,
-  Hotel,
-  Camera,
-  Map,
-  Coins,
-  Mail,
-} from "lucide-react";
-import { PlanSelectionDialog } from "@/components/shared/PlanSelectionDialog";
-import { UserHeader } from "@/components/layout/UserHeader";
 import {
   useUser,
   useFirestore,
@@ -45,17 +11,56 @@ import {
   useDoc,
 } from "@/firebase";
 import { collection, query, where, doc } from "firebase/firestore";
+import {
+  ArrowRight,
+  ArrowLeft,
+  Check,
+  Mail,
+  Link as LinkIcon,
+  Star,
+  MapPin,
+  Brain,
+  Wallet,
+  Users,
+  Calendar,
+  Map,
+  FileText,
+  TrendingUp,
+  Gem,
+  Mountain,
+  Leaf,
+  Menu,
+  X,
+} from "lucide-react";
+import { PlanSelectionDialog } from "@/components/shared/PlanSelectionDialog";
 
-/* ═══════════════════════════════════════════════════════════════════
-   MAIN LANDING PAGE
-   ═══════════════════════════════════════════════════════════════════ */
+function useCounter(target: number, enabled: boolean, decimals = 0) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!enabled) return;
+    const speed = 200;
+    const inc = target / speed;
+    let current = 0;
+    const timer = setInterval(() => {
+      current += inc;
+      if (current >= target) {
+        setCount(target);
+        clearInterval(timer);
+      } else {
+        setCount(decimals > 0 ? +current.toFixed(decimals) : Math.ceil(current));
+      }
+    }, 10);
+    return () => clearInterval(timer);
+  }, [enabled, target, decimals]);
+  return count;
+}
+
 export default function LandingPage() {
   const router = useRouter();
   const { user } = useUser();
   const firestore = useFirestore();
   const [isPlanDialogOpen, setIsPlanDialogOpen] = useState(false);
 
-  /* ── Firebase data ── */
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return doc(firestore, "users", user.uid);
@@ -75,734 +80,672 @@ export default function LandingPage() {
   const isPremium = userData?.isPremium || false;
   const isLimitReached = !isPremium && tripCount >= 4;
 
-  /* â”€â”€ Auth-aware routing (unchanged) â”€â”€ */
   const handleProceed = () => {
-    if (!user) { router.push("/auth"); return; }
-    if (isLimitReached) { setIsPlanDialogOpen(true); }
-    else { router.push("/plan/new"); }
+    if (!user) {
+      router.push("/auth");
+      return;
+    }
+    if (isLimitReached) {
+      setIsPlanDialogOpen(true);
+    } else {
+      router.push("/plan/new");
+    }
   };
 
-  /* ── Feature data ── */
-  const features = useMemo(
-    () => [
-      {
-        icon: Brain,
-        title: "AI Travel Brain",
-        desc: "Contextual intelligence that learns your travel philosophy and curates hyper-personalized routes.",
-        accent: "#6366F1",
-        spotlightColor: "rgba(99, 102, 241, 0.25)",
-      },
-      {
-        icon: Wallet,
-        title: "BudgetSync",
-        desc: "Real-time multi-currency tracking across your entire journey.",
-        accent: "#10B981",
-        spotlightColor: "rgba(16, 185, 129, 0.25)",
-      },
-      {
-        icon: Users,
-        title: "Collaborative",
-        desc: "Plan with your crew. Vote, sync costs, and share memories.",
-        accent: "#8B5CF6",
-        spotlightColor: "rgba(139, 92, 246, 0.25)",
-      },
-      {
-        icon: Route,
-        title: "SmartItinerary",
-        desc: "Day-by-day plans crafted around your pace and preferences.",
-        accent: "#F472B6",
-        spotlightColor: "rgba(244, 114, 182, 0.25)",
-      },
-      {
-        icon: Map,
-        title: "Live Map",
-        desc: "Interactive mapping with real-time updates.",
-        accent: "#38BDF8",
-        spotlightColor: "rgba(56, 189, 248, 0.25)",
-      },
-      {
-        icon: Download,
-        title: "PDF Export",
-        desc: "Offline-ready itineraries, anywhere.",
-        accent: "#FBBF24",
-        spotlightColor: "rgba(251, 191, 36, 0.25)",
-      },
-    ],
-    []
-  );
+  const [form, setForm] = useState({ name: "", email: "", message: "" });
+  const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
 
-  /* â”€â”€ How It Works steps â”€â”€ */
-  const steps = [
-    {
-      num: "01",
-      icon: Globe,
-      title: "Tell VOYIQ your vision",
-      desc: "Share your destination, dates, travel style, budget, and preferences. Our AI listens and understands context.",
-      color: "#6366F1",
-    },
-    {
-      num: "02",
-      icon: Brain,
-      title: "AI generates your blueprint",
-      desc: "In seconds, receive a fully personalized day-by-day itinerary with curated accommodations, activities, and dining.",
-      color: "#8B5CF6",
-    },
-    {
-      num: "03",
-      icon: RefreshCw,
-      title: "Refine & collaborate",
-      desc: "Chat with your AI to adjust any detail. Invite travel companions and plan together in real-time.",
-      color: "#10B981",
-    },
-    {
-      num: "04",
-      icon: Plane,
-      title: "Explore with confidence",
-      desc: "Your itinerary syncs to your device. BudgetSync tracks expenses as you travel. The AI adapts to changes on the fly.",
-      color: "#F472B6",
-    },
-  ];
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSending(true);
+    setTimeout(() => {
+      setSubmitted(true);
+      setSending(false);
+      setForm({ name: "", email: "", message: "" });
+    }, 800);
+  };
 
-  /* ── Testimonials ── */
-  const testimonials = [
-    {
-      quote:
-        "VOYIQ completely redefined my approach to travel. The AI curation is impeccable â€” it saved me 20+ hours of research.",
-      author: "Sarah Jenkins",
-      role: "Digital Nomad Â· 47 trips planned",
-      initials: "SJ",
-      stars: 5,
-      color: "#6366F1",
-    },
-    {
-      quote:
-        "The BudgetSync feature alone is worth it. I always know exactly where my money is going, even across 5 different currencies.",
-      author: "Marcus Chen",
-      role: "Business Traveler Â· 31 trips planned",
-      initials: "MC",
-      stars: 5,
-      color: "#10B981",
-    },
-    {
-      quote:
-        "Planning group trips used to be a nightmare. VOYIQ's collaboration tools made our 8-person Bali trip effortless.",
-      author: "Priya Anand",
-      role: "Travel Blogger Â· 89 trips planned",
-      initials: "PA",
-      stars: 5,
-      color: "#8B5CF6",
-    },
-    {
-      quote:
-        "I've tried every travel app out there. Nothing comes close to the intelligence VOYIQ brings to itinerary planning.",
-      author: "James O'Brien",
-      role: "Adventure Seeker Â· 62 trips planned",
-      initials: "JO",
-      stars: 5,
-      color: "#F472B6",
-    },
-  ];
+  useEffect(() => {
+    const els = document.querySelectorAll(".reveal-stitch");
+    const observers: IntersectionObserver[] = [];
+    els.forEach((el) => {
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            el.classList.add("active");
+            observer.disconnect();
+          }
+        },
+        { threshold: 0.1 }
+      );
+      observer.observe(el);
+      observers.push(observer);
+    });
+    return () => observers.forEach((o) => o.disconnect());
+  }, []);
 
-  /* â”€â”€ Marquee items â”€â”€ */
-  const marqueeItems = [
-    { icon: Plane, label: "Smart Itineraries" },
-    { icon: Wallet, label: "BudgetSync" },
-    { icon: MessageSquare, label: "AI Companion" },
-    { icon: Users, label: "Group Planning" },
-    { icon: Map, label: "Live Maps" },
-    { icon: Hotel, label: "Hotel Curation" },
-    { icon: Camera, label: "Experience Discovery" },
-    { icon: Coins, label: "Multi-Currency" },
-    { icon: Download, label: "PDF Export" },
-    { icon: Lock, label: "Secure Sync" },
-    { icon: RefreshCw, label: "Dynamic Replanning" },
-  ];
+  useEffect(() => {
+    const grid = document.getElementById("features-grid");
+    if (!grid) return;
+    const handler = (e: MouseEvent) => {
+      document.querySelectorAll(".spotlight-card").forEach((card) => {
+        const rect = card.getBoundingClientRect();
+        (card as HTMLElement).style.setProperty(
+          "--mouse-x",
+          `${e.clientX - rect.left}px`
+        );
+        (card as HTMLElement).style.setProperty(
+          "--mouse-y",
+          `${e.clientY - rect.top}px`
+        );
+      });
+    };
+    grid.addEventListener("mousemove", handler);
+    return () => grid.removeEventListener("mousemove", handler);
+  }, []);
 
-  /* ── Famous Destinations (CardStack) ── */
-  const destinations: CardStackItem[] = useMemo(() => [
+  useEffect(() => {
+    const prev = document.body.style.backgroundColor;
+    document.body.style.backgroundColor = "#111415";
+    return () => { document.body.style.backgroundColor = prev; };
+  }, []);
+
+  const [countersVisible, setCountersVisible] = useState(false);
+  const statsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = statsRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setCountersVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const travelers = useCounter(10, countersVisible);
+  const countries = useCounter(50, countersVisible);
+  const tripsPlanned = useCounter(1, countersVisible);
+  const rating = useCounter(4.9, countersVisible, 1);
+
+  const destRef = useRef<HTMLDivElement>(null);
+  const scrollDest = (dir: "left" | "right") => {
+    destRef.current?.scrollBy({
+      left: dir === "left" ? -400 : 400,
+      behavior: "smooth",
+    });
+  };
+
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  const serviceTags = ["Itinerary", "Flights", "Hotels", "Experiences"];
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const toggleService = (s: string) => {
+    setSelectedServices((prev) =>
+      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
+    );
+  };
+
+  const destinations = [
     {
-      id: 1,
-      title: "Santorini, Greece",
-      description: "Iconic whitewashed villages cascading down volcanic cliffs above the Aegean.",
-      imageSrc: "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=800&q=80",
-      tag: "Island Escape",
+      name: "Tokyo",
+      country: "Japan",
+      price: "$2,400",
+      tag: "Trending",
+      tagIcon: TrendingUp,
+      image:
+        "https://lh3.googleusercontent.com/aida-public/AB6AXuAqvbe4a3pKRqZ5UoVUSvnEhC7xxNZoMbp-zCMo-a8N-x5s3aTk0BLSEYgmmOH_HO-Upz4zCDSY5Bw3hh7-1hvLAOsge-S3_lNaoYJRxpYnKUt1KYmgxLzhRH0LUhWAM4X2OLWG9xEe_ey0Zp98Btq3oU4T1YiAwuukTLN9ZxHarhRv1r19vyqkHHSRRTtnLCCbKdFYeTT-RdqDMVq-HfciYHjm6FScMv2-2R5rxmy7lcfvDayUGae2q-rDcrhLCh2POjFNqaBewj8",
     },
     {
-      id: 2,
-      title: "Kyoto, Japan",
-      description: "Ancient temples, bamboo groves, and seasonal cherry blossoms in harmony.",
-      imageSrc: "https://images.unsplash.com/photo-1492571350019-22de08371fd3?w=800&q=80",
-      tag: "Cultural Journey",
+      name: "Amalfi Coast",
+      country: "Italy",
+      price: "$3,800",
+      tag: "Luxury",
+      tagIcon: Gem,
+      image:
+        "https://lh3.googleusercontent.com/aida-public/AB6AXuAmall5gqWl3Llhpck8ISqwvE7A1JXLg_J4KRe8InMB87PlBhaCPR-r-EUjVRi7PXwukWGQgAT9dLFqo_IABn06lqu-gNHAKAzA2aEQgutS6v13cuP67rwMqDW7SdnnX_FLDdmN6JPvPyzQpLHxEiEzUO-U9eoObGD77zswLGOcmU0iyTFWjbNDKq27AeA0dVT7zXlR4NZLCkSnh0YvP2yS16P6vPLhtfYA6EO2KuKAjpHHcnUv_38odrWYichJSICHN2qJKTeEc5w",
     },
     {
-      id: 3,
-      title: "Machu Picchu, Peru",
-      description: "Lost Incan citadel perched high in the Andes, a UNESCO World Heritage marvel.",
-      imageSrc: "https://images.unsplash.com/photo-1526392060635-9d6019884377?w=800&q=80",
+      name: "Reykjavik",
+      country: "Iceland",
+      price: "$1,900",
       tag: "Adventure",
+      tagIcon: Mountain,
+      image:
+        "https://lh3.googleusercontent.com/aida-public/AB6AXuD118ctIjik3J_AWnOGgErTB-mkU318btY-UejdoBJF0WFauPFf4bVQu5n1-lP6bJRnJb-6-zSTxWR9WgRM7hC61CotLAV0dINKfZXvQ9B3KBOg6oJoZAV7Qt0JPKssxinM8QB1f-ieOpnW87DH-QTKEfzJ90ed0wbKSDZYE9MZL7FFKE_ZEORHCvZEWyxGeghDDWudqIGMe2gh-SpiL3f0rnqAUS3ybvVj8ZwMj1Xa1sPSbj3nXwocryg0ZfcWnrW2c8aofMGXlQU",
     },
     {
-      id: 4,
-      title: "Amalfi Coast, Italy",
-      description: "Dramatic cliffside villages, azure waters, and world-class Italian cuisine.",
-      imageSrc: "https://images.unsplash.com/photo-1533605788862-af5a2bbfa5e5?w=800&q=80",
-      tag: "Luxury",
+      name: "Monteverde",
+      country: "Costa Rica",
+      price: "$1,500",
+      tag: "Eco-friendly",
+      tagIcon: Leaf,
+      image:
+        "https://lh3.googleusercontent.com/aida-public/AB6AXuDszI0fASx7OWztcneFl4U_yfXZMA-txSMo9HxZaf52NphJ2cpUbBbVyBPyN1_55f9h5CdjoeA5sc6SHErLHZ6g2FYnoB0zrYVHZ6D3ZKx1FLV6qrY_u3t6j-y8UtiEdf8CXvsowoMj-_p9zwpMEs-2a0WIkR5mWFx_NEswfHGOqQ292XAnfOieFsDh2ajQjGF1b_HX1avGiAzbnZ049kTe6uEbkgFicD3-rOy0xgs2RCKKeSnzlNSvqz_BjTmQeG0xEhJrLxhdUs4",
+    },
+  ];
+
+  const features = [
+    {
+      icon: Brain,
+      title: "AI Travel Brain",
+      desc: "A sophisticated neural engine that learns your preferences, dynamically suggesting hidden gems and optimal routes.",
     },
     {
-      id: 5,
-      title: "Bali, Indonesia",
-      description: "Lush terraced rice fields, sacred temples, and vibrant spiritual culture.",
-      imageSrc: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&q=80",
-      tag: "Tropical",
+      icon: Wallet,
+      title: "BudgetSync",
+      desc: "Real-time financial tracking integrated directly into your itinerary. Predictive algorithms prevent overspending.",
     },
     {
-      id: 6,
-      title: "Dubai, UAE",
-      description: "Futuristic skyline meets golden desert sands and world-record landmarks.",
-      imageSrc: "https://images.unsplash.com/photo-1518684079-3c830dcef090?w=800&q=80",
-      tag: "Luxury",
+      icon: Users,
+      title: "Collaborative Canvas",
+      desc: "Invite friends and family to a multiplayer workspace. Vote on activities, share notes, and finalize plans synchronously.",
     },
-  ], []);
+    {
+      icon: Calendar,
+      title: "Smart Itineraries",
+      desc: "Fluid scheduling that automatically adjusts when flights are delayed or reservations change. Total peace of mind.",
+    },
+    {
+      icon: Map,
+      title: "Spatial Mapping",
+      desc: "High-fidelity, 3D interactive maps that plot your day seamlessly, minimizing transit time and maximizing exploration.",
+    },
+    {
+      icon: FileText,
+      title: "Cinematic Export",
+      desc: "Generate stunning, magazine-quality PDF briefs of your trip. Perfect for offline viewing or printing as a keepsake.",
+    },
+  ];
 
   return (
-    <div className="flex flex-col min-h-dvh overflow-x-hidden">
-      <UserHeader logoHref="/" />
-
-      <section aria-label="Hero" className="relative">
-        <PixelHero
-          word1="Travel"
-          word2="Refined."
-          description="AI-crafted itineraries personalised to your budget, style, and pace. Plan your next adventure in under 60 seconds."
-          primaryCta="Begin Your Journey"
-          primaryCtaMobile="Get Started"
-          secondaryCta="Join the Community"
-          secondaryCtaMobile="Join"
-          onPrimaryClick={handleProceed}
-          secondaryHref="/auth"
-        />
-      </section>
-
-      <section
-        className="py-16 relative overflow-hidden border-y border-white/5"
-        aria-label="Key statistics"
-      >
-        <div className="container mx-auto px-4">
-          <dl className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            {[
-              { value: "10,000+", label: "Travelers Worldwide" },
-              { value: "50,000+", label: "Itineraries Created" },
-              { value: "150+", label: "Countries Covered" },
-              { value: "98%", label: "Satisfaction Rate" },
-            ].map((stat, i) => (
-              <div key={i}>
-                <dt className="text-4xl font-headline font-extrabold aurora-text mb-1">
-                  {stat.value}
-                </dt>
-                <dd className="text-sm text-muted-foreground font-medium">
-                  {stat.label}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-      </section>
-
-      <section
-        className="py-8 border-b border-white/5"
-        aria-label="Feature highlights"
-      >
-        <div className="container mx-auto px-4">
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
-            {marqueeItems.map((item, i) => (
-              <div
-                key={item.label}
-                className="flex items-center gap-2 text-sm font-medium text-muted-foreground"
-              >
-                <item.icon
-                  className="w-4 h-4"
-                  style={{ color: i % 3 === 0 ? "#6366F1" : i % 3 === 1 ? "#8B5CF6" : "#10B981" }}
-                />
-                {item.label}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section
-        className="pt-16 pb-10 relative overflow-hidden border-t border-white/5"
-        aria-label="Famous travel destinations"
-      >
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <Badge
-              className="mb-5 px-4 py-1.5 text-xs uppercase tracking-widest font-bold inline-flex"
-              style={{
-                background: "rgba(16,185,129,0.12)",
-                border: "1px solid rgba(16,185,129,0.28)",
-                color: "#34D399",
-              }}
-            >
-              Dream Destinations
-            </Badge>
-            <h2 className="text-4xl md:text-5xl font-headline font-bold tracking-tight">
-              The world is{" "}
-              <span className="aurora-text-emerald">waiting for you.</span>
-            </h2>
-            <p className="mt-4 text-lg text-muted-foreground max-w-xl mx-auto">
-              Swipe through iconic destinations and let VOYIQ craft your perfect itinerary.
-            </p>
-          </div>
-
-          <CardStack
-            items={destinations}
-            pauseOnHover
-            showDots
-            cardWidth={540}
-            cardHeight={340}
+    <main className="relative flex flex-col min-h-screen bg-[#111415] text-white antialiased selection:bg-white selection:text-[#111415] font-inter">
+      <section className="relative h-screen mb-12 px-0 pt-0 pb-0.5">
+        <div className="absolute inset-0 mt-[6px] ml-[6px] mr-[6px] rounded-[20px_20px_0_0] overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#1a2a3a] via-[#111415] to-[#0d1b2a]" />
+          <video
+            autoPlay
             loop
-          />
-
-          <div className="text-center mt-6">
-            <LiquidButton
-              onClick={handleProceed}
-              variant="aurora"
-              size="xl"
-              className="font-semibold"
-            >
-              Plan a Trip to These Places
-              <ArrowRight className="ml-2 w-4 h-4" aria-hidden="true" />
-            </LiquidButton>
-          </div>
-        </div>
-      </section>
-
-      <section
-        id="features"
-        className="pt-8 pb-24 relative overflow-hidden border-t border-white/5"
-        aria-label="Features"
-      >
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mb-10">
-            <Badge
-              className="mb-6 px-4 py-1.5 text-xs uppercase tracking-widest font-bold"
-              style={{
-                background: "rgba(99,102,241,0.12)",
-                border: "1px solid rgba(99,102,241,0.28)",
-                color: "#818CF8",
-              }}
-            >
-              Explorer&apos;s Toolkit
-            </Badge>
-            <h2 className="text-4xl md:text-6xl font-headline font-bold mb-5 tracking-tight">
-              Built for the{" "}
-              <span className="aurora-text">modern voyager.</span>
-            </h2>
-            <p className="text-xl text-muted-foreground leading-relaxed">
-              Six powerful tools. One seamless experience. Engineered for every
-              type of traveler.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {features.map((f, i) => (
-              <div key={i}>
-                <SpotlightCard
-                  className="flex flex-col h-full"
-                  spotlightColor={f.spotlightColor}
-                >
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 flex-shrink-0"
-                    style={{
-                      background: `${f.accent}15`,
-                      border: `1px solid ${f.accent}30`,
-                    }}
-                  >
-                    <f.icon
-                      className="w-6 h-6"
-                      style={{ color: f.accent }}
-                      aria-hidden="true"
-                    />
-                  </div>
-
-                  <h3 className="text-lg font-bold mb-2">{f.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed text-sm flex-1">
-                    {f.desc}
-                  </p>
-
-                  <div
-                    className="mt-5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest"
-                    style={{ color: f.accent }}
-                  >
-                    Explore <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
-                  </div>
-                </SpotlightCard>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section
-        id="how-it-works"
-        className="py-24 relative overflow-hidden border-t border-white/5"
-        aria-label="How VOYIQ works"
-      >
-        <div className="container mx-auto px-4">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <Badge
-              className="mb-6 px-4 py-1.5 text-xs uppercase tracking-widest font-bold inline-flex"
-              style={{
-                background: "rgba(16,185,129,0.12)",
-                border: "1px solid rgba(16,185,129,0.28)",
-                color: "#34D399",
-              }}
-            >
-              The Process
-            </Badge>
-            <h2 className="text-4xl md:text-6xl font-headline font-bold tracking-tight">
-              From idea to{" "}
-              <span className="aurora-text-emerald">adventure</span>, in minutes.
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative">
-            {/* Connection line on desktop */}
-            <div
-              className="hidden lg:block absolute top-12 left-[12.5%] right-[12.5%] h-px"
-              style={{
-                background:
-                  "linear-gradient(90deg, rgba(99,102,241,0.4), rgba(139,92,246,0.4), rgba(16,185,129,0.4), rgba(244,114,182,0.4))",
-              }}
-              aria-hidden="true"
-            />
-
-            {steps.map((step, i) => (
-              <div key={i} className="flex flex-col items-center text-center">
-                {/* Step badge */}
-                <div className="relative mb-6">
-                  <div
-                    className="w-24 h-24 rounded-3xl flex items-center justify-center aurora-card relative z-10"
-                    style={{
-                      border: `1px solid ${step.color}30`,
-                      boxShadow: `0 0 32px ${step.color}20, 0 16px 48px rgba(0,0,0,0.4)`,
-                    }}
-                  >
-                    <step.icon
-                      className="w-9 h-9"
-                      style={{ color: step.color }}
-                      aria-hidden="true"
-                    />
-                  </div>
-                  <span
-                    className="absolute -top-2 -right-2 w-7 h-7 rounded-full text-xs font-headline font-extrabold flex items-center justify-center z-20"
-                    style={{
-                      background: step.color,
-                      color: "white",
-                      boxShadow: `0 0 12px ${step.color}60`,
-                    }}
-                  >
-                    {i + 1}
-                  </span>
-                </div>
-                <h3 className="text-lg font-bold mb-3">{step.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {step.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section
-        className="py-20 relative overflow-hidden border-t border-white/5"
-        aria-label="Community testimonials"
-      >
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <div
-              className="flex items-center justify-center mb-4"
-              role="img"
-              aria-label="Community of 10,000 plus travelers"
-            >
-              {[
-                { initials: "JD", color: "#6366F1" },
-                { initials: "AL", color: "#8B5CF6" },
-                { initials: "RK", color: "#10B981" },
-                { initials: "MT", color: "#F472B6" },
-                { initials: "CS", color: "#38BDF8" },
-                { initials: "+10k", color: "#FBBF24", isCount: true },
-              ].map((a, i) => (
-                <div
-                  key={i}
-                  className="w-11 h-11 rounded-full flex items-center justify-center text-xs font-bold text-white border-2"
-                  style={{
-                    background: a.isCount
-                      ? "rgba(255,255,255,0.08)"
-                      : `linear-gradient(135deg, ${a.color}80, ${a.color}40)`,
-                    borderColor: "hsl(var(--background))",
-                    marginLeft: i === 0 ? 0 : "-10px",
-                    zIndex: 6 - i,
-                    fontSize: a.isCount ? "9px" : undefined,
-                  }}
-                  aria-hidden="true"
-                >
-                  {a.initials}
-                </div>
-              ))}
-            </div>
-            <p className="text-muted-foreground text-sm">
-              Trusted by{" "}
-              <span className="text-foreground font-semibold">10,000+ travelers</span>{" "}
-              across 150 countries
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {testimonials.map((t) => (
-              <div
-                key={t.author}
-                className="aurora-card rounded-2xl p-5"
-                style={{ border: `1px solid ${t.color}20` }}
-              >
-                <div className="flex gap-1 mb-3" aria-hidden="true">
-                  {Array.from({ length: t.stars }).map((_, s) => (
-                    <Star
-                      key={s}
-                      className="w-3 h-3 fill-current"
-                      style={{ color: t.color }}
-                    />
-                  ))}
-                </div>
-                <p className="text-sm text-foreground/80 mb-4 leading-relaxed italic">
-                  &ldquo;{t.quote}&rdquo;
-                </p>
-                <div className="flex items-center gap-2.5">
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                    style={{ background: `${t.color}50` }}
-                    aria-hidden="true"
-                  >
-                    {t.initials}
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold">{t.author}</p>
-                    <p className="text-xs" style={{ color: t.color }}>
-                      {t.role}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section
-        className="py-24 relative overflow-hidden border-t border-white/5"
-        aria-label="Get started call to action"
-      >
-        <div className="container mx-auto px-4 text-center">
-          <Badge
-            className="mb-8 px-5 py-2 text-xs uppercase tracking-widest font-bold inline-flex"
-            style={{
-              background: "rgba(99,102,241,0.12)",
-              border: "1px solid rgba(99,102,241,0.28)",
-              color: "#818CF8",
-            }}
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover opacity-80"
+            src="/hf_20260602_150901_c45b90ec-18d7-42ff-90e2-b95d7109e330.mp4"
           >
-            Start Today â€” Free Forever
-          </Badge>
-
-          <h2 className="text-4xl md:text-7xl font-headline font-extrabold mb-6 tracking-tight text-balance">
-            Your next story{" "}
-            <span className="aurora-text">awaits.</span>
-          </h2>
-
-          <p className="text-xl text-muted-foreground mb-4 max-w-xl mx-auto leading-relaxed">
-            Step into the future of exploration. Refined, intelligent, and
-            entirely yours.
-          </p>
-          <p className="text-sm text-muted-foreground mb-12">
-            No credit card required Â· Free plan available Â· Cancel anytime
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <LiquidButton
-              size="xxl"
-              onClick={handleProceed}
-              variant="aurora"
-              className="font-bold"
-            >
-              {user ? "Plan Your Adventure" : "Begin Free Exploration"}
-              <ArrowRight className="ml-2 w-5 h-5" aria-hidden="true" />
-            </LiquidButton>
-
-            <Link href="/auth">
-              <Button
-                variant="outline"
-                size="lg"
-                className="h-16 px-10 text-lg rounded-full font-semibold"
-                style={{
-                  background: "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                }}
-              >
-                Sign In Instead
-              </Button>
-            </Link>
-          </div>
+            <source
+              src="/hf_20260602_150901_c45b90ec-18d7-42ff-90e2-b95d7109e330.mp4"
+              type="video/mp4"
+            />
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-t from-[#111415] via-[#111415]/40 to-transparent" />
         </div>
-      </section>
 
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          FOOTER â€” Multi-column with newsletter
-          SKILL.md Â§9: Navigation â€” destructive-nav-separation
-          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-      <footer
-        className="relative pt-16 pb-8"
-        style={{
-          borderTop: "1px solid rgba(255,255,255,0.06)",
-          background: "rgba(6,8,20,0.9)",
-        }}
-        role="contentinfo"
-      >
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
-            {/* Brand column */}
-            <div className="lg:col-span-2 space-y-5">
+        <div className="relative z-10 h-full flex flex-col">
+            <nav
+              className="bg-white/60 backdrop-blur-md rounded-full shadow-sm pl-4 pr-2 py-2 flex items-center justify-between w-fit mx-auto mt-[30px] md:gap-8 transition-all duration-300 hover:bg-white/70"
+              role="navigation"
+              aria-label="Main navigation"
+            >
               <Link
                 href="/"
-                className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
-                aria-label="VOYIQ Home"
+                className="flex items-center gap-2 text-[#2f3131] mr-4 sm:mr-8 transition-transform hover:scale-95 active:scale-90"
               >
-                <div
-                  className="w-9 h-9 rounded-xl flex items-center justify-center"
-                  style={{
-                    background: "linear-gradient(135deg, #6366F1, #8B5CF6)",
-                    boxShadow: "0 0 20px rgba(99,102,241,0.35)",
-                  }}
+                <svg
+                  fill="currentColor"
+                  height="24"
+                  viewBox="0 0 256 256"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
-                  <Compass
-                    className="text-white w-5 h-5"
-                    aria-hidden="true"
-                  />
-                </div>
-                <span className="text-xl font-headline font-bold tracking-tight">
-                  VOYIQ
+                  <path d="M 256 256 L 128 256 L 0 128 L 128 128 Z M 256 128 L 128 128 L 0 0 L 128 0 Z" />
+                </svg>
+                <span className="font-bold text-[#2f3131] hidden md:block tracking-tight">
+                  Voyiq.
                 </span>
               </Link>
-              <p className="text-sm text-muted-foreground leading-relaxed max-w-sm">
-                Next-generation AI travel intelligence. Crafting exceptional
-                journeys for the modern explorer since 2024.
-              </p>
-              {/* Newsletter */}
-              <div>
-                <p className="text-xs uppercase tracking-widest font-bold text-muted-foreground mb-3">
-                  Travel insights, weekly
-                </p>
-                <form
-                  className="flex gap-2"
-                  onSubmit={(e) => e.preventDefault()}
-                  aria-label="Newsletter subscription"
+
+              <div className="hidden md:flex items-center gap-6">
+                <a className="text-[16px] leading-[1.5] text-[#444748] hover:text-[#2f3131] transition-colors" href="#">
+                  Destinations
+                </a>
+                <Link className="text-[16px] leading-[1.5] text-[#444748] hover:text-[#2f3131] transition-colors" href="/pricing">
+                  Pricing
+                </Link>
+                <Link className="text-[16px] leading-[1.5] text-[#444748] hover:text-[#2f3131] transition-colors" href="/dashboard">
+                  Dashboard
+                </Link>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleProceed}
+                  className="bg-[#111415] text-white px-6 py-2 rounded-full text-[12px] leading-[1] tracking-[0.05em] font-semibold uppercase hover:bg-[#323536] transition-colors ml-4 shadow-lg scale-95 active:scale-90"
                 >
-                  <label htmlFor="newsletter-email" className="sr-only">
-                    Email address
-                  </label>
-                  <div className="relative flex-1">
-                    <Mail
-                      className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
-                      aria-hidden="true"
-                    />
-                    <input
-                      id="newsletter-email"
-                      type="email"
-                      placeholder="your@email.com"
-                      autoComplete="email"
-                      className="w-full pl-9 pr-3 py-2.5 rounded-xl text-sm bg-white/5 border border-white/10 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-colors"
+                  Start Exploring
+                </button>
+                <button
+                  className="md:hidden w-10 h-10 flex items-center justify-center text-[#2f3131] hover:bg-white/20 rounded-full transition-colors"
+                  onClick={() => setMobileNavOpen(!mobileNavOpen)}
+                  aria-label={mobileNavOpen ? "Close menu" : "Open menu"}
+                >
+                  {mobileNavOpen ? (
+                    <X className="w-5 h-5" />
+                  ) : (
+                    <Menu className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+            </nav>
+
+            {mobileNavOpen && (
+              <div className="md:hidden mt-2 glass-panel rounded-2xl p-4 flex flex-col gap-3 backdrop-blur-xl">
+                <a className="text-[16px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors" href="#">Destinations</a>
+                <Link className="text-[16px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors" href="/pricing">Pricing</Link>
+                <Link className="text-[16px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors" href="/dashboard">Dashboard</Link>
+              </div>
+            )}
+
+            <div className="flex-grow" />
+
+            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 w-full max-w-[1280px] mx-auto mt-12 md:mt-0">
+              <div className="flex-1 max-w-2xl">
+                <h1 className="text-[64px] leading-[1.1] tracking-[-0.04em] font-bold text-white mb-4 drop-shadow-md">
+                  Travel Refined. Experience{" "}
+                  <br />
+                  <span className="font-instrument-serif text-[68px] leading-[1.1] font-light text-[#dbe1ff] italic">
+                    Luxury
+                  </span>
+                </h1>
+                <p className="text-[18px] leading-[1.6] text-[#c4c7c8] max-w-lg drop-shadow">
+                  Elevate your journey with AI-crafted itineraries that adapt to
+                  your rhythm. Immerse yourself in the world&apos;s most
+                  breathtaking destinations without the friction of planning.
+                </p>
+              </div>
+
+              <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-6 w-full lg:w-[480px] border border-white/20 text-[#2f3131] flex-shrink-0 relative overflow-hidden">
+                <div
+                  className={`absolute inset-0 bg-white/95 backdrop-blur-md z-20 flex flex-col items-center justify-center transition-opacity duration-500 ${
+                    submitted ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+                  }`}
+                >
+                  <div className="w-16 h-16 bg-[#1d2021] rounded-full flex items-center justify-center mb-4 text-white">
+                    <Check className="w-7 h-7" />
+                  </div>
+                  <h3 className="text-[24px] leading-[1.2] font-semibold text-[#2f3131]">
+                    You&apos;re all set!
+                  </h3>
+                  <p className="text-[16px] leading-[1.5] text-[#c4c7c8] text-center mt-2 px-6">
+                    We&apos;ve received your message and will be in touch shortly.
+                  </p>
+                  <button
+                    onClick={() => setSubmitted(false)}
+                    className="mt-6 px-6 py-2 border border-[#8e9192] rounded-full text-[12px] leading-[1] tracking-[0.05em] font-semibold uppercase text-[#2f3131] hover:bg-[#1d2021] hover:text-white transition-colors"
+                  >
+                    Send another
+                  </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+                  <div className="flex items-center justify-between mb-2">
+                    <h2 className="text-[24px] leading-[1.2] font-semibold text-[#2f3131]">
+                      Say hello!
+                    </h2>
+                    <div className="flex gap-2">
+                      <a
+                        href="#"
+                        className="w-8 h-8 rounded-full border border-[#444748] flex items-center justify-center text-[#2f3131] hover:bg-[#1d2021] hover:text-white transition-colors"
+                        aria-label="Email us"
+                      >
+                        <Mail className="w-4 h-4" />
+                      </a>
+                      <a
+                        href="#"
+                        className="w-8 h-8 rounded-full border border-[#444748] flex items-center justify-center text-[#2f3131] hover:bg-[#1d2021] hover:text-white transition-colors"
+                        aria-label="Link"
+                      >
+                        <LinkIcon className="w-4 h-4" />
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex-1">
+                      <input
+                        value={form.name}
+                        onChange={(e) => setForm({ ...form, name: e.target.value })}
+                        className="w-full bg-transparent border-b border-[#444748] px-0 py-2 text-[16px] leading-[1.5] text-[#2f3131] placeholder:text-[#636565] focus:border-[#2f3131] transition-colors rounded-none resize-none"
+                        placeholder="Name"
+                        required
+                        type="text"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        value={form.email}
+                        onChange={(e) => setForm({ ...form, email: e.target.value })}
+                        className="w-full bg-transparent border-b border-[#444748] px-0 py-2 text-[16px] leading-[1.5] text-[#2f3131] placeholder:text-[#636565] focus:border-[#2f3131] transition-colors rounded-none"
+                        placeholder="Email"
+                        required
+                        type="email"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <textarea
+                      value={form.message}
+                      onChange={(e) => setForm({ ...form, message: e.target.value })}
+                      className="w-full bg-transparent border-b border-[#444748] px-0 py-2 text-[16px] leading-[1.5] text-[#2f3131] placeholder:text-[#636565] focus:border-[#2f3131] transition-colors rounded-none resize-none"
+                      placeholder="Tell us about your project..."
+                      required
+                      rows={3}
                     />
                   </div>
-                  <Button
+
+                  <div className="mt-2">
+                    <p className="text-[12px] leading-[1] tracking-[0.05em] font-semibold uppercase text-[#444748] mb-3">
+                      I&apos;m looking for:
+                    </p>
+                    <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto hide-scrollbar pb-2">
+                      {serviceTags.map((s) => (
+                        <label key={s} className="cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="peer sr-only"
+                            checked={selectedServices.includes(s)}
+                            onChange={() => toggleService(s)}
+                          />
+                          <div className="px-4 py-1.5 rounded-full border border-[#444748] text-[#444748] text-[12px] leading-[1] tracking-[0.05em] font-semibold uppercase peer-checked:bg-[#2f3131] peer-checked:text-white peer-checked:border-[#2f3131] transition-all hover:border-[#2f3131]/50">
+                            {s}
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <button
                     type="submit"
-                    size="sm"
-                    className="rounded-xl px-4 font-semibold text-white"
-                    style={{
-                      background: "linear-gradient(135deg, #6366F1, #8B5CF6)",
-                    }}
+                    disabled={sending}
+                    className="w-full bg-[#111415] text-white py-3 rounded-xl text-[12px] leading-[1] tracking-[0.05em] font-semibold uppercase hover:bg-[#323536] transition-colors mt-2 flex items-center justify-center gap-2 group"
                   >
-                    Join
-                  </Button>
+                    {sending ? (
+                      "Sending..."
+                    ) : (
+                      <>
+                        Send my message
+                        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                      </>
+                    )}
+                  </button>
                 </form>
               </div>
             </div>
-
-            {/* Product links */}
-            <nav aria-label="Product links">
-              <h3 className="text-sm font-bold uppercase tracking-widest mb-4 text-foreground">
-                Product
-              </h3>
-              <ul className="space-y-3">
-                {["Features", "How it Works", "Pricing", "Dashboard", "Mobile App"].map(
-                  (item) => (
-                    <li key={item}>
-                      <Link
-                        href="#"
-                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                      >
-                        {item}
-                      </Link>
-                    </li>
-                  )
-                )}
-              </ul>
-            </nav>
-
-            {/* Company + Legal links */}
-            <nav aria-label="Company links">
-              <h3 className="text-sm font-bold uppercase tracking-widest mb-4 text-foreground">
-                Company
-              </h3>
-              <ul className="space-y-3">
-                {["About", "Blog", "Careers", "Press Kit", "Privacy Policy", "Terms of Use"].map(
-                  (item) => (
-                    <li key={item}>
-                      <Link
-                        href="#"
-                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                      >
-                        {item}
-                      </Link>
-                    </li>
-                  )
-                )}
-              </ul>
-            </nav>
           </div>
+      </section>
 
-          <hr className="hr-gradient mb-8" />
-
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground">
-            <p>Â© 2024 VOYIQ AI. Crafting the future of travel.</p>
-            <div className="flex items-center gap-2">
-              <div
-                className="w-1.5 h-1.5 rounded-full bg-emerald-400"
-                style={{ boxShadow: "0 0 4px rgba(16,185,129,0.5)" }}
-                aria-hidden="true"
-              />
-              <span>All systems operational</span>
+      <section
+        ref={statsRef}
+        className="py-16 border-y border-white/5 bg-[#111415]/30 backdrop-blur-sm relative z-10 px-5 md:px-16"
+        aria-label="Statistics"
+      >
+        <div className="max-w-[1280px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 reveal-stitch">
+          <div className="glass-panel p-6 rounded-xl flex flex-col items-center justify-center text-center">
+            <div className="text-[32px] leading-[1.2] tracking-[-0.02em] font-semibold text-white mb-1">
+              <span>{travelers}</span>K+
             </div>
+            <div className="text-[12px] leading-[1] tracking-[0.05em] font-semibold text-[#c4c7c8] uppercase tracking-wider">
+              Travelers
+            </div>
+          </div>
+          <div className="glass-panel p-6 rounded-xl flex flex-col items-center justify-center text-center">
+            <div className="text-[32px] leading-[1.2] tracking-[-0.02em] font-semibold text-white mb-1">
+              {countries}+
+            </div>
+            <div className="text-[12px] leading-[1] tracking-[0.05em] font-semibold text-[#c4c7c8] uppercase tracking-wider">
+              Countries
+            </div>
+          </div>
+          <div className="glass-panel p-6 rounded-xl flex flex-col items-center justify-center text-center">
+            <div className="text-[32px] leading-[1.2] tracking-[-0.02em] font-semibold text-white mb-1">
+              {tripsPlanned}M+
+            </div>
+            <div className="text-[12px] leading-[1] tracking-[0.05em] font-semibold text-[#c4c7c8] uppercase tracking-wider">
+              Trips Planned
+            </div>
+          </div>
+          <div className="glass-panel p-6 rounded-xl flex flex-col items-center justify-center text-center">
+            <div className="text-[32px] leading-[1.2] tracking-[-0.02em] font-semibold text-white mb-1 flex items-baseline justify-center gap-1">
+              {rating}
+              <Star className="w-5 h-5 fill-current text-white" />
+            </div>
+            <div className="text-[12px] leading-[1] tracking-[0.05em] font-semibold text-[#c4c7c8] uppercase tracking-wider">
+              App Rating
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-8 border-b border-white/5 overflow-hidden bg-[#0c0f10]/50 relative z-10">
+        <div className="slider">
+          <div className="slide-track">
+            {(() => {
+              const brands = [
+                "CONDE NAST",
+                "AER LINGUS",
+                "FOUR SEASONS",
+                "VIRGIN ATLANTIC",
+                "AMEX TRAVEL",
+                "SINGAPORE AIR",
+                "MARRIOTT",
+              ];
+              return [...brands, ...brands].map((brand, i) => (
+                <div key={i} className="slide">
+                  <span className="text-[24px] leading-[1.2] font-semibold text-[#c4c7c8]/50 font-bold tracking-widest">
+                    {brand}
+                  </span>
+                </div>
+              ));
+            })()}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-24 relative z-10 px-5 md:px-16 overflow-hidden" aria-label="Destinations">
+        <div className="max-w-[1280px] mx-auto mb-12 flex justify-between items-end reveal-stitch">
+          <div>
+            <h2 className="font-instrument-serif text-[68px] leading-[1.1] font-bold text-white mb-2">
+              Curated Escapes
+            </h2>
+            <p className="text-[18px] leading-[1.6] text-[#c4c7c8]">
+              Where algorithmic precision meets natural beauty.
+            </p>
+          </div>
+          <div className="hidden md:flex gap-2">
+            <button
+              onClick={() => scrollDest("left")}
+              className="w-12 h-12 rounded-full glass-panel flex items-center justify-center hover:bg-white/10 transition-colors border border-[#444748]"
+              aria-label="Scroll left"
+            >
+              <ArrowLeft className="w-5 h-5 text-white" />
+            </button>
+            <button
+              onClick={() => scrollDest("right")}
+              className="w-12 h-12 rounded-full glass-panel flex items-center justify-center hover:bg-white/10 transition-colors border border-[#444748]"
+              aria-label="Scroll right"
+            >
+              <ArrowRight className="w-5 h-5 text-white" />
+            </button>
+          </div>
+        </div>
+
+        <div
+          ref={destRef}
+          className="flex gap-6 overflow-x-auto no-scrollbar pb-8 -mx-5 px-5 md:-mx-16 md:px-16 snap-x snap-mandatory reveal-stitch"
+        >
+          {destinations.map((d) => {
+            const TagIcon = d.tagIcon;
+            return (
+              <div
+                key={d.name}
+                className="min-w-[85vw] md:min-w-[400px] h-[500px] rounded-2xl overflow-hidden relative group snap-center shrink-0 border border-white/10"
+              >
+                <div
+                  className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+                  style={{ backgroundImage: `url('${d.image}')` }}
+                />
+                <div className="absolute inset-0 glass-overlay" />
+                <div className="absolute top-4 left-4 glass-panel px-3 py-1 rounded-full flex items-center gap-1 backdrop-blur-md bg-black/20">
+                  <TagIcon className="w-[14px] h-[14px] text-white" />
+                  <span className="text-[12px] leading-[1] tracking-[0.05em] font-semibold text-white uppercase tracking-widest">
+                    {d.tag}
+                  </span>
+                </div>
+                <div className="absolute bottom-0 left-0 w-full p-6 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                  <h3 className="text-[32px] leading-[1.2] tracking-[-0.02em] font-semibold text-white mb-1 drop-shadow-md">
+                    {d.name}
+                  </h3>
+                  <p className="text-[16px] leading-[1.5] text-[#c4c7c8] mb-4 flex items-center gap-2">
+                    <MapPin className="w-4 h-4" /> {d.country}
+                  </p>
+                  <div className="flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
+                    <span className="text-[12px] leading-[1] tracking-[0.05em] font-semibold text-white glass-panel px-3 py-1 rounded-full">
+                      From {d.price}
+                    </span>
+                    <button
+                      onClick={handleProceed}
+                      className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center hover:bg-[#323536] hover:text-white transition-colors"
+                      aria-label={`Plan trip to ${d.name}`}
+                    >
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section
+        className="py-24 relative z-10 px-5 md:px-16 bg-[#0c0f10]/80 border-t border-white/5"
+        aria-label="Features"
+      >
+        <div className="max-w-[1280px] mx-auto reveal-stitch mb-16 text-center">
+          <span className="text-[12px] leading-[1] tracking-[0.05em] font-semibold text-[#c4c7c8] tracking-widest uppercase mb-4 inline-block">
+            The Toolkit
+          </span>
+          <h2 className="font-instrument-serif text-[68px] leading-[1.1] font-bold text-white mb-4">
+            Intelligence built in.
+          </h2>
+          <p className="text-[18px] leading-[1.6] text-[#c4c7c8] max-w-2xl mx-auto">
+            Our platform combines cutting-edge AI with intuitive design to
+            handle the complexity of travel planning, leaving you with just the
+            joy of the journey.
+          </p>
+        </div>
+
+        <div
+          id="features-grid"
+          className="max-w-[1280px] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 reveal-stitch"
+        >
+          {features.map((f) => {
+            const Icon = f.icon;
+            return (
+              <div
+                key={f.title}
+                className="glass-panel p-8 rounded-2xl spotlight-card h-full flex flex-col border border-white/5 hover:border-white/20 transition-colors duration-300"
+              >
+                <div className="w-14 h-14 rounded-xl bg-[#323536] flex items-center justify-center mb-6 border border-[#444748]">
+                  <Icon className="w-7 h-7 text-white" />
+                </div>
+                <h3 className="text-[24px] leading-[1.2] font-semibold text-white mb-3">
+                  {f.title}
+                </h3>
+                <p className="text-[16px] leading-[1.5] text-[#c4c7c8] flex-grow">
+                  {f.desc}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="py-24 relative z-10 px-5 md:px-16 mb-12">
+        <div className="max-w-4xl mx-auto glass-panel p-12 md:p-20 rounded-3xl text-center relative overflow-hidden border border-[#444748] reveal-stitch">
+          <h2 className="font-instrument-serif text-[68px] leading-[1.1] font-bold text-white mb-6 tracking-tight">
+            Ready for your next journey?
+          </h2>
+          <p className="text-[18px] leading-[1.6] text-[#c4c7c8] mb-10 max-w-xl mx-auto">
+            Join the thousands of sophisticated explorers who have refined their
+            travel experience with Voyiq.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button
+              onClick={handleProceed}
+              className="w-full sm:w-auto inline-flex items-center justify-center text-[12px] leading-[1] tracking-[0.05em] font-semibold bg-white text-[#111415] px-8 py-4 rounded-full hover:bg-[#323536] hover:text-white transition-all uppercase tracking-widest group"
+            >
+              Start Exploring Free
+              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <footer className="bg-[#0c0f10] border-t border-white/10 py-12 relative z-10">
+        <div className="flex flex-col md:flex-row justify-between items-center px-5 md:px-16 gap-6 max-w-[1280px] mx-auto">
+          <div className="text-[24px] leading-[1.2] font-semibold text-white">
+            Voyiq.
+          </div>
+          <div className="flex flex-wrap justify-center gap-6">
+            <a
+              className="text-[16px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors"
+              href="#"
+            >
+              Privacy Policy
+            </a>
+            <a
+              className="text-[16px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors"
+              href="#"
+            >
+              Terms of Service
+            </a>
+            <a
+              className="text-[16px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors"
+              href="#"
+            >
+              Cookie Policy
+            </a>
+            <a
+              className="text-[16px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors"
+              href="#"
+            >
+              Support
+            </a>
+            <a
+              className="text-[16px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors"
+              href="#"
+            >
+              Press Kit
+            </a>
+          </div>
+          <div className="text-[16px] leading-[1.5] text-[#c4c7c8]">
+            &copy; 2024 Voyiq AI Travel. All rights reserved.
           </div>
         </div>
       </footer>
 
-      {/* â”€â”€ Plan selection dialog (unchanged) â”€â”€ */}
       <PlanSelectionDialog
         open={isPlanDialogOpen}
         onOpenChange={setIsPlanDialogOpen}
         tripCount={tripCount}
         onSelectFree={() => router.push("/plan/new")}
       />
-    </div>
+    </main>
   );
 }

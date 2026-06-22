@@ -3,9 +3,10 @@
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Brain, X, Send, Sparkles, Minimize2 } from "lucide-react";
+import { Brain, X, Send, Sparkles, Minimize2, MessageCircle } from "lucide-react";
 import { provideAIChatAssistance } from "@/ai/flows/provide-ai-chat-assistance-flow";
 import { useAuth } from "@/firebase";
+import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   role: "user" | "model";
@@ -14,6 +15,7 @@ interface Message {
 
 export function ChatCompanion({ tripData }: { tripData: any }) {
   const auth = useAuth();
+  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([
@@ -65,7 +67,7 @@ export function ChatCompanion({ tripData }: { tripData: any }) {
       });
       setMessages((prev) => [...prev, { role: "model", content: response.response }]);
     } catch (e) {
-      console.error(e);
+      toast({ variant: "destructive", title: "Chat Error", description: "Failed to get AI response." });
       setMessages((prev) => [...prev, { role: "model", content: "Sorry, I ran into an issue. Please try again." }]);
     } finally {
       setLoading(false);
@@ -77,32 +79,15 @@ export function ChatCompanion({ tripData }: { tripData: any }) {
       {/* Chat panel */}
       {isOpen && (
         <div
-          className="w-80 md:w-96 flex flex-col animate-scale-in"
-          style={{
-            height: "480px",
-            background: "rgba(10,14,30,0.97)",
-            backdropFilter: "blur(30px)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: "1.5rem",
-            boxShadow: "0 30px 80px rgba(0,0,0,0.7), 0 0 40px rgba(0,212,184,0.06)",
-            overflow: "hidden",
-          }}
+          className="w-80 md:w-96 h-[480px] flex flex-col animate-scale-in bg-card border border-border rounded-2xl overflow-hidden"
         >
-          {/* Chromatic top bar */}
-          <div className="h-0.5 w-full shrink-0" style={{ background: "linear-gradient(90deg, #00D4B8, #7B61FF, #F5A623)" }} />
-
           {/* Header */}
           <div
-            className="flex items-center justify-between px-5 py-4 shrink-0"
-            style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+            className="flex items-center justify-between px-5 py-4 shrink-0 border-b border-border"
           >
             <div className="flex items-center gap-3">
               <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center animate-glow-teal"
-                style={{
-                  background: "linear-gradient(135deg, hsl(172 100% 42%), hsl(172 100% 30%))",
-                  boxShadow: "0 0 20px rgba(0,212,184,0.4)",
-                }}
+                className="w-9 h-9 rounded-xl flex items-center justify-center bg-primary"
               >
                 <Brain className="w-4.5 h-4.5 text-primary-foreground" />
               </div>
@@ -116,8 +101,7 @@ export function ChatCompanion({ tripData }: { tripData: any }) {
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground hover:text-white transition-colors"
-              style={{ background: "rgba(255,255,255,0.04)" }}
+              className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground hover:text-white transition-colors bg-muted"
               aria-label="Close chat"
             >
               <Minimize2 className="w-4 h-4" />
@@ -133,29 +117,13 @@ export function ChatCompanion({ tripData }: { tripData: any }) {
               <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                 {m.role === "model" && (
                   <div
-                    className="w-7 h-7 rounded-xl flex items-center justify-center mr-2 flex-shrink-0 mt-0.5"
-                    style={{ background: "rgba(0,212,184,0.15)", border: "1px solid rgba(0,212,184,0.2)" }}
+                    className="w-7 h-7 rounded-xl flex items-center justify-center mr-2 flex-shrink-0 mt-0.5 bg-muted border border-border"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-primary" />
                   </div>
                 )}
                 <div
-                  className="max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed"
-                  style={
-                    m.role === "user"
-                      ? {
-                          background: "linear-gradient(135deg, hsl(172 100% 42%), hsl(172 100% 35%))",
-                          color: "hsl(222 47% 9%)",
-                          borderBottomRightRadius: "4px",
-                          fontWeight: 600,
-                        }
-                      : {
-                          background: "rgba(255,255,255,0.06)",
-                          border: "1px solid rgba(255,255,255,0.08)",
-                          color: "rgba(255,255,255,0.9)",
-                          borderBottomLeftRadius: "4px",
-                        }
-                  }
+                  className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${m.role === "user" ? "bg-primary text-primary-foreground font-semibold" : "bg-muted text-foreground border border-border"}`}
                 >
                   {m.content}
                 </div>
@@ -166,20 +134,18 @@ export function ChatCompanion({ tripData }: { tripData: any }) {
             {loading && (
               <div className="flex justify-start items-end gap-2">
                 <div
-                  className="w-7 h-7 rounded-xl flex items-center justify-center"
-                  style={{ background: "rgba(0,212,184,0.15)", border: "1px solid rgba(0,212,184,0.2)" }}
+                  className="w-7 h-7 rounded-xl flex items-center justify-center bg-muted border border-border"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-primary animate-pulse" />
                 </div>
                 <div
-                  className="flex gap-1.5 px-4 py-3 rounded-2xl"
-                  style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderBottomLeftRadius: "4px" }}
+                  className="flex gap-1.5 px-4 py-3 rounded-2xl bg-muted border border-border"
                 >
                   {[0, 0.2, 0.4].map((delay, j) => (
                     <div
                       key={j}
-                      className="w-1.5 h-1.5 rounded-full animate-bounce"
-                      style={{ background: "rgba(0,212,184,0.7)", animationDelay: `${delay}s` }}
+                      className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce"
+                      style={{ animationDelay: `${delay}s` }}
                     />
                   ))}
                 </div>
@@ -189,39 +155,25 @@ export function ChatCompanion({ tripData }: { tripData: any }) {
 
           {/* Input */}
           <div
-            className="px-4 py-4 shrink-0"
-            style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+            className="px-4 py-4 shrink-0 border-t border-border"
           >
             <div className="flex gap-2">
               <input
                 ref={inputRef}
                 type="text"
                 placeholder="Ask anything about your trip..."
-                className="flex-1 h-11 px-4 rounded-2xl text-sm text-white placeholder:text-muted-foreground/60 outline-none transition-all duration-200"
-                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
+                className="flex-1 h-11 px-4 rounded-2xl text-sm text-foreground placeholder:text-muted-foreground/60 outline-none transition-all duration-200 bg-muted border border-border focus:ring-2 focus:ring-ring"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                onFocus={(e) => {
-                  (e.target as HTMLInputElement).style.borderColor = "rgba(0,212,184,0.4)";
-                  (e.target as HTMLInputElement).style.boxShadow = "0 0 0 3px rgba(0,212,184,0.1)";
-                }}
-                onBlur={(e) => {
-                  (e.target as HTMLInputElement).style.borderColor = "rgba(255,255,255,0.1)";
-                  (e.target as HTMLInputElement).style.boxShadow = "none";
-                }}
               />
               <button
                 onClick={handleSend}
                 disabled={loading || !input.trim()}
-                className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-200 disabled:opacity-40"
-                style={{
-                  background: "linear-gradient(135deg, hsl(172 100% 42%), hsl(172 100% 35%))",
-                  boxShadow: "0 0 16px rgba(0,212,184,0.3)",
-                }}
+                className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-200 disabled:opacity-40 bg-primary text-primary-foreground"
                 aria-label="Send message"
               >
-                <Send className="w-4 h-4 text-primary-foreground" />
+                <Send className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -231,20 +183,11 @@ export function ChatCompanion({ tripData }: { tripData: any }) {
       {/* FAB toggle button */}
       <button
         onClick={() => setIsOpen((v) => !v)}
-        className="w-16 h-16 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all duration-300 hover:scale-110 active:scale-95"
-        style={{
-          background: isOpen
-            ? "rgba(10,14,30,0.9)"
-            : "linear-gradient(135deg, hsl(172 100% 42%), hsl(172 100% 30%))",
-          border: isOpen ? "1px solid rgba(255,255,255,0.15)" : "none",
-          boxShadow: isOpen
-            ? "0 8px 30px rgba(0,0,0,0.5)"
-            : "0 0 40px rgba(0,212,184,0.4), 0 8px 30px rgba(0,0,0,0.5)",
-        }}
+        className={`w-16 h-16 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all duration-300 hover:scale-110 active:scale-95 ${isOpen ? "bg-card border border-border" : "bg-primary text-primary-foreground"}`}
         aria-label="Toggle AI chat"
       >
         {isOpen ? (
-          <X className="w-6 h-6 text-white" />
+          <X className="w-6 h-6 text-foreground" />
         ) : (
           <>
             <Brain className="w-7 h-7 text-primary-foreground" />

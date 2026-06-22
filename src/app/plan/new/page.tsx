@@ -26,13 +26,17 @@ import {
   CheckCircle2,
   Loader2,
   Plane,
+  User,
+  HeartHandshake,
+  UsersRound,
+  PartyPopper,
 } from "lucide-react";
 import { useFirestore, useUser, useCollection, useMemoFirebase, useDoc } from "@/firebase";
 import { collection, doc, writeBatch, query, where } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { generatePersonalizedItinerary } from "@/ai/flows/generate-personalized-itinerary";
 import { Badge } from "@/components/ui/badge";
-import { UserHeader } from "@/components/layout/UserHeader";
+import { AppNavbar } from "@/components/layout/AppNavbar";
 import { PlanSelectionDialog } from "@/components/shared/PlanSelectionDialog";
 import { ProgressiveFluxLoader } from "@/components/ui/progressive-flux-loader";
 import {
@@ -64,10 +68,10 @@ const TRAVEL_STYLES = [
 ];
 
 const GROUP_TYPES = [
-  { value: "solo", label: "Solo", emoji: "🧭" },
-  { value: "couple", label: "Couple", emoji: "💫" },
-  { value: "family", label: "Family", emoji: "👨‍👩‍👧" },
-  { value: "friends", label: "Friends", emoji: "🎉" },
+  { value: "solo", label: "Solo", icon: User },
+  { value: "couple", label: "Couple", icon: HeartHandshake },
+  { value: "family", label: "Family", icon: UsersRound },
+  { value: "friends", label: "Friends", icon: PartyPopper },
 ];
 
 const DIETARY = ["Vegetarian", "Vegan", "Non-veg", "Halal", "No preference"];
@@ -91,31 +95,21 @@ function Chip({
   onClick,
   children,
   className = "",
+  ariaLabel,
 }: {
   active: boolean;
   onClick: () => void;
   children: React.ReactNode;
   className?: string;
+  ariaLabel?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`px-5 py-2.5 rounded-2xl text-sm font-bold transition-all duration-200 cursor-pointer min-h-[44px] flex items-center gap-2 ${className}`}
-      style={
-        active
-          ? {
-              background: "linear-gradient(135deg, hsl(172 100% 42%), hsl(172 100% 35%))",
-              color: "hsl(222 47% 9%)",
-              boxShadow: "0 0 20px rgba(0,212,184,0.35), inset 0 1px 0 rgba(255,255,255,0.2)",
-              transform: "translateY(-1px)",
-            }
-          : {
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              color: "rgba(255,255,255,0.7)",
-            }
-      }
+      aria-pressed={active}
+      aria-label={ariaLabel}
+      className={`px-5 py-2.5 rounded-2xl text-sm font-bold transition-all duration-200 cursor-pointer min-h-[44px] flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 ${className} ${active ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground border border-border"}`}
     >
       {children}
     </button>
@@ -139,37 +133,21 @@ function GlassInput({
     <div className="space-y-2">
       <Label
         htmlFor={id}
-        className="text-[10px] font-bold uppercase tracking-widest"
-        style={{ color: "rgba(255,255,255,0.5)" }}
+        className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground"
       >
         {label}
       </Label>
       <div className="relative">
         {Icon && (
-          <Icon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          <Icon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" aria-hidden="true" />
         )}
         <input
           id={id}
           {...props}
-          className={`w-full h-14 rounded-2xl text-sm font-medium text-white placeholder:text-muted-foreground/60 transition-all duration-200 outline-none ${Icon ? "pl-11" : "pl-4"} pr-4`}
-          style={{
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            boxShadow: "inset 0 2px 4px rgba(0,0,0,0.2)",
-            ...(props.style || {}),
-          }}
-          onFocus={(e) => {
-            (e.target as HTMLInputElement).style.borderColor = "rgba(0,212,184,0.4)";
-            (e.target as HTMLInputElement).style.boxShadow =
-              "0 0 0 3px rgba(0,212,184,0.12), inset 0 2px 4px rgba(0,0,0,0.2)";
-          }}
-          onBlur={(e) => {
-            (e.target as HTMLInputElement).style.borderColor = "rgba(255,255,255,0.1)";
-            (e.target as HTMLInputElement).style.boxShadow = "inset 0 2px 4px rgba(0,0,0,0.2)";
-          }}
+          className={`w-full h-14 rounded-2xl text-sm font-medium text-foreground placeholder:text-muted-foreground/60 transition-all duration-200 outline-none bg-secondary border border-border focus:ring-2 focus:ring-ring ${Icon ? "pl-11" : "pl-4"} pr-4`}
         />
       </div>
-      {hint && <p className="text-xs text-muted-foreground/70 pl-1">{hint}</p>}
+      {hint && <p className="text-xs text-muted-foreground/70 pl-1" id={`${id}-hint`}>{hint}</p>}
     </div>
   );
 }
@@ -196,52 +174,40 @@ function PlaceAutocomplete({
     <div className="relative space-y-2">
       <Label
         htmlFor={id}
-        className="text-[10px] font-bold uppercase tracking-widest"
-        style={{ color: "rgba(255,255,255,0.5)" }}
+        className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground"
       >
         {label}
       </Label>
       <div className="relative">
-        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" aria-hidden="true" />
         <input
           id={id}
           type="text"
           placeholder={placeholder}
+          autoComplete="off"
+          role="combobox"
+          aria-expanded={results.length > 0}
+          aria-autocomplete="list"
+          aria-controls={`${id}-listbox`}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full h-14 pl-11 pr-4 rounded-2xl text-sm font-medium text-white placeholder:text-muted-foreground/60 outline-none transition-all duration-200"
-          style={{
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            boxShadow: "inset 0 2px 4px rgba(0,0,0,0.2)",
-          }}
-          onFocus={(e) => {
-            (e.target as HTMLInputElement).style.borderColor = "rgba(0,212,184,0.4)";
-            (e.target as HTMLInputElement).style.boxShadow =
-              "0 0 0 3px rgba(0,212,184,0.12), inset 0 2px 4px rgba(0,0,0,0.2)";
-          }}
-          onBlur={(e) => {
-            (e.target as HTMLInputElement).style.borderColor = "rgba(255,255,255,0.1)";
-            (e.target as HTMLInputElement).style.boxShadow = "inset 0 2px 4px rgba(0,0,0,0.2)";
-          }}
+          className="w-full h-14 pl-11 pr-4 rounded-2xl text-sm font-medium text-foreground placeholder:text-muted-foreground/60 outline-none transition-all duration-200 bg-secondary border border-border focus:ring-2 focus:ring-ring"
         />
       </div>
       {results.length > 0 && (
         <div
-          className="absolute top-full left-0 w-full mt-2 rounded-2xl overflow-hidden z-50"
-          style={{
-            background: "rgba(10,14,30,0.95)",
-            backdropFilter: "blur(20px)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
-          }}
+          id={`${id}-listbox`}
+          role="listbox"
+          aria-label={`${label} suggestions`}
+          className="absolute top-full left-0 w-full mt-2 rounded-2xl overflow-hidden z-50 bg-popover border border-border"
         >
           {results.map((item, i) => (
             <button
               key={i}
               type="button"
-              className="w-full p-4 text-left text-sm text-muted-foreground hover:text-white hover:bg-white/8 transition-colors duration-150"
-              style={{ borderBottom: i < results.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none" }}
+              role="option"
+              aria-selected={false}
+              className={`w-full p-4 text-left text-sm text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-colors duration-150 ${i < results.length - 1 ? "border-b border-border" : ""}`}
               onMouseDown={() => onSelect(item)}
             >
               <span className="line-clamp-1">{item.display_name}</span>
@@ -389,21 +355,11 @@ function TripWizardContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-10 relative overflow-hidden px-6">
-        {/* Ambient orbs */}
-        <div className="absolute w-[500px] h-[500px] rounded-full pointer-events-none opacity-40"
-          style={{ background: "radial-gradient(circle, rgba(99,102,241,0.35) 0%, transparent 70%)", filter: "blur(80px)", top: "-5%", left: "10%" }} />
-        <div className="absolute w-[400px] h-[400px] rounded-full pointer-events-none opacity-30"
-          style={{ background: "radial-gradient(circle, rgba(139,92,246,0.3) 0%, transparent 70%)", filter: "blur(80px)", bottom: "5%", right: "10%" }} />
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-10 relative px-6">
 
         {/* Icon */}
         <div
-          className="w-20 h-20 rounded-3xl flex items-center justify-center animate-float-slow"
-          style={{
-            background: "linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.15))",
-            border: "1px solid rgba(99,102,241,0.35)",
-            boxShadow: "0 0 40px rgba(99,102,241,0.3)",
-          }}
+          className="w-20 h-20 rounded-3xl flex items-center justify-center animate-float-slow bg-primary/10 border border-primary/30"
         >
           <Sparkles className="w-9 h-9 text-primary animate-pulse" />
         </div>
@@ -433,49 +389,42 @@ function TripWizardContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <UserHeader showBack backHref={isCollabMode ? "/collab" : "/dashboard"} title={isCollabMode ? "Room Adventure" : "New Adventure"} />
-
-      {/* Background ambiance */}
-      <div className="fixed inset-0 pointer-events-none -z-0">
-        <div className="absolute w-[500px] h-[500px] rounded-full" style={{ background: "radial-gradient(circle, rgba(0,212,184,0.06) 0%, transparent 70%)", filter: "blur(80px)", top: "-100px", right: "-100px" }} />
-        <div className="absolute w-[400px] h-[400px] rounded-full" style={{ background: "radial-gradient(circle, rgba(123,97,255,0.05) 0%, transparent 70%)", filter: "blur(80px)", bottom: "-100px", left: "-100px" }} />
+    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-[-5%] left-[-5%] w-[550px] h-[550px] rounded-full bg-blue-500/10 blur-[130px]" />
+        <div className="absolute bottom-[-10%] right-[-5%] w-[500px] h-[500px] rounded-full bg-violet-500/8 blur-[110px]" />
+        <div className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-cyan-500/5 blur-[100px]" />
       </div>
+      <AppNavbar />
 
-      <div className="flex-1 flex items-start justify-center p-4 md:p-8 pt-8 md:pt-12 relative z-10">
-        <div className="w-full max-w-3xl space-y-8">
+      <div className="flex-1 flex items-start justify-center p-4 md:p-8 pt-24 md:pt-28 relative z-10">
+        <div className="w-full max-w-3xl">
+
+          <div className="glass-panel p-6 md:p-8 space-y-8">
 
           {/* Step indicator */}
-          <div className="space-y-5">
+          <nav aria-label="Trip creation progress" className="space-y-5">
             {/* Step bubbles */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between" role="list">
               {STEPS.map((s, i) => {
                 const isCompleted = step > s.num;
                 const isActive = step === s.num;
                 return (
                   <React.Fragment key={s.num}>
-                    <div className="flex flex-col items-center gap-2">
+                    <div className="flex flex-col items-center gap-2" role="listitem" aria-current={isActive ? "step" : undefined}>
                       <div
-                        className="w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-300 font-bold"
-                        style={
-                          isCompleted
-                            ? { background: "rgba(0,212,184,0.15)", border: "1px solid rgba(0,212,184,0.3)", color: "#00D4B8" }
-                            : isActive
-                            ? { background: "linear-gradient(135deg, hsl(172 100% 42%), hsl(172 100% 35%))", boxShadow: "0 0 20px rgba(0,212,184,0.4)", color: "hsl(222 47% 9%)" }
-                            : { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.3)" }
-                        }
+                        className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-300 font-bold ${isCompleted ? "bg-primary/15 border border-primary/30 text-primary" : isActive ? "bg-primary text-primary-foreground" : "bg-secondary border border-border text-muted-foreground/50"}`}
                       >
-                        {isCompleted ? <CheckCircle2 className="w-5 h-5" /> : <s.icon className="w-5 h-5" />}
+                        {isCompleted ? <CheckCircle2 className="w-5 h-5" aria-hidden="true" /> : <s.icon className="w-5 h-5" aria-hidden="true" />}
                       </div>
                       <span
-                        className="text-[10px] font-bold uppercase tracking-widest hidden sm:block"
-                        style={{ color: isActive ? "#00D4B8" : "rgba(255,255,255,0.35)" }}
+                        className={`text-[10px] font-bold uppercase tracking-widest hidden sm:block ${isActive ? "text-primary" : "text-muted-foreground/60"}`}
                       >
                         {s.label}
                       </span>
                     </div>
                     {i < STEPS.length - 1 && (
-                      <div className="flex-1 h-px mx-2" style={{ background: isCompleted ? "rgba(0,212,184,0.3)" : "rgba(255,255,255,0.08)" }} />
+                      <div className={`flex-1 h-px mx-2 ${isCompleted ? "bg-primary/30" : "bg-border"}`} role="presentation" />
                     )}
                   </React.Fragment>
                 );
@@ -483,34 +432,30 @@ function TripWizardContent() {
             </div>
 
             {/* Progress bar */}
-            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+            <div className="h-1.5 rounded-full overflow-hidden bg-secondary" role="progressbar" aria-valuenow={progressPct} aria-valuemin={0} aria-valuemax={100}>
               <div
-                className="h-full rounded-full transition-all duration-700"
-                style={{
-                  width: `${progressPct}%`,
-                  background: "linear-gradient(90deg, hsl(172 100% 42%), #00fff2)",
-                  boxShadow: "0 0 12px rgba(0,212,184,0.5)",
-                }}
+                className="h-full rounded-full transition-all duration-700 bg-primary"
+                style={{ width: `${progressPct}%` }}
               />
             </div>
-          </div>
+          </nav>
 
           {/* Limit warning */}
           {isLimitReached && (
             <div
-              className="flex items-start gap-4 p-5 rounded-2xl"
-              style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}
+              className="flex items-start gap-4 p-5 rounded-2xl bg-destructive/10 border border-destructive/20"
+              role="alert"
             >
-              <AlertCircle className="text-destructive w-5 h-5 mt-0.5 flex-shrink-0" />
+              <AlertCircle className="text-destructive w-5 h-5 mt-0.5 flex-shrink-0" aria-hidden="true" />
               <div className="flex-1">
-                <p className="text-sm font-bold text-white">Free plan trip limit reached ({tripCount}/4)</p>
+                <p className="text-sm font-bold text-foreground">Free plan trip limit reached ({tripCount}/4)</p>
                 <p className="text-xs text-muted-foreground mt-0.5">Upgrade to Premium to plan unlimited adventures.</p>
               </div>
               <Button
                 size="sm"
                 onClick={() => setShowPlanDialog(true)}
-                className="shrink-0 rounded-xl font-bold"
-                style={{ background: "rgba(239,68,68,0.2)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444" }}
+                variant="outline"
+                className="shrink-0 rounded-xl font-bold text-destructive border-destructive/30 hover:bg-destructive/10"
               >
                 Upgrade
               </Button>
@@ -520,26 +465,19 @@ function TripWizardContent() {
           {/* Collab notice */}
           {isCollabMode && userData?.activeCollabRoomId && (
             <div
-              className="flex items-center gap-3 p-4 rounded-2xl"
-              style={{ background: "rgba(245,166,35,0.08)", border: "1px solid rgba(245,166,35,0.2)" }}
+              className="flex items-center gap-3 p-4 rounded-2xl bg-accent/10 border border-accent/20"
             >
-              <UsersIcon className="text-accent w-4 h-4 flex-shrink-0" />
+              <UsersIcon className="text-accent w-4 h-4 flex-shrink-0" aria-hidden="true" />
               <p className="text-xs font-bold text-accent uppercase tracking-wider">Adding to Collab Room: {userData.activeCollabRoomId}</p>
             </div>
           )}
 
           {/* Main wizard card */}
           <div
-            className="rounded-3xl overflow-hidden"
-            style={{
-              background: "linear-gradient(135deg, rgba(0,212,184,0.04) 0%, rgba(10,14,30,0.8) 50%, rgba(123,97,255,0.03) 100%)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              boxShadow: "0 30px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)",
-              backdropFilter: "blur(20px)",
-            }}
+            className="rounded-2xl overflow-hidden glass-panel"
           >
             {/* Chromatic top bar */}
-            <div className="h-0.5 w-full" style={{ background: "linear-gradient(90deg, #00D4B8, #7B61FF, #F5A623)" }} />
+            <div className="h-0.5 w-full bg-gradient-to-r from-blue-500 via-cyan-400 to-violet-500" />
 
             <div className="p-5 sm:p-8 md:p-10">
               {/* ── STEP 1: Where & When ─────────────────────────────── */}
@@ -562,26 +500,26 @@ function TripWizardContent() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <GlassInput id="travelers" label="Number of Travelers" type="number" min="1" icon={UsersIcon} placeholder="How many people?" value={formData.numTravelers || ""} onChange={(e) => setFormData((p) => ({ ...p, numTravelers: parseInt(e.target.value) || ("" as any) }))} />
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.5)" }}>Travel Group</Label>
+                    <fieldset className="space-y-2">
+                      <legend className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Travel Group</legend>
                       <div className="grid grid-cols-2 gap-2">
-                        {GROUP_TYPES.map((gt) => (
-                          <button
-                            key={gt.value}
-                            type="button"
-                            onClick={() => setFormData((p) => ({ ...p, groupType: gt.value as any }))}
-                            className="h-14 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold transition-all duration-200 cursor-pointer"
-                            style={
-                              formData.groupType === gt.value
-                                ? { background: "linear-gradient(135deg, hsl(172 100% 42%), hsl(172 100% 35%))", color: "hsl(222 47% 9%)", boxShadow: "0 0 16px rgba(0,212,184,0.3)" }
-                                : { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)" }
-                            }
-                          >
-                            <span className="text-base">{gt.emoji}</span> {gt.label}
-                          </button>
-                        ))}
+                        {GROUP_TYPES.map((gt) => {
+                          const Icon = gt.icon;
+                          return (
+                            <button
+                              key={gt.value}
+                              type="button"
+                              role="radio"
+                              aria-checked={formData.groupType === gt.value}
+                              onClick={() => setFormData((p) => ({ ...p, groupType: gt.value as any }))}
+                              className={`h-14 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold transition-all duration-200 cursor-pointer focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 ${formData.groupType === gt.value ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground border border-border"}`}
+                            >
+                              <Icon className="w-4 h-4" aria-hidden="true" /> {gt.label}
+                            </button>
+                          );
+                        })}
                       </div>
-                    </div>
+                    </fieldset>
                   </div>
                 </div>
               )}
@@ -596,18 +534,12 @@ function TripWizardContent() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.5)" }}>Currency</Label>
+                      <Label htmlFor="currency" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Currency</Label>
                       <Select value={formData.currency} onValueChange={(val) => setFormData((p) => ({ ...p, currency: val }))}>
-                        <SelectTrigger
-                          className="h-14 rounded-2xl font-medium"
-                          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}
-                        >
+                        <SelectTrigger id="currency" className="h-14 rounded-2xl font-medium">
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
-                        <SelectContent
-                          className="rounded-2xl"
-                          style={{ background: "rgba(10,14,30,0.97)", border: "1px solid rgba(255,255,255,0.1)" }}
-                        >
+                        <SelectContent className="rounded-2xl">
                           {COMMON_CURRENCIES.map((c) => (
                             <SelectItem key={c.code} value={c.code}>
                               {c.symbol} {c.code} — {c.name}
@@ -628,8 +560,8 @@ function TripWizardContent() {
                     />
                   </div>
 
-                  <div className="space-y-3">
-                    <Label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.5)" }}>Travel Style (Multi-select)</Label>
+                  <fieldset className="space-y-3">
+                    <legend className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Travel Style (Multi-select)</legend>
                     <div className="flex flex-wrap gap-3">
                       {TRAVEL_STYLES.map((s) => (
                         <Chip key={s.label} active={formData.travelStyle.includes(s.label)} onClick={() => toggleStyle(s.label)}>
@@ -638,29 +570,26 @@ function TripWizardContent() {
                         </Chip>
                       ))}
                     </div>
-                  </div>
+                  </fieldset>
 
-                  <div className="space-y-3">
-                    <Label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.5)" }}>Travel Pace</Label>
+                  <fieldset className="space-y-3">
+                    <legend className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Travel Pace</legend>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       {PACE_OPTIONS.map((p) => (
                         <button
                           key={p.value}
                           type="button"
+                          role="radio"
+                          aria-checked={formData.pace === p.value}
                           onClick={() => setFormData((prev) => ({ ...prev, pace: p.value as any }))}
-                          className="p-4 rounded-2xl text-left transition-all duration-200 cursor-pointer min-h-[80px]"
-                          style={
-                            formData.pace === p.value
-                              ? { background: "linear-gradient(135deg, rgba(0,212,184,0.2), rgba(0,212,184,0.05))", border: "1px solid rgba(0,212,184,0.35)", boxShadow: "0 0 20px rgba(0,212,184,0.15)" }
-                              : { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }
-                          }
+                          className={`p-4 rounded-2xl text-left transition-all duration-200 cursor-pointer min-h-[80px] focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 ${formData.pace === p.value ? "bg-primary/10 border border-primary/30" : "bg-secondary border border-border"}`}
                         >
-                          <div className="text-sm font-bold text-white mb-1">{p.label}</div>
+                          <div className="text-sm font-bold text-foreground mb-1">{p.label}</div>
                           <div className="text-[10px] text-muted-foreground">{p.sub}</div>
                         </button>
                       ))}
                     </div>
-                  </div>
+                  </fieldset>
                 </div>
               )}
 
@@ -672,8 +601,8 @@ function TripWizardContent() {
                     <p className="text-muted-foreground">Help the AI craft the perfect tailored experience for you.</p>
                   </div>
 
-                  <div className="space-y-3">
-                    <Label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.5)" }}>Dietary Preference</Label>
+                  <fieldset className="space-y-3">
+                    <legend className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Dietary Preference</legend>
                     <div className="flex flex-wrap gap-3">
                       {DIETARY.map((d) => (
                         <Chip
@@ -685,7 +614,7 @@ function TripWizardContent() {
                         </Chip>
                       ))}
                     </div>
-                  </div>
+                  </fieldset>
 
                   <GlassInput
                     id="must-include"
@@ -711,10 +640,9 @@ function TripWizardContent() {
                 <div className="space-y-8 animate-fade-in">
                   <div className="text-center">
                     <div
-                      className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6"
-                      style={{ background: "linear-gradient(135deg, rgba(0,212,184,0.2), rgba(123,97,255,0.1))", border: "1px solid rgba(0,212,184,0.3)", boxShadow: "0 0 40px rgba(0,212,184,0.2)" }}
+                      className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 glass-panel border-blue-500/20"
                     >
-                      <Plane className="w-9 h-9 text-primary" />
+                      <Plane className="w-9 h-9 text-blue-400" />
                     </div>
                     <h2 className="text-3xl md:text-4xl font-headline font-bold text-white mb-2">Ready to Fly?</h2>
                     <p className="text-muted-foreground">Review your adventure configuration and launch.</p>
@@ -722,8 +650,7 @@ function TripWizardContent() {
 
                   {/* Summary card */}
                   <div
-                    className="rounded-2xl p-6 space-y-4"
-                    style={{ background: "rgba(0,212,184,0.04)", border: "1px solid rgba(0,212,184,0.12)" }}
+                    className="rounded-2xl p-6 space-y-4 glass-panel"
                   >
                     {[
                       { label: "Route", value: `${formData.origin || "—"} → ${formData.destination || "—"}` },
@@ -736,11 +663,10 @@ function TripWizardContent() {
                     ].map((item) => (
                       <div
                         key={item.label}
-                        className="flex justify-between items-start gap-4 text-sm"
-                        style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "12px" }}
+                        className="flex justify-between items-start gap-4 text-sm border-b border-border pb-3"
                       >
                         <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{item.label}</span>
-                        <span className="text-right font-medium text-white max-w-xs">{item.value}</span>
+                        <span className="text-right font-medium text-foreground max-w-xs">{item.value}</span>
                       </div>
                     ))}
                     {isCollabMode && userData?.activeCollabRoomId && (
@@ -750,24 +676,19 @@ function TripWizardContent() {
 
                   <Button
                     size="lg"
-                    className="btn-shimmer w-full h-16 text-lg rounded-2xl font-bold"
+                    className="w-full h-16 text-lg rounded-2xl font-bold bg-primary text-primary-foreground hover:bg-primary/90"
                     onClick={handleSubmit}
                     disabled={loading || isLimitReached}
-                    style={{
-                      background: isLimitReached ? "rgba(255,255,255,0.06)" : "linear-gradient(135deg, hsl(172 100% 42%), hsl(172 100% 35%))",
-                      boxShadow: isLimitReached ? "none" : "0 0 40px rgba(0,212,184,0.35), 0 8px 24px rgba(0,0,0,0.4)",
-                      color: isLimitReached ? "rgba(255,255,255,0.3)" : "hsl(222 47% 9%)",
-                    }}
                   >
                     {loading ? (
                       <span className="flex items-center gap-3">
-                        <Loader2 className="animate-spin w-5 h-5" /> Generating Itinerary...
+                        <Loader2 className="animate-spin w-5 h-5" aria-hidden="true" /> Generating Itinerary...
                       </span>
                     ) : isLimitReached ? (
                       "Upgrade Required to Continue"
                     ) : (
                       <span className="flex items-center gap-3">
-                        <Sparkles className="w-5 h-5" /> Generate My Adventure
+                        <Sparkles className="w-5 h-5" aria-hidden="true" /> Generate My Adventure
                       </span>
                     )}
                   </Button>
@@ -776,31 +697,31 @@ function TripWizardContent() {
 
               {/* ── Navigation buttons ────────────────────────────────── */}
               {!loading && (
-                <div className="flex justify-between items-center mt-10 pt-8" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                <nav aria-label="Wizard navigation" className="flex justify-between items-center mt-10 pt-8 border-t border-border">
                   <Button
                     variant="ghost"
                     disabled={step === 1}
                     onClick={handleBack}
                     className="h-12 px-6 rounded-2xl font-bold gap-2 disabled:opacity-30"
-                    style={{ background: step > 1 ? "rgba(255,255,255,0.04)" : "transparent", border: step > 1 ? "1px solid rgba(255,255,255,0.08)" : "none" }}
                   >
-                    <ChevronLeft className="w-4 h-4" /> Back
+                    <ChevronLeft className="w-4 h-4" aria-hidden="true" /> Back
                   </Button>
 
                   {step < 4 && (
                     <Button
                       onClick={handleNext}
+                      variant="secondary"
                       className="h-12 px-8 rounded-2xl font-bold gap-2"
-                      style={{ background: "rgba(0,212,184,0.12)", border: "1px solid rgba(0,212,184,0.25)", color: "#00D4B8" }}
                     >
-                      Next <ChevronRight className="w-4 h-4" />
+                      Next <ChevronRight className="w-4 h-4" aria-hidden="true" />
                     </Button>
                   )}
-                </div>
+                </nav>
               )}
             </div>
           </div>
         </div>
+      </div>
       </div>
 
       <PlanSelectionDialog open={showPlanDialog} onOpenChange={setShowPlanDialog} tripCount={tripCount} onSelectFree={() => setShowPlanDialog(false)} />
@@ -814,7 +735,7 @@ export default function TripWizard() {
       fallback={
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
-            <div className="w-12 h-12 rounded-full border-2 border-transparent animate-spin" style={{ borderTopColor: "hsl(172 100% 42%)", borderRightColor: "rgba(0,212,184,0.2)" }} />
+            <div className="w-12 h-12 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
             <p className="text-muted-foreground text-sm animate-pulse">Loading Wizard...</p>
           </div>
         </div>

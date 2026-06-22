@@ -25,7 +25,7 @@ export function Hero({
       id="hero"
       className="relative mx-auto w-full pt-40 px-6 text-center md:px-8
       min-h-[calc(100vh-40px)] overflow-hidden
-      bg-[linear-gradient(to_bottom,#000,#0000_30%,#898e8e_78%,#ffffff_99%_50%)]
+      bg-background
       rounded-b-xl"
     >
       {/* Grid BG */}
@@ -33,31 +33,18 @@ export function Hero({
         className="absolute -z-10 inset-0 opacity-80 h-[600px] w-full
         bg-[linear-gradient(to_right,#333_1px,transparent_1px),linear-gradient(to_bottom,#333_1px,transparent_1px)]
         bg-[size:6rem_5rem]
-        [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]"
+        "
       />
 
-      {/* Radial Accent */}
-      <div
-        className="absolute left-1/2 top-[calc(100%-90px)] lg:top-[calc(100%-150px)]
-        h-[500px] w-[700px] md:h-[500px] md:w-[1100px] lg:h-[750px] lg:w-[140%]
-        -translate-x-1/2 rounded-[100%] border-[#B48CDE] bg-black
-        bg-[radial-gradient(closest-side,#000_82%,#ffffff)]
-        animate-fade-up"
-      />
 
-      {/* Aurora orbs */}
-      <div className="pointer-events-none absolute top-20 left-1/4 w-72 h-72 rounded-full opacity-20 blur-3xl"
-        style={{ background: "radial-gradient(circle, rgba(99,102,241,0.8), transparent)" }} />
-      <div className="pointer-events-none absolute top-32 right-1/4 w-60 h-60 rounded-full opacity-15 blur-3xl"
-        style={{ background: "radial-gradient(circle, rgba(139,92,246,0.8), transparent)" }} />
 
       {/* Eyebrow */}
       {eyebrow && (
         <a href="#" className="group">
           <span
-            className="text-sm text-gray-400 mx-auto px-5 py-2
-            bg-gradient-to-tr from-zinc-300/5 via-gray-400/5 to-transparent
-            border-[2px] border-white/10
+            className="text-sm text-muted-foreground mx-auto px-5 py-2
+            bg-muted/30
+            border border-border
             rounded-3xl w-fit tracking-tight uppercase flex items-center justify-center"
           >
             {eyebrow}
@@ -69,9 +56,8 @@ export function Hero({
       {/* Title */}
       <h1
         className="animate-fade-in -translate-y-4 text-balance
-        bg-gradient-to-br from-white from-30% to-white/40
-        bg-clip-text py-6 text-5xl font-semibold leading-none tracking-tighter
-        text-transparent opacity-0 sm:text-6xl md:text-7xl lg:text-8xl"
+        py-6 text-5xl font-semibold leading-none tracking-tighter
+        text-foreground opacity-0 sm:text-6xl md:text-7xl lg:text-8xl"
       >
         {title}
       </h1>
@@ -79,7 +65,7 @@ export function Hero({
       {/* Subtitle */}
       <p
         className="animate-fade-in mb-12 -translate-y-4 text-balance
-        text-lg tracking-tight text-gray-400
+        text-lg tracking-tight text-muted-foreground
         opacity-0 md:text-xl"
       >
         {subtitle}
@@ -91,22 +77,14 @@ export function Hero({
           {onCtaClick ? (
             <Button
               onClick={onCtaClick}
-              className="mt-[-20px] w-fit md:w-52 z-20 tracking-tighter text-center text-lg rounded-full font-bold"
-              style={{
-                background: "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)",
-                boxShadow: "0 0 40px rgba(99,102,241,0.4)",
-              }}
+              className="bg-primary text-primary-foreground mt-[-20px] w-fit md:w-52 z-20 tracking-tighter text-center text-lg rounded-full font-bold"
             >
               {ctaLabel}
             </Button>
           ) : (
             <Button
               asChild
-              className="mt-[-20px] w-fit md:w-52 z-20 tracking-tighter text-center text-lg rounded-full font-bold"
-              style={{
-                background: "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)",
-                boxShadow: "0 0 40px rgba(99,102,241,0.4)",
-              }}
+              className="bg-primary text-primary-foreground mt-[-20px] w-fit md:w-52 z-20 tracking-tighter text-center text-lg rounded-full font-bold"
             >
               <a href={ctaHref}>{ctaLabel}</a>
             </Button>
@@ -116,9 +94,7 @@ export function Hero({
 
       {/* Bottom Fade */}
       <div
-        className="animate-fade-up relative mt-32 opacity-0 [perspective:2000px]
-        after:absolute after:inset-0 after:z-50
-        after:[background:linear-gradient(to_top,hsl(var(--background))_10%,transparent)]"
+        className="animate-fade-up relative mt-32 opacity-0"
       />
     </section>
   );

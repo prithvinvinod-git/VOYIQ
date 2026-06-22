@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useRef } from "react";
@@ -18,24 +17,31 @@ export default function TripMap({ locations }: { locations: Location[] }) {
   useEffect(() => {
     if (!mapRef.current) return;
 
-    // Initialize map
     if (!leafletMap.current) {
-      leafletMap.current = L.map(mapRef.current).setView([0, 0], 2);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
+      leafletMap.current = L.map(mapRef.current, {
+        zoomControl: true,
+        attributionControl: false,
+      }).setView([20, 0], 2);
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        minZoom: 1,
       }).addTo(leafletMap.current);
+
+      // Force size recalculation to avoid tile pixelation
+      setTimeout(() => leafletMap.current?.invalidateSize(), 100);
+      setTimeout(() => leafletMap.current?.invalidateSize(), 500);
     }
 
-    // Clear old markers
-    markers.current.forEach(m => m.remove());
+    markers.current.forEach((m) => m.remove());
     markers.current = [];
 
     if (locations.length > 0) {
       const points: L.LatLngExpression[] = [];
-      locations.forEach(loc => {
+      locations.forEach((loc) => {
         if (loc.lat && loc.lng) {
           const marker = L.marker([loc.lat, loc.lng])
-            .bindPopup(loc.activity)
+            .bindPopup(`<b>${loc.activity}</b>`)
             .addTo(leafletMap.current!);
           markers.current.push(marker);
           points.push([loc.lat, loc.lng]);
@@ -43,14 +49,12 @@ export default function TripMap({ locations }: { locations: Location[] }) {
       });
 
       if (points.length > 0) {
-        leafletMap.current.fitBounds(L.latLngBounds(points), { padding: [50, 50] });
+        leafletMap.current.fitBounds(L.latLngBounds(points), { padding: [50, 50], maxZoom: 15 });
       }
     }
 
-    return () => {
-      // Cleanup happens if component unmounts
-    };
+    return () => {};
   }, [locations]);
 
-  return <div ref={mapRef} className="w-full h-full min-h-[400px]" />;
+  return <div ref={mapRef} className="w-full h-full min-h-[280px]" />;
 }

@@ -58,11 +58,11 @@ export function RoomChat({ roomId }: RoomChatProps) {
     <>
       {/* Centered Chat Overlay */}
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-300">
-          <Card className="w-full max-w-xl glass-card border-primary/20 shadow-2xl flex flex-col h-[600px] max-h-[85vh]">
-            <CardHeader className="p-6 border-b border-white/5 flex flex-row items-center justify-between bg-primary/5">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/95 animate-in fade-in duration-300">
+          <Card className="w-full max-w-xl bg-card border border-border flex flex-col h-[600px] max-h-[85vh]">
+            <CardHeader className="p-6 border-b border-border flex flex-row items-center justify-between bg-muted">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+                <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
                   <Users className="w-5 h-5 text-primary-foreground" />
                 </div>
                 <div>
@@ -74,7 +74,8 @@ export function RoomChat({ roomId }: RoomChatProps) {
                 variant="ghost" 
                 size="icon" 
                 onClick={() => setIsOpen(false)} 
-                className="hover:bg-white/10 rounded-full h-10 w-10"
+                className="hover:bg-muted rounded-full h-10 w-10"
+                aria-label="Close chat"
               >
                 <X className="w-5 h-5" />
               </Button>
@@ -95,10 +96,10 @@ export function RoomChat({ roomId }: RoomChatProps) {
                       <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{msg.senderName}</span>
                     )}
                   </div>
-                  <div className={`max-w-[85%] rounded-2xl px-5 py-3 text-sm shadow-md transition-all ${
+                  <div className={`max-w-[85%] rounded-2xl px-5 py-3 text-sm transition-all ${
                     msg.senderId === user?.uid 
                     ? 'bg-primary text-primary-foreground rounded-br-none font-medium' 
-                    : 'bg-white/10 text-white rounded-bl-none border border-white/5'
+                    : 'bg-muted text-foreground rounded-bl-none border border-border'
                   }`}>
                     {msg.text}
                   </div>
@@ -106,19 +107,20 @@ export function RoomChat({ roomId }: RoomChatProps) {
               ))}
             </CardContent>
 
-            <CardFooter className="p-6 border-t border-white/5 bg-white/5">
+            <CardFooter className="p-6 border-t border-border bg-muted/50">
               <div className="flex w-full gap-3">
                 <Input 
                   placeholder="Type a message to the group..." 
-                  className="bg-background/50 border-white/10 h-14 rounded-2xl px-6 text-sm"
+                  className="bg-background border-border h-14 rounded-2xl px-6 text-sm"
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                 />
                 <Button 
                   size="icon" 
-                  className="bg-primary hover:bg-primary/90 flex-shrink-0 w-14 h-14 rounded-2xl shadow-xl shadow-primary/20 transition-all active:scale-95" 
+                  className="bg-primary hover:bg-primary/90 flex-shrink-0 w-14 h-14 rounded-2xl transition-all active:scale-95" 
                   onClick={handleSend}
+                  aria-label="Send message"
                 >
                   <Send className="w-5 h-5 text-primary-foreground" />
                 </Button>
@@ -133,7 +135,7 @@ export function RoomChat({ roomId }: RoomChatProps) {
         <div className="fixed bottom-8 right-8 z-50">
           <Button 
             size="lg" 
-            className="rounded-full w-20 h-20 shadow-2xl shadow-primary/30 bg-primary text-primary-foreground hover:bg-primary/90 flex flex-col gap-1 items-center justify-center p-0 border-4 border-background group transition-all hover:scale-105 active:scale-95"
+            className="rounded-full w-20 h-20 bg-primary text-primary-foreground hover:bg-primary/90 flex flex-col gap-1 items-center justify-center p-0 border-4 border-background group transition-all hover:scale-105 active:scale-95"
             onClick={() => setIsOpen(true)}
           >
             <div className="relative">

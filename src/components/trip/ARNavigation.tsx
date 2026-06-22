@@ -332,7 +332,7 @@ export function ARNavigation({ slots }: ARNavigationProps) {
         <>
           {/* Top Status HUD */}
           <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 w-[90%] max-w-sm">
-            <div className="glass-card bg-black/40 backdrop-blur-xl border-primary/30 p-4 rounded-3xl flex items-center justify-between">
+            <div className="bg-black/60 border border-primary/30 p-4 rounded-3xl flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center animate-pulse">
                   <Navigation className="w-5 h-5 text-primary" />
@@ -352,7 +352,7 @@ export function ARNavigation({ slots }: ARNavigationProps) {
             
             {/* Live Instructions Pill */}
             {nextInstruction && (
-              <div className="mt-3 bg-accent/20 border border-accent/40 backdrop-blur-md px-4 py-2 rounded-2xl flex items-center gap-2 animate-in slide-in-from-top">
+              <div className="mt-3 bg-accent/20 border border-accent/40 px-4 py-2 rounded-2xl flex items-center gap-2 animate-in slide-in-from-top">
                 <ArrowRight className="w-4 h-4 text-accent animate-bounce-x" />
                 <span className="text-[11px] font-bold text-white">{nextInstruction}</span>
               </div>
@@ -364,7 +364,7 @@ export function ARNavigation({ slots }: ARNavigationProps) {
             <div className="relative w-64 h-64 border border-primary/20 rounded-full">
               <div className="absolute inset-4 border border-white/5 rounded-full" />
               <div className="absolute transition-transform duration-500 ease-out h-full w-full" style={{ transform: `rotate(${bearing}deg)` }}>
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-12 bg-primary rounded-full shadow-[0_0_15px_hsl(var(--primary))]" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-12 bg-primary rounded-full" />
               </div>
             </div>
           </div>
@@ -373,7 +373,7 @@ export function ARNavigation({ slots }: ARNavigationProps) {
           <div className="absolute bottom-8 left-6 right-6 z-10">
             <div className="flex gap-4 items-end">
               {/* Street View Mini HUD */}
-              <div className="w-32 h-32 rounded-3xl border-2 border-white/20 overflow-hidden bg-black/80 shadow-2xl shrink-0 group relative">
+              <div className="w-32 h-32 rounded-3xl border-2 border-white/20 overflow-hidden bg-black/80 shrink-0 group relative">
                 <div ref={streetViewRef} className="w-full h-full opacity-80 group-hover:opacity-100 transition-opacity" />
                 <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
                    <Eye className="w-6 h-6 text-white/20 group-hover:text-primary transition-colors" />
@@ -384,7 +384,7 @@ export function ARNavigation({ slots }: ARNavigationProps) {
               </div>
 
               {/* Target Location Card */}
-              <div className="flex-1 glass-card bg-black/60 backdrop-blur-xl border-white/10 p-5 rounded-[2rem]">
+              <div className="flex-1 bg-black/60 border border-white/10 p-5 rounded-[2rem]">
                 <div className="flex items-center gap-2 mb-1">
                   <ShieldCheck className="w-3.5 h-3.5 text-primary" />
                   <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Location Verified</span>

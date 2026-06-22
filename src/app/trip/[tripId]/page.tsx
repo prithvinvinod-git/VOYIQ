@@ -1,13 +1,11 @@
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Sun,
-  Clock,
   Sparkles,
   CheckCircle2,
   Loader2,
@@ -18,11 +16,19 @@ import {
   TrendingDown,
   AlertTriangle,
   Wallet,
-  Languages,
   ChevronLeft,
   MapPin,
   Scan,
-  Lock,
+  ArrowLeft,
+  Gauge,
+  Calendar,
+  Clock,
+  DollarSign,
+  ChevronRight,
+  Star,
+  Map,
+  CreditCard,
+  BarChart3,
 } from "lucide-react";
 import {
   useDoc,
@@ -35,11 +41,8 @@ import {
 } from "@/firebase";
 import { doc, collection, query, orderBy } from "firebase/firestore";
 import { ChatCompanion } from "@/components/chat/ChatCompanion";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserHeader } from "@/components/layout/UserHeader";
 import { BudgetBreakdown } from "@/components/trip/BudgetBreakdown";
-import { Progress } from "@/components/ui/progress";
-import { Checkbox } from "@/components/ui/checkbox";
+import { ItineraryTimeline, DaySelector } from "@/components/trip/ItineraryTimeline";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -60,28 +63,18 @@ import { suggestBudgetAlternatives, SuggestBudgetAlternativesOutput } from "@/ai
 import dynamic from "next/dynamic";
 import { useToast } from "@/hooks/use-toast";
 import { PlanSelectionDialog } from "@/components/shared/PlanSelectionDialog";
+import { AppNavbar } from "@/components/layout/AppNavbar";
 
 const TripMap = dynamic(() => import("@/components/trip/TripMap"), {
   ssr: false,
   loading: () => (
-    <div
-      className="w-full h-full flex items-center justify-center rounded-2xl"
-      style={{ background: "rgba(255,255,255,0.03)" }}
-    >
-      <MapPin className="text-muted-foreground w-8 h-8 opacity-20 animate-pulse" />
+    <div className="w-full h-full flex items-center justify-center rounded-2xl bg-white/5">
+      <MapPin className="text-white/20 w-8 h-8 animate-pulse" />
     </div>
   ),
 });
 
 const CATEGORIES = ["Food", "Transport", "Stay", "Activities", "Misc"];
-
-const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  Food: { bg: "rgba(0,212,184,0.1)", text: "#00D4B8", border: "rgba(0,212,184,0.2)" },
-  Transport: { bg: "rgba(123,97,255,0.1)", text: "#a78bfa", border: "rgba(123,97,255,0.2)" },
-  Stay: { bg: "rgba(245,166,35,0.1)", text: "#F5A623", border: "rgba(245,166,35,0.2)" },
-  Activities: { bg: "rgba(56,189,248,0.1)", text: "#38bdf8", border: "rgba(56,189,248,0.2)" },
-  Misc: { bg: "rgba(255,255,255,0.06)", text: "rgba(255,255,255,0.6)", border: "rgba(255,255,255,0.1)" },
-};
 
 export default function TripDetail() {
   const { tripId } = useParams();
@@ -175,16 +168,16 @@ export default function TripDetail() {
     return { progressValue: total > 0 ? (completed / total) * 100 : 0 };
   }, [itinerary]);
 
-  const handleToggleSlot = (day: any, slotIdx: number) => {
-    if (!firestore || !tripId) return;
-    const updatedSlots = [...day.slots];
+  const handleToggleSlot = (slotIdx: number) => {
+    if (!firestore || !tripId || !currentDay) return;
+    const updatedSlots = [...currentDay.slots];
     updatedSlots[slotIdx] = { ...updatedSlots[slotIdx], completed: !updatedSlots[slotIdx].completed };
-    updateDocumentNonBlocking(doc(firestore, `trips/${tripId}/itineraryDays`, day.id), { slots: updatedSlots });
+    updateDocumentNonBlocking(doc(firestore, `trips/${tripId}/itineraryDays`, currentDay.id), { slots: updatedSlots });
     setTimeout(() => {
       let globalCompleted = 0;
       let globalTotal = 0;
       itinerary?.forEach((d) => {
-        const slots = d.id === day.id ? updatedSlots : d.slots;
+        const slots = d.id === currentDay.id ? updatedSlots : d.slots;
         slots.forEach((s: any) => { globalTotal++; if (s.completed) globalCompleted++; });
       });
       const health = globalTotal > 0 ? (globalCompleted / globalTotal) * 100 : 0;
@@ -203,14 +196,8 @@ export default function TripDetail() {
   };
 
   const handleNavigateAll = () => {
-    if (!trip || !currentDay?.slots?.length) return;
-    const slots = currentDay.slots;
-    const origin = encodeURIComponent(slots[0].location);
-    if (slots.length === 1) { window.open(`https://www.google.com/maps/dir/?api=1&origin=current+location&destination=${origin}&travelmode=driving`, "_blank"); return; }
-    const waypoints = slots.slice(1, -1).map((s: any) => encodeURIComponent(s.location)).filter(Boolean);
-    const destination = encodeURIComponent(slots[slots.length - 1].location);
-    const waypointQuery = waypoints.length > 0 ? `&waypoints=${waypoints.join("|")}` : "";
-    window.open(`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}${waypointQuery}&travelmode=driving`, "_blank");
+    if (!isPremium) { setIsPlanDialogOpen(true); return; }
+    router.push(`/ar/${tripId}`);
   };
 
   const handleLaunchAR = () => {
@@ -231,17 +218,11 @@ export default function TripDetail() {
 
   const handleRunOptimizer = async () => {
     if (!user || !trip) return;
-
-    // Find the category that is most over budget
     const overBudget = budgetStats.find(stat => stat.actual > stat.planned);
     if (!overBudget) {
-      toast({
-        title: "All Good!",
-        description: "Your actual spending is currently within the planned budget for all categories.",
-      });
+      toast({ title: "All Good!", description: "Your actual spending is within the planned budget for all categories." });
       return;
     }
-
     setIsAiLoading(true);
     try {
       const idToken = await user.getIdToken();
@@ -263,7 +244,6 @@ export default function TripDetail() {
       setAiSuggestions(response);
       toast({ title: "Optimizer finished!", description: "AI has generated saving suggestions." });
     } catch (e: any) {
-      console.error(e);
       toast({ variant: "destructive", title: "Optimization failed", description: e.message || "Something went wrong." });
     } finally {
       setIsAiLoading(false);
@@ -272,466 +252,392 @@ export default function TripDetail() {
 
   if (isUserLoading || (isTripLoading && !trip)) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
-        <div
-          className="w-14 h-14 rounded-full border-2 border-transparent animate-spin"
-          style={{ borderTopColor: "hsl(172 100% 42%)", borderRightColor: "rgba(0,212,184,0.15)" }}
-        />
-        <p className="text-muted-foreground font-headline text-sm animate-pulse-subtle">Syncing with your Travel Brain...</p>
+      <div className="min-h-screen bg-[#111415] flex flex-col items-center justify-center gap-4">
+        <div className="w-12 h-12 rounded-full border-2 animate-spin border-blue-500/15 border-t-blue-500" />
+        <p className="text-white/50 font-headline text-sm">Syncing with your Travel Brain...</p>
       </div>
     );
   }
 
   if (tripError) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
-        <div
-          className="w-20 h-20 rounded-3xl flex items-center justify-center mb-6"
-          style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)" }}
-        >
-          <AlertTriangle className="text-destructive w-10 h-10" />
+      <div className="min-h-screen bg-[#111415] flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-20 h-20 rounded-3xl flex items-center justify-center mb-6 bg-red-500/10 border border-red-500/20">
+          <AlertTriangle className="text-red-400 w-10 h-10" />
         </div>
-        <h1 className="text-3xl font-headline font-bold mb-2">Access Restricted</h1>
-        <p className="text-muted-foreground max-w-md mb-8">You might not have permission to view this journey.</p>
+        <h1 className="text-3xl font-headline font-bold text-white mb-2">Access Restricted</h1>
+        <p className="text-white/50 max-w-md mb-8">You might not have permission to view this journey.</p>
         <Button
           onClick={() => router.push("/dashboard")}
-          className="btn-shimmer h-12 px-8 rounded-2xl font-bold"
-          style={{ background: "linear-gradient(135deg, hsl(172 100% 42%), hsl(172 100% 35%))" }}
+          className="h-12 px-8 rounded-xl font-semibold bg-blue-500 text-white hover:bg-blue-600"
         >
-          <ChevronLeft className="w-4 h-4 mr-2" /> Back to Dashboard
+          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Dashboard
         </Button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <UserHeader showBack backHref="/dashboard" title={trip?.destination || "Journey"} />
+    <div className="min-h-screen bg-[#111415] text-white">
+      <AppNavbar />
 
-      {/* Progress bar strip */}
-      <div
-        className="px-4 sm:px-8 py-4 flex flex-col md:flex-row items-center gap-4"
-        style={{
-          background: "rgba(10,14,30,0.6)",
-          backdropFilter: "blur(12px)",
-          borderBottom: "1px solid rgba(255,255,255,0.05)",
-        }}
-      >
-        <div className="flex items-center gap-2.5">
-          <CheckCircle2 className="text-primary w-4 h-4" />
-          <span className="text-xs font-bold uppercase tracking-widest">Itinerary Progress</span>
-        </div>
-
-        <div className="flex-1 w-full max-w-xl relative">
-          <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-            <div
-              className="h-full rounded-full transition-all duration-700"
-              style={{
-                width: `${progressValue}%`,
-                background: "linear-gradient(90deg, hsl(172 100% 42%), #00fff2)",
-                boxShadow: "0 0 10px rgba(0,212,184,0.6)",
-              }}
-            />
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between md:justify-start gap-3 w-full md:w-auto">
-          <span className="text-xs font-bold text-primary">{Math.round(progressValue)}%</span>
-          <div className="flex items-center gap-2 flex-1 md:flex-none justify-end md:justify-start">
-            <Button
-              size="sm"
-              variant="outline"
-              className="rounded-xl gap-1.5 h-9 font-bold text-[10px] sm:text-xs px-2.5 sm:px-3 flex-1 md:flex-none max-w-[140px] md:max-w-none justify-center"
-              style={{ background: "rgba(245,166,35,0.08)", border: "1px solid rgba(245,166,35,0.2)", color: "#F5A623" }}
-              onClick={handleBookFlight}
-            >
-              <Plane className="w-3.5 h-3.5 shrink-0" /> <span className="truncate">Flights</span>
-            </Button>
-            <Button
-              size="sm"
-              className="rounded-xl gap-1.5 h-9 font-bold text-[10px] sm:text-xs px-2.5 sm:px-3 flex-1 md:flex-none max-w-[140px] md:max-w-none justify-center text-white"
-              style={{ background: "rgba(0,212,184,0.12)", border: "1px solid rgba(0,212,184,0.2)", color: "#00D4B8" }}
-              onClick={handleLaunchAR}
-            >
-              <Scan className="w-3.5 h-3.5 shrink-0" /> <span className="truncate">AR HUD</span>
-            </Button>
+      {/* Trip Hero */}
+      <div className="relative pt-28 pb-6 px-4 md:px-8 lg:px-12 max-w-7xl mx-auto">
+        <button
+          onClick={() => router.push("/dashboard")}
+          className="flex items-center gap-1.5 text-sm text-white/40 hover:text-white transition-colors mb-4"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          Back to Dashboard
+        </button>
+        <div className="glass-panel rounded-2xl p-6 md:p-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-blue-400 bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">
+                  {trip?.destination || "Loading..."}
+                </span>
+                <span className={`text-[10px] font-semibold px-3 py-1 rounded-full ${
+                  (trip?.health || 0) > 80
+                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                    : "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
+                }`}>
+                  {(trip?.health || 0).toFixed(0)}% Refined
+                </span>
+              </div>
+              <h1 className="text-2xl md:text-3xl font-headline font-bold text-white">
+                {trip?.destination || "Your Journey"}
+              </h1>
+              <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-white/50">
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-blue-400" />
+                  {trip?.startDate ? new Date(trip.startDate).toLocaleDateString() : ""} - {trip?.endDate ? new Date(trip.endDate).toLocaleDateString() : ""}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <DollarSign className="w-3.5 h-3.5 text-violet-400" />
+                  {trip?.totalBudget} {trip?.currency}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-xl gap-1.5 h-9 text-xs font-semibold bg-white/5 border-white/10 text-white/60 hover:bg-white/10 hover:text-white"
+                onClick={handleBookFlight}
+              >
+                <Plane className="w-3.5 h-3.5" /> Flights
+              </Button>
+              <Button
+                size="sm"
+                className="rounded-xl gap-1.5 h-9 text-xs font-semibold bg-blue-500 hover:bg-blue-600 text-white"
+                onClick={handleLaunchAR}
+              >
+                <Scan className="w-3.5 h-3.5" /> AR HUD
+              </Button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Main content */}
-      <main className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden">
-        {/* Left: itinerary */}
-        <div className="flex-1 lg:overflow-y-auto p-4 md:p-6 space-y-6 lg:border-r scrollbar-hide" style={{ borderColor: "rgba(255,255,255,0.04)" }}>
-          {/* Day selector */}
-          <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
-            {itinerary?.map((day) => {
-              const isActive = activeDay === day.dayNumber;
-              return (
-                <button
-                  key={day.id}
-                  onClick={() => setActiveDay(day.dayNumber)}
-                  className="flex-shrink-0 w-16 h-16 rounded-2xl flex flex-col items-center justify-center gap-0.5 transition-all duration-300 font-bold"
-                  style={
-                    isActive
-                      ? {
-                          background: "linear-gradient(135deg, hsl(172 100% 42%), hsl(172 100% 35%))",
-                          boxShadow: "0 0 24px rgba(0,212,184,0.4)",
-                          transform: "scale(1.05)",
-                        }
-                      : {
-                          background: "rgba(255,255,255,0.04)",
-                          border: "1px solid rgba(255,255,255,0.08)",
-                        }
-                  }
-                >
-                  <span className="text-[9px] uppercase font-bold opacity-70">Day</span>
-                  <span className="text-lg font-extrabold leading-none">{day.dayNumber}</span>
-                </button>
-              );
-            })}
+      {/* Progress bar strip */}
+      <div className="px-4 md:px-8 lg:px-12 max-w-7xl mx-auto mb-6">
+        <div className="glass-panel rounded-2xl p-4 flex flex-col md:flex-row items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Gauge className="text-blue-400 w-4 h-4" />
+            <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Itinerary Progress</span>
           </div>
+          <div className="flex-1 w-full">
+            <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-blue-500 to-violet-500 transition-all duration-500"
+                style={{ width: `${progressValue}%` }}
+              />
+            </div>
+          </div>
+          <span className="text-xs font-bold tabular-nums text-blue-400">{Math.round(progressValue)}%</span>
+        </div>
+      </div>
+
+      {/* Main content: two columns */}
+      <div className="px-4 md:px-8 lg:px-12 max-w-7xl mx-auto pb-20 flex flex-col lg:flex-row gap-6">
+        {/* Left: Itinerary */}
+        <div className="flex-1 min-w-0">
+          {/* Day selector */}
+          {itinerary && (
+            <div className="glass-panel rounded-2xl p-4 mb-6">
+              <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar">
+                {itinerary.map((d: any) => (
+                  <button
+                    key={d.dayNumber}
+                    onClick={() => setActiveDay(d.dayNumber)}
+                    className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-200 whitespace-nowrap ${
+                      activeDay === d.dayNumber
+                        ? "bg-blue-500 text-white"
+                        : "bg-white/5 text-white/50 hover:text-white hover:bg-white/10"
+                    }`}
+                  >
+                    Day {d.dayNumber}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Day header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h2 className="text-2xl sm:text-3xl font-headline font-bold">
-              {currentDay?.theme || `Day ${activeDay}`}
-            </h2>
-            <div
-              className="flex items-center gap-2 px-4 py-2 rounded-full w-fit"
-              style={{ background: "rgba(245,166,35,0.1)", border: "1px solid rgba(245,166,35,0.2)" }}
-            >
-              <Sun className="w-4 h-4 text-accent" />
-              <span className="font-bold text-accent text-sm">{currentDay?.weatherTempHigh || 24}°C</span>
+          <div className="glass-panel rounded-2xl p-5 mb-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-headline font-bold text-white">
+                  {currentDay?.theme || `Day ${activeDay}`}
+                </h2>
+                {currentDay?.subtitle && (
+                  <p className="text-sm text-white/40 mt-1">{currentDay.subtitle}</p>
+                )}
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20">
+                <Sun className="w-3.5 h-3.5 text-orange-400" />
+                <span className="font-semibold text-orange-400 text-sm">{currentDay?.weatherTempHigh || 24}°C</span>
+              </div>
             </div>
           </div>
 
-          {/* Activity cards */}
-          <div className="grid grid-cols-1 gap-4">
-            {isItineraryLoading && (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-36 rounded-3xl animate-pulse" style={{ background: "rgba(255,255,255,0.04)" }} />
-                ))}
-              </div>
-            )}
-
-            {(currentDay?.slots || []).map((slot: any, idx: number) => {
-              const catColor = CATEGORY_COLORS[slot.category] || CATEGORY_COLORS.Misc;
-              return (
+          {/* Itinerary timeline */}
+          {isItineraryLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-32 rounded-2xl animate-pulse bg-white/5" />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {(currentDay?.slots || []).map((slot: any, idx: number) => (
                 <div
                   key={idx}
-                  className={`rounded-3xl overflow-hidden transition-all duration-300 ${slot.completed ? "opacity-40" : "hover:scale-[1.01]"}`}
-                  style={{
-                    background: "linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(10,14,30,0.7) 100%)",
-                    border: "1px solid rgba(255,255,255,0.07)",
-                    boxShadow: slot.completed ? "none" : "0 8px 32px rgba(0,0,0,0.3)",
-                  }}
+                  className={`glass-panel rounded-2xl p-5 transition-all duration-300 ${
+                    slot.completed ? "opacity-60" : ""
+                  }`}
                 >
-                  {/* Category accent bar */}
-                  <div className="h-0.5 w-full" style={{ background: `linear-gradient(90deg, ${catColor.text}, transparent)` }} />
-
-                  <div className="p-5 flex items-start gap-4">
-                    <Checkbox
-                      checked={slot.completed}
-                      onCheckedChange={() => handleToggleSlot(currentDay, idx)}
-                      className="mt-1 border-primary/50"
-                    />
-                    <div className="flex-1 space-y-3 min-w-0">
-                      <div className="flex justify-between items-start gap-2">
-                        <div
-                          className="text-[10px] font-bold flex items-center gap-1.5 uppercase tracking-widest"
-                          style={{ color: "hsl(172 100% 42%)" }}
-                        >
-                          <Clock className="w-3 h-3" /> {slot.time}
+                  <div className="flex items-start gap-4">
+                    <button
+                      onClick={() => handleToggleSlot(idx)}
+                      className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 border transition-all duration-200 ${
+                        slot.completed
+                          ? "bg-emerald-500 border-emerald-500"
+                          : "bg-white/5 border-white/20 hover:border-blue-400"
+                      }`}
+                    >
+                      {slot.completed && <CheckCircle2 className="w-4 h-4 text-white" />}
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <span className="text-[11px] font-semibold text-blue-400 block mb-1">
+                            {slot.time}
+                          </span>
+                          <h4 className={`text-sm font-bold ${slot.completed ? "text-white/50 line-through" : "text-white"}`}>
+                            {slot.activity}
+                          </h4>
                         </div>
-                        <span className="text-sm font-bold flex-shrink-0" style={{ color: "hsl(37 91% 55%)" }}>
-                          ₹{slot.estimatedCostINR}
-                        </span>
+                        {slot.estimatedCostINR && (
+                          <span className="text-[11px] font-medium text-white/30 whitespace-nowrap">
+                            {trip?.currency} {slot.estimatedCostINR}
+                          </span>
+                        )}
                       </div>
-
-                      <h4 className={`text-base font-bold leading-tight ${slot.completed ? "line-through text-muted-foreground" : "text-white"}`}>
-                        {slot.activity}
-                      </h4>
-                      <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">{slot.description}</p>
-
-                      {slot.localPhrases?.length > 0 && (
-                        <div
-                          className="rounded-2xl p-4 mt-2 space-y-3"
-                          style={{ background: "rgba(0,212,184,0.05)", border: "1px solid rgba(0,212,184,0.1)" }}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Languages className="w-3.5 h-3.5 text-primary" />
-                            <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-widest">Local Assist</p>
-                          </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {slot.localPhrases.map((phrase: any, i: number) => (
-                              <div key={i} className="flex flex-col gap-0.5">
-                                <span className="text-sm font-bold italic text-accent">&ldquo;{phrase.phrase}&rdquo;</span>
-                                <span className="text-[10px] text-muted-foreground">{phrase.meaning}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="flex flex-wrap items-center gap-2 mt-2 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-                        <span
-                          className="text-[10px] font-bold px-3 py-1 rounded-full"
-                          style={{ background: catColor.bg, border: `1px solid ${catColor.border}`, color: catColor.text }}
-                        >
-                          {slot.category}
-                        </span>
-                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground min-w-0 max-w-full">
-                          <MapPin className="w-3 h-3 shrink-0" /> <span className="truncate">{slot.location}</span>
-                        </div>
+                      <p className="text-xs text-white/40 mt-1 line-clamp-2">{slot.description}</p>
+                      <div className="flex items-center gap-1.5 mt-2">
+                        <MapPin className="w-3 h-3 text-white/30" />
+                        <span className="text-[10px] text-white/30">{slot.location}</span>
                       </div>
                     </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              ))}
+              {(!currentDay?.slots || currentDay.slots.length === 0) && (
+                <div className="glass-panel rounded-2xl py-12 text-center">
+                  <p className="text-sm text-white/30">No activities planned for this day yet.</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Right: Map / Budget / AI */}
-        <div
-          className="lg:w-2/5 flex flex-col min-h-[500px] lg:min-h-0"
-          style={{ background: "rgba(10,14,30,0.4)" }}
-        >
-          <Tabs defaultValue="map" className="h-full flex flex-col">
-            <TabsList
-              className="m-4 p-1.5 rounded-2xl shrink-0 grid grid-cols-3"
-              style={{
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.08)",
-              }}
-            >
-              <TabsTrigger value="map" className="rounded-xl py-2.5 font-bold text-xs">Explore Map</TabsTrigger>
-              <TabsTrigger value="budget" className="rounded-xl py-2.5 font-bold text-xs">BudgetSync</TabsTrigger>
-              <TabsTrigger value="ai" className="rounded-xl py-2.5 font-bold text-xs">Optimizer</TabsTrigger>
-            </TabsList>
+        <div className="lg:w-[380px] xl:w-[420px] flex flex-col gap-6">
+          {/* Explore Map */}
+          <div className="glass-panel rounded-2xl overflow-hidden">
+            <div className="p-4 border-b border-white/5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Map className="w-4 h-4 text-blue-400" />
+                <span className="text-xs font-bold text-white/60 uppercase tracking-widest">Explore Map</span>
+              </div>
+              <Button
+                size="sm"
+                className="rounded-xl h-8 text-[10px] font-bold gap-1.5 bg-blue-500 hover:bg-blue-600 text-white"
+                onClick={handleNavigateAll}
+              >
+                <Navigation className="w-3 h-3" /> Navigate Day
+              </Button>
+            </div>
+            <div className="h-[300px]">
+              <TripMap locations={currentDay?.slots || []} />
+            </div>
+          </div>
 
-            {/* Map tab */}
-            <TabsContent value="map" className="flex-1 h-[450px] lg:h-auto mt-0 relative mx-4 mb-4 rounded-2xl overflow-hidden">
-              <div className="absolute top-3 right-3 z-10">
+          {/* BudgetSync */}
+          <div className="glass-panel rounded-2xl p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <CreditCard className="w-4 h-4 text-violet-400" />
+              <span className="text-xs font-bold text-white/60 uppercase tracking-widest">BudgetSync</span>
+            </div>
+            <BudgetBreakdown data={budgetStats} currency={trip?.currency || "USD"} />
+            <div className="mt-4 p-4 rounded-xl bg-white/5 border border-white/10">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[10px] uppercase font-bold text-white/30 tracking-widest">Left to Spend</span>
+                <span className="text-lg font-bold text-white tabular-nums">{trip?.currency} {budgetProgress.remaining.toFixed(0)}</span>
+              </div>
+              <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-yellow-500 to-red-500 transition-all duration-500"
+                  style={{ width: `${budgetProgress.percent}%` }}
+                />
+              </div>
+              <p className="text-[10px] text-right text-white/30 font-bold mt-2 tabular-nums">{Math.round(budgetProgress.percent)}% OF TOTAL BUDGET</p>
+            </div>
+            <Button
+              className="w-full h-11 rounded-xl font-semibold text-xs mt-4 bg-white/5 border border-white/10 text-white hover:bg-white/10"
+              variant="outline"
+              onClick={() => setIsExpenseDialogOpen(true)}
+            >
+              <Plus className="w-4 h-4 mr-2" /> Log Actual Expense
+            </Button>
+          </div>
+
+          {/* AI Optimizer */}
+          <div className="glass-panel rounded-2xl p-5">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-500/10 border border-blue-500/20">
+                <Brain className="text-blue-400 w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-headline font-bold text-white">AI Optimizer</h3>
+                <p className="text-[11px] text-white/40">Smart suggestions to balance your spend.</p>
+              </div>
+            </div>
+
+            {isAiLoading ? (
+              <div className="py-10 text-center rounded-xl bg-white/5">
+                <Loader2 className="w-8 h-8 text-blue-400 mx-auto mb-3 animate-spin" />
+                <p className="text-xs text-white/40">Running budget optimization analysis...</p>
+              </div>
+            ) : aiSuggestions ? (
+              <div className="space-y-3">
+                {aiSuggestions.alternatives.map((alt, i) => (
+                  <div key={i} className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                        {alt.category}
+                      </span>
+                      <div className="flex items-center gap-1 font-bold text-xs text-emerald-400">
+                        <TrendingDown className="w-3 h-3" />
+                        Save ~{trip?.currency} {alt.estimatedSavings}
+                      </div>
+                    </div>
+                    <p className="text-xs text-white/60 leading-relaxed">{alt.suggestion}</p>
+                  </div>
+                ))}
                 <Button
-                  size="sm"
-                  className="rounded-xl font-bold text-xs shadow-2xl gap-2"
-                  style={{ background: "white", color: "black" }}
-                  onClick={handleNavigateAll}
+                  onClick={handleRunOptimizer}
+                  className="w-full h-10 rounded-xl text-xs font-semibold gap-2 bg-white/5 border border-white/10 text-white hover:bg-white/10"
                 >
-                  <Navigation className="w-3.5 h-3.5" /> Navigate Day
+                  <Sparkles className="w-3.5 h-3.5" /> Recalculate Suggestions
                 </Button>
               </div>
-              <TripMap locations={currentDay?.slots || []} />
-            </TabsContent>
-
-            {/* Budget tab */}
-            <TabsContent value="budget" className="flex-1 mt-0 p-4 overflow-y-auto space-y-5 scrollbar-hide">
-              <BudgetBreakdown data={budgetStats} currency={trip?.currency || "USD"} />
-
-              <div
-                className="p-5 rounded-3xl"
-                style={{
-                  background: "linear-gradient(135deg, rgba(0,212,184,0.08) 0%, rgba(15,20,40,0.7) 100%)",
-                  border: "1px solid rgba(0,212,184,0.15)",
-                }}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center"
-                      style={{ background: "rgba(0,212,184,0.15)", border: "1px solid rgba(0,212,184,0.2)" }}
-                    >
-                      <Wallet className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-widest block">Left to Spend</span>
-                      <span className="text-xl font-bold text-white">{trip?.currency} {budgetProgress.remaining.toFixed(0)}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-                  <div
-                    className="h-full rounded-full transition-all duration-700"
-                    style={{
-                      width: `${budgetProgress.percent}%`,
-                      background: budgetProgress.percent > 80
-                        ? "linear-gradient(90deg, #F5A623, #ef4444)"
-                        : "linear-gradient(90deg, hsl(172 100% 42%), #00fff2)",
-                      boxShadow: "0 0 8px rgba(0,212,184,0.4)",
-                    }}
-                  />
-                </div>
-                <p className="text-[9px] text-right text-muted-foreground font-bold mt-2">{Math.round(budgetProgress.percent)}% OF TOTAL BUDGET</p>
-              </div>
-
-              <Button
-                className="w-full h-14 rounded-2xl font-bold"
-                variant="outline"
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}
-                onClick={() => setIsExpenseDialogOpen(true)}
-              >
-                <Plus className="w-5 h-5 mr-2" /> Log Actual Expense
-              </Button>
-            </TabsContent>
-
-            {/* AI tab */}
-            <TabsContent value="ai" className="flex-1 mt-0 p-4 overflow-y-auto scrollbar-hide">
-              <div className="space-y-6">
-                <div
-                  className="flex items-center gap-4 p-5 rounded-3xl"
-                  style={{ background: "rgba(0,212,184,0.08)", border: "1px solid rgba(0,212,184,0.15)" }}
-                >
-                  <div
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                    style={{ background: "rgba(0,212,184,0.15)", border: "1px solid rgba(0,212,184,0.2)" }}
-                  >
-                    <Brain className="text-primary w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-headline font-bold">AI Optimizer</h3>
-                    <p className="text-xs text-muted-foreground">Smart suggestions to balance your spend.</p>
-                  </div>
-                </div>
-
-                {isAiLoading ? (
-                  <div className="py-16 text-center rounded-3xl" style={{ background: "rgba(255,255,255,0.02)", border: "1px dashed rgba(255,255,255,0.08)" }}>
-                    <Loader2 className="w-10 h-10 text-primary mx-auto mb-4 animate-spin" />
-                    <p className="text-sm text-muted-foreground">Running budget optimization analysis...</p>
-                  </div>
-                ) : aiSuggestions ? (
-                  <div className="space-y-4">
-                    <div className="space-y-3 animate-fade-in">
-                      {aiSuggestions.alternatives.map((alt, i) => (
-                        <div
-                          key={i}
-                          className="p-5 rounded-3xl"
-                          style={{ background: "rgba(0,212,184,0.05)", border: "1px solid rgba(0,212,184,0.12)" }}
-                        >
-                          <div className="flex items-center justify-between mb-3">
-                            <span
-                              className="text-[10px] font-bold px-3 py-1 rounded-full"
-                              style={{ background: "rgba(0,212,184,0.12)", color: "#00D4B8", border: "1px solid rgba(0,212,184,0.2)" }}
-                            >
-                              {alt.category}
-                            </span>
-                            <div className="flex items-center gap-1.5 font-bold text-sm" style={{ color: "#F5A623" }}>
-                              <TrendingDown className="w-4 h-4" />
-                              Save ~{trip?.currency} {alt.estimatedSavings}
-                            </div>
-                          </div>
-                          <p className="text-sm font-medium leading-relaxed text-white/80">{alt.suggestion}</p>
-                        </div>
-                      ))}
+            ) : (
+              <div className="py-8 text-center rounded-xl bg-white/5 space-y-3">
+                {budgetStats.some(stat => stat.actual > stat.planned) ? (
+                  <>
+                    <AlertTriangle className="w-8 h-8 text-orange-400 mx-auto opacity-70" />
+                    <div className="space-y-1">
+                      <p className="text-xs text-white font-bold">Category Budgets Exceeded</p>
+                      <p className="text-[11px] text-white/40 px-4">Get AI tips to balance your spending.</p>
                     </div>
                     <Button
                       onClick={handleRunOptimizer}
-                      className="w-full h-12 rounded-2xl font-bold gap-2 text-white"
-                      style={{ background: "rgba(0,212,184,0.12)", border: "1px solid rgba(0,212,184,0.2)", color: "#00D4B8" }}
+                      className="h-9 px-5 rounded-xl text-xs font-semibold gap-2 bg-blue-500 hover:bg-blue-600 text-white"
                     >
-                      <Sparkles className="w-4 h-4" /> Recalculate Suggestions
+                      <Brain className="w-3.5 h-3.5" /> Run Budget Optimizer
                     </Button>
-                  </div>
+                  </>
                 ) : (
-                  <div
-                    className="py-16 text-center rounded-3xl space-y-4"
-                    style={{ background: "rgba(255,255,255,0.02)", border: "1px dashed rgba(255,255,255,0.08)" }}
-                  >
-                    {budgetStats.some(stat => stat.actual > stat.planned) ? (
-                      <>
-                        <AlertTriangle className="w-10 h-10 text-accent mx-auto opacity-70 animate-pulse" />
-                        <div className="space-y-1">
-                          <p className="text-sm text-white font-bold">Category Budgets Exceeded</p>
-                          <p className="text-xs text-muted-foreground px-8 leading-relaxed">
-                            You have spent more than planned in some categories. Get AI tips to balance it.
-                          </p>
-                        </div>
-                        <Button
-                          onClick={handleRunOptimizer}
-                          className="h-11 px-6 rounded-2xl font-bold gap-2"
-                          style={{ background: "linear-gradient(135deg, hsl(172 100% 42%), hsl(172 100% 35%))", color: "hsl(222 47% 9%)", boxShadow: "0 0 15px rgba(0,212,184,0.3)" }}
-                        >
-                          <Brain className="w-4 h-4" /> Run Budget Optimizer
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="w-10 h-10 text-primary mx-auto opacity-70" />
-                        <div className="space-y-1">
-                          <p className="text-sm text-white font-bold">Budget is On Track</p>
-                          <p className="text-xs text-muted-foreground px-8 leading-relaxed">
-                            Your actual spending is currently within the planned budget.
-                          </p>
-                        </div>
-                      </>
-                    )}
-                  </div>
+                  <>
+                    <CheckCircle2 className="w-8 h-8 text-blue-400 mx-auto opacity-70" />
+                    <div className="space-y-1">
+                      <p className="text-xs text-white font-bold">Budget is On Track</p>
+                      <p className="text-[11px] text-white/40 px-4">Your spending is within the planned budget.</p>
+                    </div>
+                  </>
                 )}
               </div>
-            </TabsContent>
-          </Tabs>
+            )}
+          </div>
+
         </div>
-      </main>
+      </div>
 
       {/* Expense dialog */}
       <Dialog open={isExpenseDialogOpen} onOpenChange={setIsExpenseDialogOpen}>
-        <DialogContent
-          className="max-w-md rounded-3xl"
-          style={{
-            background: "rgba(10,14,30,0.95)",
-            backdropFilter: "blur(20px)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            boxShadow: "0 30px 80px rgba(0,0,0,0.7)",
-          }}
-        >
+        <DialogContent className="max-w-md rounded-2xl bg-[#1d2021] border border-white/10">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-headline font-bold">Log New Expense</DialogTitle>
+            <DialogTitle className="text-xl font-headline font-bold text-white">Log New Expense</DialogTitle>
           </DialogHeader>
           <div className="space-y-5 py-4">
             <div className="space-y-2">
-              <Label className="text-[10px] uppercase font-bold tracking-widest opacity-60">Amount ({trip?.currency})</Label>
+              <Label htmlFor="expense-amount" className="text-[10px] uppercase font-bold tracking-widest text-white/40">
+                Amount ({trip?.currency})
+              </Label>
               <Input
+                id="expense-amount"
                 type="number"
                 placeholder="0.00"
-                className="h-14 rounded-2xl text-lg font-bold"
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}
+                className="h-12 rounded-xl text-lg font-bold bg-white/5 border-white/10 text-white"
                 value={expenseAmount}
                 onChange={(e) => setExpenseAmount(e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-[10px] uppercase font-bold tracking-widest opacity-60">Category</Label>
+              <Label htmlFor="expense-category" className="text-[10px] uppercase font-bold tracking-widest text-white/40">
+                Category
+              </Label>
               <Select value={expenseCategory} onValueChange={setExpenseCategory}>
-                <SelectTrigger className="h-14 rounded-2xl" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                <SelectTrigger id="expense-category" className="h-12 rounded-xl bg-white/5 border-white/10 text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent
-                  className="rounded-2xl"
-                  style={{ background: "rgba(10,14,30,0.95)", border: "1px solid rgba(255,255,255,0.1)" }}
-                >
-                  {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                <SelectContent className="rounded-xl bg-[#1d2021] border-white/10">
+                  {CATEGORIES.map((c) => <SelectItem key={c} value={c} className="text-white">{c}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-[10px] uppercase font-bold tracking-widest opacity-60">Note (Optional)</Label>
+              <Label htmlFor="expense-note" className="text-[10px] uppercase font-bold tracking-widest text-white/40">
+                Note (Optional)
+              </Label>
               <Input
+                id="expense-note"
                 placeholder="What was this for?"
-                className="h-14 rounded-2xl"
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}
+                className="h-12 rounded-xl bg-white/5 border-white/10 text-white"
                 value={expenseNote}
                 onChange={(e) => setExpenseNote(e.target.value)}
               />
             </div>
           </div>
           <DialogFooter className="gap-3">
-            <Button variant="ghost" className="rounded-2xl h-12" onClick={() => setIsExpenseDialogOpen(false)}>Cancel</Button>
+            <Button variant="ghost" className="rounded-xl h-11 text-white/60 hover:text-white" onClick={() => setIsExpenseDialogOpen(false)}>Cancel</Button>
             <Button
-              className="btn-shimmer h-12 rounded-2xl px-8 font-bold"
-              style={{ background: "linear-gradient(135deg, hsl(172 100% 42%), hsl(172 100% 35%))", boxShadow: "0 0 20px rgba(0,212,184,0.3)" }}
+              className="h-11 rounded-xl px-8 font-semibold bg-blue-500 text-white hover:bg-blue-600"
               onClick={handleLogExpense}
+              disabled={!expenseAmount}
             >
               Record Expense
             </Button>

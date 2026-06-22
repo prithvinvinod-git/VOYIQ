@@ -26,7 +26,7 @@ export function BudgetBreakdown({ data, currency }: BudgetBreakdownProps) {
   const totalActual = data.reduce((acc, curr) => acc + curr.actual, 0);
 
   return (
-    <Card className="glass-card border-none overflow-hidden">
+    <Card className="bg-card border border-border overflow-hidden">
       <CardHeader>
         <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
           Trip Budget Comparison
@@ -36,7 +36,7 @@ export function BudgetBreakdown({ data, currency }: BudgetBreakdownProps) {
         <div className="h-[250px] w-full p-4">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff10" />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
               <XAxis 
                 dataKey="category" 
                 axisLine={false} 
@@ -50,10 +50,10 @@ export function BudgetBreakdown({ data, currency }: BudgetBreakdownProps) {
                 tickFormatter={(val) => `${val}`}
               />
               <Tooltip 
-                cursor={{ fill: '#ffffff05' }}
+                cursor={{ fill: 'hsl(var(--muted) / 0.3)' }}
                 contentStyle={{ 
-                  backgroundColor: '#1a1a1a', 
-                  border: '1px solid #333', 
+                  backgroundColor: 'hsl(var(--card))', 
+                  border: '1px solid hsl(var(--border))', 
                   borderRadius: '12px',
                   fontSize: '12px'
                 }}
@@ -63,14 +63,14 @@ export function BudgetBreakdown({ data, currency }: BudgetBreakdownProps) {
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="p-4 bg-white/5 flex justify-around text-center">
+        <div className="p-4 bg-muted/50 flex justify-around text-center">
           <div>
             <span className="text-[10px] text-muted-foreground uppercase block">Total Planned</span>
             <span className="text-sm font-bold text-primary">
               {currency} {totalPlanned.toFixed(0)}
             </span>
           </div>
-          <div className="w-px bg-white/10" />
+          <div className="w-px bg-border" />
           <div>
             <span className="text-[10px] text-muted-foreground uppercase block">Total Spent</span>
             <span className="text-sm font-bold text-accent">

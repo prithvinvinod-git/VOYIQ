@@ -13,6 +13,8 @@ export default {
       fontFamily: {
         body: ['DM Sans', 'sans-serif'],
         headline: ['Space Grotesk', 'sans-serif'],
+        inter: ['Inter', 'sans-serif'],
+        'instrument-serif': ['Instrument Serif', 'serif'],
         code: ['monospace'],
       },
       colors: {

@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+
+<html class="dark scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Voyiq AI - Travel Refined</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "surface": "#111415",
+                "on-primary-fixed": "#1a1c1c",
+                "surface-container-lowest": "#0c0f10",
+                "secondary-fixed-dim": "#c6c6c6",
+                "on-error-container": "#ffdad6",
+                "inverse-on-surface": "#2e3132",
+                "primary": "#ffffff",
+                "surface-container-low": "#191c1d",
+                "on-tertiary-fixed-variant": "#003ea8",
+                "on-primary-container": "#636565",
+                "secondary-fixed": "#e2e2e2",
+                "secondary": "#c6c6c6",
+                "primary-fixed": "#e2e2e2",
+                "surface-tint": "#c6c6c7",
+                "on-tertiary-container": "#1359e2",
+                "outline": "#8e9192",
+                "surface-container-highest": "#323536",
+                "on-primary-fixed-variant": "#454747",
+                "background": "#111415",
+                "tertiary-fixed": "#dbe1ff",
+                "on-surface": "#e1e3e4",
+                "surface-variant": "#323536",
+                "surface-dim": "#111415",
+                "secondary-container": "#474747",
+                "tertiary-container": "#dbe1ff",
+                "on-tertiary-fixed": "#00174b",
+                "on-secondary": "#303030",
+                "on-error": "#690005",
+                "inverse-primary": "#5d5f5f",
+                "error-container": "#93000a",
+                "on-surface-variant": "#c4c7c8",
+                "surface-container-high": "#282a2b",
+                "error": "#ffb4ab",
+                "surface-container": "#1d2021",
+                "surface-bright": "#373a3b",
+                "on-secondary-container": "#b5b5b5",
+                "tertiary": "#ffffff",
+                "on-primary": "#2f3131",
+                "outline-variant": "#444748",
+                "tertiary-fixed-dim": "#b4c5ff",
+                "on-tertiary": "#002a78",
+                "on-secondary-fixed-variant": "#474747",
+                "on-secondary-fixed": "#1b1b1b",
+                "inverse-surface": "#e1e3e4",
+                "primary-container": "#e2e2e2",
+                "on-background": "#e1e3e4",
+                "primary-fixed-dim": "#c6c6c7"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+        },
+        "spacing": {
+                "unit": "8px",
+                "gutter": "24px",
+                "margin-mobile": "20px",
+                "container-max": "1280px",
+                "margin-desktop": "64px"
+        },
+        "fontFamily": {
+                "display-lg": [
+                        "Inter"
+                ],
+                "display-lg-italic": [
+                        "Instrument Serif"
+                ],
+                "body-lg": [
+                        "Inter"
+                ],
+                "label-sm": [
+                        "Inter"
+                ],
+                "headline-md-mobile": [
+                        "Inter"
+                ],
+                "body-md": [
+                        "Inter"
+                ],
+                "headline-md": [
+                        "Inter"
+                ]
+        },
+        "fontSize": {
+                "display-lg": [
+                        "64px",
+                        {
+                                "lineHeight": "1.1",
+                                "letterSpacing": "-0.04em",
+                                "fontWeight": "700"
+                        }
+                ],
+                "display-lg-italic": [
+                        "68px",
+                        {
+                                "lineHeight": "1.1",
+                                "fontWeight": "400"
+                        }
+                ],
+                "body-lg": [
+                        "18px",
+                        {
+                                "lineHeight": "1.6",
+                                "fontWeight": "400"
+                        }
+                ],
+                "label-sm": [
+                        "12px",
+                        {
+                                "lineHeight": "1",
+                                "letterSpacing": "0.05em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "headline-md-mobile": [
+                        "24px",
+                        {
+                                "lineHeight": "1.2",
+                                "fontWeight": "600"
+                        }
+                ],
+                "body-md": [
+                        "16px",
+                        {
+                                "lineHeight": "1.5",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-md": [
+                        "32px",
+                        {
+                                "lineHeight": "1.2",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "600"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+<style>
+        .glass-panel {
+            background: rgba(17, 20, 21, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .glass-overlay {
+            background: linear-gradient(180deg, rgba(17, 20, 21, 0) 0%, rgba(17, 20, 21, 0.9) 100%);
+        }
+
+        .light-glass {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Custom Scrollbar for Tags */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: none;
+        }
+
+        /* Animations */
+        @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(calc(-250px * 7)); }
+        }
+
+        .slider {
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .slider::before,
+        .slider::after {
+            background: linear-gradient(to right, rgba(17, 20, 21, 1) 0%, rgba(17, 20, 21, 0) 100%);
+            content: "";
+            height: 100%;
+            position: absolute;
+            width: 100px;
+            z-index: 2;
+        }
+
+        .slider::after {
+            right: 0;
+            top: 0;
+            transform: rotateZ(180deg);
+        }
+
+        .slider::before {
+            left: 0;
+            top: 0;
+        }
+
+        .slide-track {
+            animation: scroll 40s linear infinite;
+            display: flex;
+            width: calc(250px * 14);
+        }
+
+        .slide {
+            height: 100px;
+            width: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Scroll Reveal */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Hide scrollbar for horizontal lists */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* Spotlight Hover */
+        .spotlight-card {
+            position: relative;
+            overflow: hidden;
+        }
+        .spotlight-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(800px circle at var(--mouse-x) var(--mouse-y), rgba(255, 255, 255, 0.06), transparent 40%);
+            opacity: 0;
+            transition: opacity 0.5s;
+            z-index: 1;
+            pointer-events: none;
+        }
+        .spotlight-card:hover::before {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-background text-primary font-body-md min-h-screen antialiased selection:bg-primary selection:text-surface">
+<!-- Main Container - Adjusted to be full screen instead of a floating card for the longer page -->
+<main class="relative flex flex-col min-h-screen">
+<!-- Hero Section (From original snippet) -->
+<section class="relative h-screen flex flex-col p-3 sm:p-4 md:p-6 mb-12">
+<div class="relative flex-grow rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl flex flex-col">
+<!-- Video Background -->
+<div class="absolute inset-0 z-0">
+<video autoplay="" class="w-full h-full object-cover" loop="" muted="" playsinline="" src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260602_150901_c45b90ec-18d7-42ff-90e2-b95d7109e330.mp4"></video>
+<!-- Scrim for text readability -->
+<div class="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent"></div>
+</div>
+<!-- Content Layer -->
+<div class="relative z-10 flex flex-col flex-grow p-4 sm:p-6 md:p-8">
+<!-- TopAppBar Navigation -->
+<nav class="bg-white/60 backdrop-blur-md rounded-full shadow-sm pl-4 pr-2 py-2 flex items-center justify-between w-fit mx-auto md:mx-0 lg:w-full lg:max-w-fit md:gap-8 transition-all duration-300 hover:bg-white/70">
+<!-- Logo -->
+<a class="flex items-center gap-2 text-surface mr-4 sm:mr-8 transition-transform hover:scale-95 active:scale-90" href="#">
+<svg fill="currentColor" height="24" viewbox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M 256 256 L 128 256 L 0 128 L 128 128 Z M 256 128 L 128 128 L 0 0 L 128 0 Z"></path>
+</svg>
+<span class="font-bold text-surface hidden md:block tracking-tight">Voyiq.</span>
+</a>
+<!-- Desktop Links -->
+<div class="hidden md:flex items-center gap-6">
+<a class="font-body-md text-surface-variant hover:text-surface transition-colors" href="#">Discover</a>
+<a class="font-body-md text-surface-variant hover:text-surface transition-colors" href="#">Destinations</a>
+<a class="font-body-md text-surface-variant hover:text-surface transition-colors" href="#">Itineraries</a>
+<a class="font-body-md text-surface-variant hover:text-surface transition-colors" href="#">Pricing</a>
+</div>
+<!-- CTA -->
+<button class="bg-surface text-primary px-6 py-2 rounded-full font-label-sm uppercase tracking-wider hover:bg-surface-variant transition-colors ml-4 shadow-lg scale-95 active:scale-90 transition-transform">
+                    Start Exploring
+                </button>
+</nav>
+<!-- Spacer -->
+<div class="flex-grow"></div>
+<!-- Bottom Row: Headline & Form -->
+<div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 w-full max-w-container-max mx-auto mt-12 md:mt-0">
+<!-- Headline Area -->
+<div class="flex-1 max-w-2xl">
+<h1 class="font-display-lg text-display-lg text-primary mb-4 text-balance drop-shadow-md">
+                        Travel Refined. Experience <br/>
+<span class="font-display-lg-italic text-display-lg-italic text-tertiary font-light">Luxury</span>
+</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-lg drop-shadow">
+                        Elevate your journey with AI-crafted itineraries that adapt to your rhythm. Immerse yourself in the world's most breathtaking destinations without the friction of planning.
+                    </p>
+</div>
+<!-- Contact Form Card -->
+<div class="bg-primary/95 backdrop-blur-xl rounded-3xl shadow-2xl p-6 w-full lg:w-[480px] border border-white/20 text-on-primary flex-shrink-0 relative overflow-hidden group">
+<!-- Success Overlay (Hidden by default) -->
+<div class="absolute inset-0 bg-primary/95 backdrop-blur-md z-20 flex flex-col items-center justify-center opacity-0 pointer-events-none transition-opacity duration-500" id="success-state">
+<div class="w-16 h-16 bg-surface-container rounded-full flex items-center justify-center mb-4 text-primary">
+<span class="material-symbols-outlined text-3xl">check</span>
+</div>
+<h3 class="font-headline-md text-headline-md-mobile text-on-surface">You're all set!</h3>
+<p class="font-body-md text-on-surface-variant text-center mt-2 px-6">We've received your message and will be in touch shortly.</p>
+<button class="mt-6 px-6 py-2 border border-outline rounded-full font-label-sm text-on-surface hover:bg-surface-container transition-colors" id="reset-form">
+                            Send another
+                        </button>
+</div>
+<form class="flex flex-col gap-5" id="contact-form">
+<!-- Header Row -->
+<div class="flex items-center justify-between mb-2">
+<h2 class="font-headline-md text-headline-md-mobile text-on-surface">Say hello! 👋</h2>
+<div class="flex gap-2">
+<a class="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center text-on-surface hover:bg-surface-container transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-size: 16px;">mail</span>
+</a>
+<a class="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center text-on-surface hover:bg-surface-container transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-size: 16px;">link</span>
+</a>
+</div>
+</div>
+<!-- Inputs -->
+<div class="flex flex-col sm:flex-row gap-4">
+<div class="flex-1">
+<input class="w-full bg-surface-container-lowest/5 border-b border-outline-variant px-0 py-2 text-on-surface placeholder-on-surface-variant/50 focus:border-on-surface focus:ring-0 transition-colors bg-transparent border-t-0 border-l-0 border-r-0 rounded-none font-body-md" placeholder="Name" required="" type="text"/>
+</div>
+<div class="flex-1">
+<input class="w-full bg-surface-container-lowest/5 border-b border-outline-variant px-0 py-2 text-on-surface placeholder-on-surface-variant/50 focus:border-on-surface focus:ring-0 transition-colors bg-transparent border-t-0 border-l-0 border-r-0 rounded-none font-body-md" placeholder="Email" required="" type="email"/>
+</div>
+</div>
+<div>
+<textarea class="w-full bg-surface-container-lowest/5 border-b border-outline-variant px-0 py-2 text-on-surface placeholder-on-surface-variant/50 focus:border-on-surface focus:ring-0 transition-colors bg-transparent border-t-0 border-l-0 border-r-0 rounded-none font-body-md resize-none" placeholder="Tell us about your project..." required="" rows="3"></textarea>
+</div>
+<!-- Services Tags -->
+<div class="mt-2">
+<p class="font-label-sm text-on-surface-variant mb-3 uppercase tracking-wider">I'm looking for:</p>
+<div class="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto hide-scrollbar pb-2">
+<label class="cursor-pointer">
+<input class="peer sr-only" name="service" type="checkbox" value="Itinerary"/>
+<div class="px-4 py-1.5 rounded-full border border-outline-variant text-on-surface-variant font-label-sm peer-checked:bg-on-surface peer-checked:text-surface-container-lowest peer-checked:border-on-surface transition-all hover:border-on-surface/50">Itinerary</div>
+</label>
+<label class="cursor-pointer">
+<input class="peer sr-only" name="service" type="checkbox" value="Flights"/>
+<div class="px-4 py-1.5 rounded-full border border-outline-variant text-on-surface-variant font-label-sm peer-checked:bg-on-surface peer-checked:text-surface-container-lowest peer-checked:border-on-surface transition-all hover:border-on-surface/50">Flights</div>
+</label>
+<label class="cursor-pointer">
+<input class="peer sr-only" name="service" type="checkbox" value="Hotels"/>
+<div class="px-4 py-1.5 rounded-full border border-outline-variant text-on-surface-variant font-label-sm peer-checked:bg-on-surface peer-checked:text-surface-container-lowest peer-checked:border-on-surface transition-all hover:border-on-surface/50">Hotels</div>
+</label>
+<label class="cursor-pointer">
+<input class="peer sr-only" name="service" type="checkbox" value="Experiences"/>
+<div class="px-4 py-1.5 rounded-full border border-outline-variant text-on-surface-variant font-label-sm peer-checked:bg-on-surface peer-checked:text-surface-container-lowest peer-checked:border-on-surface transition-all hover:border-on-surface/50">Experiences</div>
+</label>
+</div>
+</div>
+<!-- Submit Button -->
+<button class="w-full bg-background text-primary py-3 rounded-xl font-label-sm uppercase tracking-widest hover:bg-surface-variant transition-colors mt-2 flex items-center justify-center gap-2 group/btn" type="submit">
+                            Send my message
+                            <span class="material-symbols-outlined text-sm transition-transform group-hover/btn:translate-x-1">arrow_forward</span>
+</button>
+</form>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Stats Bar -->
+<section class="py-16 border-y border-white/5 bg-surface/30 backdrop-blur-sm relative z-10 px-margin-mobile md:px-margin-desktop">
+<div class="max-w-container-max mx-auto grid grid-cols-2 md:grid-cols-4 gap-gutter reveal">
+<div class="glass-panel p-6 rounded-xl flex flex-col items-center justify-center text-center">
+<div class="font-headline-md text-headline-md font-bold text-primary mb-1">
+<span class="counter" data-target="10">0</span>K+
+                    </div>
+<div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Travelers</div>
+</div>
+<div class="glass-panel p-6 rounded-xl flex flex-col items-center justify-center text-center">
+<div class="font-headline-md text-headline-md font-bold text-primary mb-1">
+<span class="counter" data-target="50">0</span>+
+                    </div>
+<div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Countries</div>
+</div>
+<div class="glass-panel p-6 rounded-xl flex flex-col items-center justify-center text-center">
+<div class="font-headline-md text-headline-md font-bold text-primary mb-1">
+<span class="counter" data-target="1">0</span>M+
+                    </div>
+<div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Trips Planned</div>
+</div>
+<div class="glass-panel p-6 rounded-xl flex flex-col items-center justify-center text-center">
+<div class="font-headline-md text-headline-md font-bold text-primary mb-1 flex items-baseline justify-center gap-1">
+<span class="counter" data-target="4.9">0.0</span>
+<span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">App Rating</div>
+</div>
+</div>
+</section>
+<!-- Marquee -->
+<section class="py-8 border-b border-white/5 overflow-hidden bg-surface-container-lowest/50 relative z-10">
+<div class="slider">
+<div class="slide-track">
+<!-- Partner/Feature Logos -->
+<div class="slide"><span class="font-headline-md-mobile text-headline-md-mobile text-on-surface-variant/50 font-bold tracking-widest">CONDE NAST</span></div>
+<div class="slide"><span class="font-headline-md-mobile text-headline-md-mobile text-on-surface-variant/50 font-bold tracking-widest">AER LINGUS</span></div>
+<div class="slide"><span class="font-headline-md-mobile text-headline-md-mobile text-on-surface-variant/50 font-bold tracking-widest">FOUR SEASONS</span></div>
+<div class="slide"><span class="font-headline-md-mobile text-headline-md-mobile text-on-surface-variant/50 font-bold tracking-widest">VIRGIN ATLANTIC</span></div>
+<div class="slide"><span class="font-headline-md-mobile text-headline-md-mobile text-on-surface-variant/50 font-bold tracking-widest">AMEX TRAVEL</span></div>
+<div class="slide"><span class="font-headline-md-mobile text-headline-md-mobile text-on-surface-variant/50 font-bold tracking-widest">SINGAPORE AIR</span></div>
+<div class="slide"><span class="font-headline-md-mobile text-headline-md-mobile text-on-surface-variant/50 font-bold tracking-widest">MARRIOTT</span></div>
+<!-- Double up for seamless loop -->
+<div class="slide"><span class="font-headline-md-mobile text-headline-md-mobile text-on-surface-variant/50 font-bold tracking-widest">CONDE NAST</span></div>
+<div class="slide"><span class="font-headline-md-mobile text-headline-md-mobile text-on-surface-variant/50 font-bold tracking-widest">AER LINGUS</span></div>
+<div class="slide"><span class="font-headline-md-mobile text-headline-md-mobile text-on-surface-variant/50 font-bold tracking-widest">FOUR SEASONS</span></div>
+<div class="slide"><span class="font-headline-md-mobile text-headline-md-mobile text-on-surface-variant/50 font-bold tracking-widest">VIRGIN ATLANTIC</span></div>
+<div class="slide"><span class="font-headline-md-mobile text-headline-md-mobile text-on-surface-variant/50 font-bold tracking-widest">AMEX TRAVEL</span></div>
+<div class="slide"><span class="font-headline-md-mobile text-headline-md-mobile text-on-surface-variant/50 font-bold tracking-widest">SINGAPORE AIR</span></div>
+<div class="slide"><span class="font-headline-md-mobile text-headline-md-mobile text-on-surface-variant/50 font-bold tracking-widest">MARRIOTT</span></div>
+</div>
+</div>
+</section>
+<!-- Destinations Horizontal Scroll -->
+<section class="py-24 relative z-10 px-margin-mobile md:px-margin-desktop overflow-hidden">
+<div class="max-w-container-max mx-auto mb-12 flex justify-between items-end reveal">
+<div>
+<h2 class="font-display-lg-italic text-display-lg-italic font-bold text-primary mb-2">Curated Escapes</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Where algorithmic precision meets natural beauty.</p>
+</div>
+<div class="hidden md:flex gap-2">
+<button class="w-12 h-12 rounded-full glass-panel flex items-center justify-center hover:bg-white/10 transition-colors border border-outline-variant" id="scroll-left">
+<span class="material-symbols-outlined text-primary">arrow_back</span>
+</button>
+<button class="w-12 h-12 rounded-full glass-panel flex items-center justify-center hover:bg-white/10 transition-colors border border-outline-variant" id="scroll-right">
+<span class="material-symbols-outlined text-primary">arrow_forward</span>
+</button>
+</div>
+</div>
+<div class="flex gap-gutter overflow-x-auto no-scrollbar pb-8 -mx-margin-mobile px-margin-mobile md:-mx-margin-desktop md:px-margin-desktop snap-x snap-mandatory reveal" id="destinations-container">
+<!-- Destination Card 1 -->
+<div class="min-w-[85vw] md:min-w-[400px] h-[500px] rounded-2xl overflow-hidden relative group snap-center shrink-0 border border-white/10">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="A sweeping, cinematic landscape view of Tokyo at twilight." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAqvbe4a3pKRqZ5UoVUSvnEhC7xxNZoMbp-zCMo-a8N-x5s3aTk0BLSEYgmmOH_HO-Upz4zCDSY5Bw3hh7-1hvLAOsge-S3_lNaoYJRxpYnKUt1KYmgxLzhRH0LUhWAM4X2OLWG9xEe_ey0Zp98Btq3oU4T1YiAwuukTLN9ZxHarhRv1r19vyqkHHSRRTtnLCCbKdFYeTT-RdqDMVq-HfciYHjm6FScMv2-2R5rxmy7lcfvDayUGae2q-rDcrhLCh2POjFNqaBewj8')"></div>
+<div class="absolute inset-0 glass-overlay"></div>
+<div class="absolute top-4 left-4 glass-panel px-3 py-1 rounded-full flex items-center gap-1 backdrop-blur-md bg-black/20">
+<span class="material-symbols-outlined text-primary text-[14px]">trending_up</span>
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-widest">Trending</span>
+</div>
+<div class="absolute bottom-0 left-0 w-full p-6 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+<h3 class="font-headline-md text-headline-md font-bold text-primary mb-1 drop-shadow-md">Tokyo</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">location_on</span> Japan
+                        </p>
+<div class="flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
+<span class="font-label-sm text-label-sm text-primary glass-panel px-3 py-1 rounded-full">From $2,400</span>
+<button class="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center hover:bg-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Destination Card 2 -->
+<div class="min-w-[85vw] md:min-w-[400px] h-[500px] rounded-2xl overflow-hidden relative group snap-center shrink-0 border border-white/10">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="A breathtaking view of the Amalfi Coast." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAmall5gqWl3Llhpck8ISqwvE7A1JXLg_J4KRe8InMB87PlBhaCPR-r-EUjVRi7PXwukWGQgAT9dLFqo_IABn06lqu-gNHAKAzA2aEQgutS6v13cuP67rwMqDW7SdnnX_FLDdmN6JPvPyzQpLHxEiEzUO-U9eoObGD77zswLGOcmU0iyTFWjbNDKq27AeA0dVT7zXlR4NZLCkSnh0YvP2yS16P6vPLhtfYA6EO2KuKAjpHHcnUv_38odrWYichJSICHN2qJKTeEc5w')"></div>
+<div class="absolute inset-0 glass-overlay"></div>
+<div class="absolute top-4 left-4 glass-panel px-3 py-1 rounded-full flex items-center gap-1 backdrop-blur-md bg-black/20">
+<span class="material-symbols-outlined text-primary text-[14px]">diamond</span>
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-widest">Luxury</span>
+</div>
+<div class="absolute bottom-0 left-0 w-full p-6 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+<h3 class="font-headline-md text-headline-md font-bold text-primary mb-1 drop-shadow-md">Amalfi Coast</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">location_on</span> Italy
+                        </p>
+<div class="flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
+<span class="font-label-sm text-label-sm text-primary glass-panel px-3 py-1 rounded-full">From $3,800</span>
+<button class="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center hover:bg-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Destination Card 3 -->
+<div class="min-w-[85vw] md:min-w-[400px] h-[500px] rounded-2xl overflow-hidden relative group snap-center shrink-0 border border-white/10">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="A minimalist photograph of an Icelandic landscape." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD118ctIjik3J_AWnOGgErTB-mkU318btY-UejdoBJF0WFauPFf4bVQu5n1-lP6bJRnJb-6-zSTxWR9WgRM7hC61CotLAV0dINKfZXvQ9B3KBOg6oJoZAV7Qt0JPKssxinM8QB1f-ieOpnW87DH-QTKEfzJ90ed0wbKSDZYE9MZL7FFKE_ZEORHCvZEWyxGeghDDWudqIGMe2gh-SpiL3f0rnqAUS3ybvVj8ZwMj1Xa1sPSbj3nXwocryg0ZfcWnrW2c8aofMGXlQU')"></div>
+<div class="absolute inset-0 glass-overlay"></div>
+<div class="absolute top-4 left-4 glass-panel px-3 py-1 rounded-full flex items-center gap-1 backdrop-blur-md bg-black/20">
+<span class="material-symbols-outlined text-primary text-[14px]">landscape</span>
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-widest">Adventure</span>
+</div>
+<div class="absolute bottom-0 left-0 w-full p-6 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+<h3 class="font-headline-md text-headline-md font-bold text-primary mb-1 drop-shadow-md">Reykjavik</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">location_on</span> Iceland
+                        </p>
+<div class="flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
+<span class="font-label-sm text-label-sm text-primary glass-panel px-3 py-1 rounded-full">From $1,900</span>
+<button class="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center hover:bg-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Destination Card 4 -->
+<div class="min-w-[85vw] md:min-w-[400px] h-[500px] rounded-2xl overflow-hidden relative group snap-center shrink-0 border border-white/10">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="A lush rainforest in Costa Rica." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDszI0fASx7OWztcneFl4U_yfXZMA-txSMo9HxZaf52NphJ2cpUbBbVyBPyN1_55f9h5CdjoeA5sc6SHErLHZ6g2FYnoB0zrYVHZ6D3ZKx1FLV6qrY_u3t6j-y8UtiEdf8CXvsowoMj-_p9zwpMEs-2a0WIkR5mWFx_NEswfHGOqQ292XAnfOieFsDh2ajQjGF1b_HX1avGiAzbnZ049kTe6uEbkgFicD3-rOy0xgs2RCKKeSnzlNSvqz_BjTmQeG0xEhJrLxhdUs4')"></div>
+<div class="absolute inset-0 glass-overlay"></div>
+<div class="absolute top-4 left-4 glass-panel px-3 py-1 rounded-full flex items-center gap-1 backdrop-blur-md bg-black/20">
+<span class="material-symbols-outlined text-primary text-[14px]">eco</span>
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-widest">Eco-friendly</span>
+</div>
+<div class="absolute bottom-0 left-0 w-full p-6 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+<h3 class="font-headline-md text-headline-md font-bold text-primary mb-1 drop-shadow-md">Monteverde</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">location_on</span> Costa Rica
+                        </p>
+<div class="flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
+<span class="font-label-sm text-label-sm text-primary glass-panel px-3 py-1 rounded-full">From $1,500</span>
+<button class="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center hover:bg-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Features Grid (Spotlight Cards) -->
+<section class="py-24 relative z-10 px-margin-mobile md:px-margin-desktop bg-surface-container-lowest/80 border-t border-white/5">
+<div class="max-w-container-max mx-auto reveal mb-16 text-center">
+<span class="font-label-sm text-label-sm text-on-surface-variant tracking-widest uppercase mb-4 inline-block">The Toolkit</span>
+<h2 class="font-display-lg-italic text-display-lg-italic font-bold text-primary mb-4">Intelligence built in.</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto">Our platform combines cutting-edge AI with intuitive design to handle the complexity of travel planning, leaving you with just the joy of the journey.</p>
+</div>
+<div class="max-w-container-max mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter reveal" id="features-grid">
+<!-- Feature 1 -->
+<div class="glass-panel p-8 rounded-2xl spotlight-card h-full flex flex-col border-white/5 hover:border-white/20 transition-colors duration-300">
+<div class="w-14 h-14 rounded-xl bg-surface-variant flex items-center justify-center mb-6 border border-outline-variant">
+<span class="material-symbols-outlined text-primary text-3xl">psychology</span>
+</div>
+<h3 class="font-headline-md-mobile text-headline-md-mobile font-bold text-primary mb-3">AI Travel Brain</h3>
+<p class="font-body-md text-body-md text-on-surface-variant flex-grow">A sophisticated neural engine that learns your preferences, dynamically suggesting hidden gems and optimal routes.</p>
+</div>
+<!-- Feature 2 -->
+<div class="glass-panel p-8 rounded-2xl spotlight-card h-full flex flex-col border-white/5 hover:border-white/20 transition-colors duration-300">
+<div class="w-14 h-14 rounded-xl bg-surface-variant flex items-center justify-center mb-6 border border-outline-variant">
+<span class="material-symbols-outlined text-primary text-3xl">account_balance_wallet</span>
+</div>
+<h3 class="font-headline-md-mobile text-headline-md-mobile font-bold text-primary mb-3">BudgetSync</h3>
+<p class="font-body-md text-body-md text-on-surface-variant flex-grow">Real-time financial tracking integrated directly into your itinerary. Predictive algorithms prevent overspending.</p>
+</div>
+<!-- Feature 3 -->
+<div class="glass-panel p-8 rounded-2xl spotlight-card h-full flex flex-col border-white/5 hover:border-white/20 transition-colors duration-300">
+<div class="w-14 h-14 rounded-xl bg-surface-variant flex items-center justify-center mb-6 border border-outline-variant">
+<span class="material-symbols-outlined text-primary text-3xl">group</span>
+</div>
+<h3 class="font-headline-md-mobile text-headline-md-mobile font-bold text-primary mb-3">Collaborative Canvas</h3>
+<p class="font-body-md text-body-md text-on-surface-variant flex-grow">Invite friends and family to a multiplayer workspace. Vote on activities, share notes, and finalize plans synchronously.</p>
+</div>
+<!-- Feature 4 -->
+<div class="glass-panel p-8 rounded-2xl spotlight-card h-full flex flex-col border-white/5 hover:border-white/20 transition-colors duration-300">
+<div class="w-14 h-14 rounded-xl bg-surface-variant flex items-center justify-center mb-6 border border-outline-variant">
+<span class="material-symbols-outlined text-primary text-3xl">calendar_month</span>
+</div>
+<h3 class="font-headline-md-mobile text-headline-md-mobile font-bold text-primary mb-3">Smart Itineraries</h3>
+<p class="font-body-md text-body-md text-on-surface-variant flex-grow">Fluid scheduling that automatically adjusts when flights are delayed or reservations change. Total peace of mind.</p>
+</div>
+<!-- Feature 5 -->
+<div class="glass-panel p-8 rounded-2xl spotlight-card h-full flex flex-col border-white/5 hover:border-white/20 transition-colors duration-300">
+<div class="w-14 h-14 rounded-xl bg-surface-variant flex items-center justify-center mb-6 border border-outline-variant">
+<span class="material-symbols-outlined text-primary text-3xl">map</span>
+</div>
+<h3 class="font-headline-md-mobile text-headline-md-mobile font-bold text-primary mb-3">Spatial Mapping</h3>
+<p class="font-body-md text-body-md text-on-surface-variant flex-grow">High-fidelity, 3D interactive maps that plot your day seamlessly, minimizing transit time and maximizing exploration.</p>
+</div>
+<!-- Feature 6 -->
+<div class="glass-panel p-8 rounded-2xl spotlight-card h-full flex flex-col border-white/5 hover:border-white/20 transition-colors duration-300">
+<div class="w-14 h-14 rounded-xl bg-surface-variant flex items-center justify-center mb-6 border border-outline-variant">
+<span class="material-symbols-outlined text-primary text-3xl">picture_as_pdf</span>
+</div>
+<h3 class="font-headline-md-mobile text-headline-md-mobile font-bold text-primary mb-3">Cinematic Export</h3>
+<p class="font-body-md text-body-md text-on-surface-variant flex-grow">Generate stunning, magazine-quality PDF briefs of your trip. Perfect for offline viewing or printing as a keepsake.</p>
+</div>
+</div>
+</section>
+<!-- Global CTA -->
+<section class="py-24 relative z-10 px-margin-mobile md:px-margin-desktop mb-12">
+<div class="max-w-4xl mx-auto glass-panel p-12 md:p-20 rounded-3xl text-center relative overflow-hidden border-outline-variant reveal">
+<h2 class="font-display-lg-italic text-display-lg-italic font-bold text-primary mb-6 tracking-tight">
+                    Ready for your next journey?
+                </h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant mb-10 max-w-xl mx-auto">
+                    Join the thousands of sophisticated explorers who have refined their travel experience with Voyiq.
+                </p>
+<div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+<button class="w-full sm:w-auto inline-flex items-center justify-center font-label-sm text-label-sm bg-primary text-surface px-8 py-4 rounded-full hover:bg-surface-variant hover:text-primary transition-all uppercase tracking-widest group">
+                        Start Exploring Free
+                        <span class="material-symbols-outlined ml-2 group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="bg-surface-container-lowest border-t border-white/10 py-12 relative z-10">
+<div class="flex flex-col md:flex-row justify-between items-center px-margin-mobile md:px-margin-desktop gap-gutter max-w-container-max mx-auto">
+<div class="font-headline-md-mobile text-headline-md-mobile font-bold text-primary">Voyiq.</div>
+<div class="flex flex-wrap justify-center gap-6">
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Cookie Policy</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Support</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Press Kit</a>
+</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">
+                © 2024 Voyiq AI Travel. All rights reserved.
+            </div>
+</div>
+</footer>
+</main>
+<!-- Interactive Script -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('contact-form');
+            const successState = document.getElementById('success-state');
+            const resetBtn = document.getElementById('reset-form');
+
+            if(form) {
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    // Simulate sending
+                    const btn = form.querySelector('button[type="submit"]');
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> Sending...';
+                    
+                    setTimeout(() => {
+                        successState.classList.remove('opacity-0', 'pointer-events-none');
+                        successState.classList.add('opacity-100', 'pointer-events-auto');
+                        btn.innerHTML = originalText;
+                        form.reset();
+                    }, 800);
+                });
+
+                resetBtn.addEventListener('click', () => {
+                    successState.classList.add('opacity-0', 'pointer-events-none');
+                    successState.classList.remove('opacity-100', 'pointer-events-auto');
+                });
+            }
+
+            // Scroll Reveal Logic
+            function reveal() {
+                var reveals = document.querySelectorAll(".reveal");
+                for (var i = 0; i < reveals.length; i++) {
+                    var windowHeight = window.innerHeight;
+                    var elementTop = reveals[i].getBoundingClientRect().top;
+                    var elementVisible = 100;
+                    if (elementTop < windowHeight - elementVisible) {
+                        reveals[i].classList.add("active");
+                    }
+                }
+            }
+            window.addEventListener("scroll", reveal);
+            reveal(); // Trigger on load
+
+            // Spotlight Card Hover Effect
+            const featuresGrid = document.getElementById("features-grid");
+            if(featuresGrid) {
+                featuresGrid.onmousemove = e => {
+                    for(const card of document.getElementsByClassName("spotlight-card")) {
+                        const rect = card.getBoundingClientRect(),
+                              x = e.clientX - rect.left,
+                              y = e.clientY - rect.top;
+
+                        card.style.setProperty("--mouse-x", `${x}px`);
+                        card.style.setProperty("--mouse-y", `${y}px`);
+                    }
+                };
+            }
+
+            // Horizontal Scroll Controls
+            const container = document.getElementById('destinations-container');
+            const scrollLeftBtn = document.getElementById('scroll-left');
+            const scrollRightBtn = document.getElementById('scroll-right');
+
+            if(scrollLeftBtn && scrollRightBtn && container) {
+                scrollLeftBtn.addEventListener('click', () => {
+                    container.scrollBy({ left: -400, behavior: 'smooth' });
+                });
+                scrollRightBtn.addEventListener('click', () => {
+                    container.scrollBy({ left: 400, behavior: 'smooth' });
+                });
+            }
+
+            // Animated Counters
+            const counters = document.querySelectorAll('.counter');
+            const speed = 200; // The lower the slower
+
+            const animateCounters = () => {
+                counters.forEach(counter => {
+                    const updateCount = () => {
+                        const target = +counter.getAttribute('data-target');
+                        const count = +counter.innerText;
+                        const inc = target / speed;
+
+                        if (count < target) {
+                            // Check if it's a float
+                            if(target % 1 !== 0) {
+                                 counter.innerText = (count + inc).toFixed(1);
+                            } else {
+                                counter.innerText = Math.ceil(count + inc);
+                            }
+                            setTimeout(updateCount, 10);
+                        } else {
+                            counter.innerText = target;
+                        }
+                    };
+                    
+                    // Only animate when in view
+                    if('IntersectionObserver' in window) {
+                        const observer = new IntersectionObserver((entries) => {
+                            if(entries[0].isIntersecting) {
+                                updateCount();
+                                observer.disconnect();
+                            }
+                        });
+                        observer.observe(counter);
+                    } else {
+                        updateCount();
+                    }
+                });
+            };
+            
+            // Slight delay to let structure render
+            setTimeout(animateCounters, 500);
+        });
+    </script>
+</body></html>
