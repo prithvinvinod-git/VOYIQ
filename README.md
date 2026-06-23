@@ -133,7 +133,7 @@ voyiq/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/voyiq.git
+git clone https://github.com/prithvinvinod-git/voyiq.git
 cd voyiq
 ```
 

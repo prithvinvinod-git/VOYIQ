@@ -284,7 +284,7 @@ export default function LandingPage() {
 
         <div className="relative z-10 h-full flex flex-col">
             <nav
-              className="bg-white/60 backdrop-blur-md rounded-full shadow-sm pl-4 pr-2 py-2 flex items-center justify-between w-fit mx-auto mt-[30px] md:gap-8 transition-all duration-300 hover:bg-white/70"
+              className="bg-white/60 backdrop-blur-md rounded-full shadow-sm pl-4 pr-2 py-2 flex items-center justify-between w-full md:w-fit mx-auto mt-[30px] md:gap-8 transition-all duration-300 hover:bg-white/70 max-w-[95vw]"
               role="navigation"
               aria-label="Main navigation"
             >
@@ -313,7 +313,7 @@ export default function LandingPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleProceed}
-                  className="bg-[#111415] text-white px-6 py-2 rounded-full text-[12px] leading-[1] tracking-[0.05em] font-semibold uppercase hover:bg-[#323536] transition-colors ml-4 shadow-lg scale-95 active:scale-90"
+                  className="bg-[#111415] text-white px-4 md:px-6 py-2 rounded-full text-[10px] md:text-[12px] leading-[1] tracking-[0.05em] font-semibold uppercase hover:bg-[#323536] transition-colors ml-2 md:ml-4 shadow-lg scale-95 active:scale-90"
                 >
                   Start Exploring
                 </button>
@@ -332,20 +332,20 @@ export default function LandingPage() {
             </nav>
 
             {mobileNavOpen && (
-              <div className="md:hidden mt-2 glass-panel rounded-2xl p-4 flex flex-col gap-3 backdrop-blur-xl">
-                <a className="text-[16px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors" href="#">Destinations</a>
-                <Link className="text-[16px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors" href="/pricing">Pricing</Link>
-                <Link className="text-[16px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors" href="/dashboard">Dashboard</Link>
+              <div className="md:hidden mt-2 glass-panel rounded-2xl p-3 flex flex-col gap-1 backdrop-blur-xl w-fit mx-auto min-w-[200px]">
+                <a className="text-[14px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors px-4 py-2.5 rounded-xl hover:bg-white/10" href="#">Destinations</a>
+                <Link className="text-[14px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors px-4 py-2.5 rounded-xl hover:bg-white/10" href="/pricing">Pricing</Link>
+                <Link className="text-[14px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors px-4 py-2.5 rounded-xl hover:bg-white/10" href="/dashboard">Dashboard</Link>
               </div>
             )}
 
             <div className="flex-grow" />
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 w-full max-w-[1280px] mx-auto">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 w-full max-w-[1280px] mx-auto px-5">
               <div className="flex-1 max-w-2xl">
-                <h1 className="text-[80px] leading-[1.05] tracking-[0.02em] font-bold text-white mb-4 drop-shadow-md font-amoria">
+                <h1 className="text-[44px] md:text-[80px] leading-[1.05] tracking-[0.02em] font-bold text-white mb-4 drop-shadow-md font-amoria">
                   Travel Refined. Experience{" "}
                   <br />
-                  <span className="font-instrument-serif text-[88px] leading-[1.05] font-light text-[#dbe1ff] italic hover:bg-gradient-to-r hover:from-amber-300 hover:via-yellow-200 hover:to-amber-400 hover:bg-clip-text hover:text-transparent transition-all duration-500">
+                  <span className="font-instrument-serif text-[48px] md:text-[88px] leading-[1.05] font-light text-[#dbe1ff] italic hover:bg-gradient-to-r hover:from-amber-300 hover:via-yellow-200 hover:to-amber-400 hover:bg-clip-text hover:text-transparent transition-all duration-500">
                     Luxury
                   </span>
                 </h1>
@@ -357,30 +357,30 @@ export default function LandingPage() {
               </div>
 
               {/* Trip Generator Card */}
-              <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-6 w-full lg:w-[480px] border border-white/20 flex-shrink-0 relative overflow-hidden">
-                <h2 className="text-[24px] leading-[1.2] font-semibold text-[#2f3131] mb-5">
+              <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-5 w-full lg:w-[420px] border border-white/20 flex-shrink-0 relative overflow-hidden">
+                <h2 className="text-[20px] leading-[1.2] font-semibold text-[#2f3131] mb-4">
                   Generate new trip!
                 </h2>
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-3">
                   <input
                     value={genDeparture}
                     onChange={(e) => setGenDeparture(e.target.value)}
-                    className="w-full bg-transparent border border-[#444748] rounded-xl px-4 py-3 text-sm text-[#2f3131] placeholder:text-[#636565] focus:border-[#2f3131] transition-colors outline-none"
+                    className="w-full bg-transparent border border-[#444748] rounded-xl px-3.5 py-2.5 text-sm text-[#2f3131] placeholder:text-[#636565] focus:border-[#2f3131] transition-colors outline-none"
                     placeholder="Departure"
                     type="text"
                   />
                   <input
                     value={genDestination}
                     onChange={(e) => setGenDestination(e.target.value)}
-                    className="w-full bg-transparent border border-[#444748] rounded-xl px-4 py-3 text-sm text-[#2f3131] placeholder:text-[#636565] focus:border-[#2f3131] transition-colors outline-none"
+                    className="w-full bg-transparent border border-[#444748] rounded-xl px-3.5 py-2.5 text-sm text-[#2f3131] placeholder:text-[#636565] focus:border-[#2f3131] transition-colors outline-none"
                     placeholder="Destination"
                     type="text"
                   />
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-2">
                     <input
                       value={genTravelers || ""}
                       onChange={(e) => setGenTravelers(parseInt(e.target.value) || ("" as any))}
-                      className="w-full bg-transparent border border-[#444748] rounded-xl px-4 py-3 text-sm text-[#2f3131] placeholder:text-[#636565] focus:border-[#2f3131] transition-colors outline-none"
+                      className="w-full bg-transparent border border-[#444748] rounded-xl px-3.5 py-2.5 text-sm text-[#2f3131] placeholder:text-[#636565] focus:border-[#2f3131] transition-colors outline-none"
                       placeholder="People"
                       type="number"
                       min="1"
@@ -389,7 +389,7 @@ export default function LandingPage() {
                       <input
                         value={genBudget || ""}
                         onChange={(e) => setGenBudget(parseInt(e.target.value) || ("" as any))}
-                        className="flex-1 bg-transparent border border-[#444748] rounded-xl px-4 py-3 text-sm text-[#2f3131] placeholder:text-[#636565] focus:border-[#2f3131] transition-colors outline-none min-w-0"
+                        className="flex-1 bg-transparent border border-[#444748] rounded-xl px-3.5 py-2.5 text-sm text-[#2f3131] placeholder:text-[#636565] focus:border-[#2f3131] transition-colors outline-none min-w-0"
                         placeholder="Budget"
                         type="number"
                         min="0"
@@ -397,7 +397,7 @@ export default function LandingPage() {
                       <select
                         value={genCurrency}
                         onChange={(e) => setGenCurrency(e.target.value)}
-                        className="w-20 bg-transparent border border-[#444748] rounded-xl px-2 py-3 text-sm text-[#2f3131] focus:border-[#2f3131] transition-colors outline-none"
+                        className="w-20 bg-transparent border border-[#444748] rounded-xl px-2 py-2.5 text-sm text-[#2f3131] focus:border-[#2f3131] transition-colors outline-none"
                       >
                         <option value="USD">$</option>
                         <option value="EUR">€</option>
@@ -408,7 +408,7 @@ export default function LandingPage() {
                   </div>
 
                   <div>
-                    <p className="text-[12px] leading-[1] tracking-[0.05em] font-semibold uppercase text-[#444748] mb-3">
+                    <p className="text-[12px] leading-[1] tracking-[0.05em] font-semibold uppercase text-[#444748] mb-2">
                       Style
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -424,7 +424,7 @@ export default function LandingPage() {
                               );
                             }}
                           />
-                          <div className="px-4 py-1.5 rounded-full border border-[#444748] text-[#444748] text-[12px] leading-[1] tracking-[0.05em] font-semibold uppercase peer-checked:bg-[#2f3131] peer-checked:text-white peer-checked:border-[#2f3131] transition-all hover:border-[#2f3131]/50">
+                          <div className="px-3.5 py-1.5 rounded-full border border-[#444748] text-[#444748] text-[12px] leading-[1] tracking-[0.05em] font-semibold uppercase peer-checked:bg-[#2f3131] peer-checked:text-white peer-checked:border-[#2f3131] transition-all hover:border-[#2f3131]/50">
                             {s}
                           </div>
                         </label>
@@ -434,7 +434,7 @@ export default function LandingPage() {
 
                   <button
                     onClick={handleGenTrip}
-                    className="w-full bg-[#111415] text-white py-3 rounded-xl text-[12px] leading-[1] tracking-[0.05em] font-semibold uppercase hover:bg-[#323536] transition-colors mt-1 flex items-center justify-center gap-2 group"
+                    className="w-full bg-[#111415] text-white py-2.5 rounded-xl text-[12px] leading-[1] tracking-[0.05em] font-semibold uppercase hover:bg-[#323536] transition-colors mt-1 flex items-center justify-center gap-2 group"
                   >
                     Generate
                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
@@ -522,7 +522,7 @@ export default function LandingPage() {
       <section className="py-24 relative z-10 px-5 md:px-16 overflow-hidden" aria-label="Destinations">
         <div className="max-w-[1280px] mx-auto mb-12 flex justify-between items-end reveal-stitch">
           <div>
-            <h2 className="font-amoria text-[68px] leading-[1.1] font-bold text-white mb-2 tracking-[0.02em]">
+            <h2 className="font-amoria text-[36px] md:text-[68px] leading-[1.1] font-bold text-white mb-2 tracking-[0.02em]">
               Curated Escapes
             </h2>
             <p className="text-[18px] leading-[1.6] text-[#c4c7c8]">
@@ -556,7 +556,7 @@ export default function LandingPage() {
             return (
               <div
                 key={d.name}
-                className="min-w-[85vw] md:min-w-[400px] h-[500px] rounded-2xl overflow-hidden relative group snap-center shrink-0 border border-white/10"
+                className="min-w-[85vw] md:min-w-[400px] h-[380px] md:h-[500px] rounded-2xl overflow-hidden relative group snap-center shrink-0 border border-white/10"
               >
                 <div
                   className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
@@ -603,7 +603,7 @@ export default function LandingPage() {
           <span className="text-[12px] leading-[1] tracking-[0.05em] font-semibold text-[#c4c7c8] tracking-widest uppercase mb-4 inline-block">
             The Toolkit
           </span>
-          <h2 className="font-amoria text-[68px] leading-[1.1] font-bold text-white mb-4 tracking-[0.02em]">
+          <h2 className="font-amoria text-[36px] md:text-[68px] leading-[1.1] font-bold text-white mb-4 tracking-[0.02em]">
             Intelligence built in.
           </h2>
           <p className="text-[18px] leading-[1.6] text-[#c4c7c8] max-w-2xl mx-auto">
@@ -622,7 +622,7 @@ export default function LandingPage() {
             return (
               <div
                 key={f.title}
-                className="glass-panel p-8 rounded-2xl spotlight-card h-full flex flex-col border border-white/5 hover:border-white/20 transition-colors duration-300"
+                className="glass-panel p-6 md:p-8 rounded-2xl spotlight-card h-full flex flex-col border border-white/5 hover:border-white/20 transition-colors duration-300"
               >
                 <div className="w-14 h-14 rounded-xl bg-[#323536] flex items-center justify-center mb-6 border border-[#444748]">
                   <Icon className="w-7 h-7 text-white" />
@@ -640,8 +640,8 @@ export default function LandingPage() {
       </section>
 
       <section className="py-24 relative z-10 px-5 md:px-16 mb-12">
-        <div className="max-w-4xl mx-auto glass-panel p-12 md:p-20 rounded-3xl text-center relative overflow-hidden border border-[#444748] reveal-stitch">
-          <h2 className="font-instrument-serif text-[68px] leading-[1.1] font-bold text-white mb-6 tracking-tight">
+        <div className="max-w-4xl mx-auto glass-panel p-8 md:p-20 rounded-3xl text-center relative overflow-hidden border border-[#444748] reveal-stitch">
+          <h2 className="font-instrument-serif text-[36px] md:text-[68px] leading-[1.1] font-bold text-white mb-6 tracking-tight">
             Ready for your next journey?
           </h2>
           <p className="text-[18px] leading-[1.6] text-[#c4c7c8] mb-10 max-w-xl mx-auto">
