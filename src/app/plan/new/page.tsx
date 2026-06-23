@@ -118,7 +118,7 @@ function Chip({
 function GlassInput({
   id,
   label,
-  icon: Icon,
+  icon,
   hint,
   ...props
 }: {
@@ -127,6 +127,7 @@ function GlassInput({
   icon?: React.ElementType;
   hint?: string;
 } & React.InputHTMLAttributes<HTMLInputElement>) {
+  const Icon = icon as React.ComponentType<{ className?: string; "aria-hidden"?: string }> | undefined;
   return (
     <div className="space-y-1.5">
       <label
