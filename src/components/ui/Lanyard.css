@@ -1,0 +1,28 @@
+@keyframes shake-subtle {
+  0%, 100% { transform: translateX(0); }
+  10% { transform: translateX(-3px) rotate(-0.5deg); }
+  20% { transform: translateX(3px) rotate(0.5deg); }
+  30% { transform: translateX(-2px) rotate(-0.3deg); }
+  40% { transform: translateX(2px) rotate(0.3deg); }
+  50% { transform: translateX(-1px); }
+  60% { transform: translateX(1px); }
+  70% { transform: translateX(-0.5px); }
+  80% { transform: translateX(0.5px); }
+  90% { transform: translateX(0); }
+}
+
+.lanyard-wrapper {
+  position: relative;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transform: scale(1);
+  transform-origin: center;
+}
+
+.lanyard-wrapper.shake {
+  animation: shake-subtle 0.8s ease-in-out;
+}

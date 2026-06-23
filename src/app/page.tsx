@@ -31,6 +31,9 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { PlanSelectionDialog } from "@/components/shared/PlanSelectionDialog";
+import CardSwap, { Card as SwapCard } from "@/components/ui/CardSwap";
+import dynamic from "next/dynamic";
+const Lanyard = dynamic(() => import("@/components/ui/Lanyard"), { ssr: false });
 
 function useCounter(target: number, enabled: boolean, decimals = 0) {
   const [count, setCount] = useState(0);
@@ -233,31 +236,37 @@ export default function LandingPage() {
       icon: Brain,
       title: "AI Travel Brain",
       desc: "A sophisticated neural engine that learns your preferences, dynamically suggesting hidden gems and optimal routes.",
+      image: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=600&q=80",
     },
     {
       icon: Wallet,
       title: "BudgetSync",
       desc: "Real-time financial tracking integrated directly into your itinerary. Predictive algorithms prevent overspending.",
+      image: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600&q=80",
     },
     {
       icon: Users,
       title: "Collaborative Canvas",
       desc: "Invite friends and family to a multiplayer workspace. Vote on activities, share notes, and finalize plans synchronously.",
+      image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&q=80",
     },
     {
       icon: Calendar,
       title: "Smart Itineraries",
       desc: "Fluid scheduling that automatically adjusts when flights are delayed or reservations change. Total peace of mind.",
+      image: "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=600&q=80",
     },
     {
       icon: Map,
       title: "Spatial Mapping",
       desc: "High-fidelity, 3D interactive maps that plot your day seamlessly, minimizing transit time and maximizing exploration.",
+      image: "https://images.unsplash.com/photo-1526778548025-fa2f459b5eb9?w=600&q=80",
     },
     {
       icon: FileText,
       title: "Cinematic Export",
       desc: "Generate stunning, magazine-quality PDF briefs of your trip. Perfect for offline viewing or printing as a keepsake.",
+      image: "https://images.unsplash.com/photo-1456324504439-367cee3b3c32?w=600&q=80",
     },
   ];
 
@@ -596,9 +605,19 @@ export default function LandingPage() {
       </section>
 
       <section
-        className="py-24 relative z-10 px-5 md:px-16 bg-[#0c0f10]/80 border-t border-white/5"
+        className="py-24 relative z-10 px-5 md:px-16 bg-[#0c0f10]/80 border-t border-white/5 overflow-visible"
         aria-label="Features"
       >
+        <div className="absolute left-0 top-0 w-[700px] h-[800px] -translate-x-1/4 -translate-y-[100px] pointer-events-none z-20">
+          <Lanyard
+            position={[0, 0, 30]}
+            fov={20}
+            transparent
+            lanyardWidth={0.8}
+            frontImage="/logo.png"
+            backImage="/logo.png"
+          />
+        </div>
         <div className="max-w-[1280px] mx-auto reveal-stitch mb-16 text-center">
           <span className="text-[12px] leading-[1] tracking-[0.05em] font-semibold text-[#c4c7c8] tracking-widest uppercase mb-4 inline-block">
             The Toolkit
@@ -613,29 +632,62 @@ export default function LandingPage() {
           </p>
         </div>
 
-        <div
-          id="features-grid"
-          className="max-w-[1280px] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 reveal-stitch"
-        >
-          {features.map((f) => {
-            const Icon = f.icon;
-            return (
-              <div
-                key={f.title}
-                className="glass-panel p-6 md:p-8 rounded-2xl spotlight-card h-full flex flex-col border border-white/5 hover:border-white/20 transition-colors duration-300"
-              >
-                <div className="w-14 h-14 rounded-xl bg-[#323536] flex items-center justify-center mb-6 border border-[#444748]">
-                  <Icon className="w-7 h-7 text-white" />
-                </div>
-                <h3 className="text-[24px] leading-[1.2] font-semibold text-white mb-3">
+        <div className="max-w-[1280px] mx-auto flex flex-col lg:flex-row lg:items-start lg:justify-between gap-12 reveal-stitch">
+          <div className="flex-1 max-w-lg lg:pt-[300px]">
+            <p className="text-[15px] leading-relaxed text-[#c4c7c8] mb-6">
+              Every feature is crafted to eliminate friction and amplify the
+              experience — from neural trip planning to real-time budget
+              intelligence.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              {features.map((f) => (
+                <span
+                  key={f.title}
+                  className="text-[11px] leading-none tracking-[0.05em] font-semibold uppercase text-[#c4c7c8]/60 border border-white/10 rounded-full px-3.5 py-2"
+                >
                   {f.title}
-                </h3>
-                <p className="text-[16px] leading-[1.5] text-[#c4c7c8] flex-grow">
-                  {f.desc}
-                </p>
-              </div>
-            );
-          })}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex-shrink-0 w-full lg:w-[580px] h-[520px]">
+            <CardSwap
+              width={500}
+              height={320}
+              cardDistance={60}
+              verticalDistance={70}
+              delay={4000}
+              pauseOnHover
+              skewAmount={5}
+              easing="elastic"
+            >
+              {features.map((f) => {
+                const Icon = f.icon;
+                return (
+                  <SwapCard key={f.title}>
+                    <div className="p-7 flex flex-col h-full">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center ring-1 ring-white/[0.08]">
+                          <Icon className="w-5 h-5 text-white" />
+                        </div>
+                        <h3 className="text-base font-semibold text-white tracking-tight">
+                          {f.title}
+                        </h3>
+                      </div>
+                      <p className="text-[13px] leading-relaxed text-[#c4c7c8] mb-3">
+                        {f.desc}
+                      </p>
+                      <div className="relative w-full h-[110px] rounded-lg overflow-hidden mt-auto">
+                        <img src={f.image} alt={f.title} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0f1113]/60 to-transparent" />
+                      </div>
+                    </div>
+                  </SwapCard>
+                );
+              })}
+            </CardSwap>
+          </div>
         </div>
       </section>
 
