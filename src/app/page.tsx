@@ -236,37 +236,37 @@ export default function LandingPage() {
       icon: Brain,
       title: "AI Travel Brain",
       desc: "A sophisticated neural engine that learns your preferences, dynamically suggesting hidden gems and optimal routes.",
-      image: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=600&q=80",
+      image: "/cardimg/1_ai_travel_brain_444x110.png",
     },
     {
       icon: Wallet,
       title: "BudgetSync",
       desc: "Real-time financial tracking integrated directly into your itinerary. Predictive algorithms prevent overspending.",
-      image: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600&q=80",
+      image: "/cardimg/2_budgetsync_444x110.png",
     },
     {
       icon: Users,
       title: "Collaborative Canvas",
       desc: "Invite friends and family to a multiplayer workspace. Vote on activities, share notes, and finalize plans synchronously.",
-      image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&q=80",
+      image: "/cardimg/3_collaborative_canvas_444x110.png",
     },
     {
       icon: Calendar,
       title: "Smart Itineraries",
       desc: "Fluid scheduling that automatically adjusts when flights are delayed or reservations change. Total peace of mind.",
-      image: "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=600&q=80",
+      image: "/cardimg/4_smart_itineraries_444x110.png",
     },
     {
       icon: Map,
       title: "Spatial Mapping",
       desc: "High-fidelity, 3D interactive maps that plot your day seamlessly, minimizing transit time and maximizing exploration.",
-      image: "https://images.unsplash.com/photo-1526778548025-fa2f459b5eb9?w=600&q=80",
+      image: "/cardimg/5_spatial_mapping_444x110.png",
     },
     {
       icon: FileText,
       title: "Cinematic Export",
       desc: "Generate stunning, magazine-quality PDF briefs of your trip. Perfect for offline viewing or printing as a keepsake.",
-      image: "https://images.unsplash.com/photo-1456324504439-367cee3b3c32?w=600&q=80",
+      image: "/cardimg/6_cinematic_export_444x110.png",
     },
   ];
 
@@ -614,7 +614,7 @@ export default function LandingPage() {
             backImage="/logo.png"
           />
         </div>
-        <div className="max-w-[1280px] mx-auto reveal-stitch mb-16 text-center">
+        <div className="max-w-[1280px] reveal-stitch mb-16 text-center" style={{ marginLeft: 'calc(50% - 640px - 90px)', marginRight: 'auto' }}>
           <span className="text-[12px] leading-[1] tracking-[0.05em] font-semibold text-[#c4c7c8] tracking-widest uppercase mb-4 inline-block">
             The Toolkit
           </span>
@@ -647,7 +647,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="flex-shrink-0 w-full max-w-full lg:overflow-visible lg:w-[580px] h-[260px] lg:h-[520px] relative z-10">
+          <div className="flex-shrink-0 w-full max-w-full lg:overflow-visible lg:w-[580px] h-[260px] lg:h-[520px] relative z-10 -mt-[80px] -ml-[80px]">
             <div className="scale-[0.8] lg:scale-100 origin-top-left w-[500px] lg:w-auto">
             <CardSwap
               width={500}

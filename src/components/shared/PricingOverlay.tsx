@@ -116,11 +116,11 @@ export function PricingOverlay({ open, onClose, feature }: PricingOverlayProps) 
         onClick={onClose}
       />
       <div
-        className={`relative w-full max-w-4xl max-h-[90vh] overflow-y-auto transition-all duration-500 ease-out ${
+        className={`relative w-full max-w-4xl transition-all duration-500 ease-out ${
           visible ? "opacity-100 translate-y-0 scale-100" : "opacity-0 -translate-y-12 scale-[0.97]"
         }`}
       >
-        <div className="glass-panel rounded-3xl p-6 md:p-10 relative">
+        <div className="glass-panel rounded-3xl p-3 md:p-4 relative">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 flex items-center justify-center text-white/60 hover:text-white transition-all z-10"
@@ -142,51 +142,52 @@ export function PricingOverlay({ open, onClose, feature }: PricingOverlayProps) 
             </div>
           )}
 
-          <div className="text-center mb-8">
-            <h2 className="text-2xl md:text-3xl font-headline font-bold text-white mb-2">
+          <div className="text-center mb-4">
+            <h2 className="text-lg md:text-xl font-headline font-bold text-white mb-1">
               {upgraded ? "You're All Set!" : "Upgrade Your Experience"}
             </h2>
-            <p className="text-sm text-white/50">
+            <p className="text-xs text-white/50">
               {upgraded ? "All premium features are now unlocked. Happy travels!" : "Choose the plan that fits your journey."}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {plans.map((plan) => {
               const Icon = plan.icon;
               return (
                 <div
                   key={plan.id}
-                  className={`relative rounded-2xl p-5 md:p-6 flex flex-col transition-all duration-300 hover:-translate-y-0.5 ${
+                  className={`relative rounded-2xl p-3 flex flex-col transition-all duration-300 hover:-translate-y-0.5 ${
                     plan.popular
                       ? "glass-panel ring-1 ring-blue-500/30"
                       : "glass-panel"
                   }`}
                 >
                   {plan.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-1 w-full px-2">
                       <span className="bg-blue-500 text-white text-[10px] font-bold px-3 py-0.5 rounded-full uppercase tracking-[0.15em] shadow-lg whitespace-nowrap">
                         Most Popular
                       </span>
+                      <span className="text-[11px] font-semibold text-emerald-400 whitespace-nowrap self-end mr-[10px]" style={{fontFamily: 'sans-serif'}}>use code: coet</span>
                     </div>
                   )}
 
                   <div className="mb-5">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 bg-white/5 border border-white/10">
-                      <Icon className="w-5 h-5 text-blue-400" />
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-2 bg-white/5 border border-white/10">
+                      <Icon className="w-4 h-4 text-blue-400" />
                     </div>
-                    <h3 className="text-lg font-headline font-bold text-white mb-0.5">
+                    <h3 className="text-base font-headline font-bold text-white mb-0.5">
                       {plan.name}
                     </h3>
                     <p className="text-xs text-white/40">{plan.tagline}</p>
                   </div>
 
-                  <div className="mb-5">
+                  <div className="mb-3">
                     {plan.price === 0 ? (
-                      <div className="text-3xl font-headline font-bold text-white">Free</div>
+                      <div className="text-2xl font-headline font-bold text-white">Free</div>
                     ) : (
                       <div className="flex items-end gap-1">
-                        <span className="text-3xl font-headline font-bold text-white">
+                        <span className="text-2xl font-headline font-bold text-white">
                           ${plan.price}
                         </span>
                         <span className="text-white/40 mb-1 text-xs">/mo</span>
@@ -194,7 +195,7 @@ export function PricingOverlay({ open, onClose, feature }: PricingOverlayProps) 
                     )}
                   </div>
 
-                  <ul className="space-y-2 mb-5 flex-1">
+                  <ul className="space-y-1.5 mb-3 flex-1">
                     {plan.features.map((f, i) => (
                       <li key={i} className="flex items-start gap-2.5 text-xs">
                         <Check className="w-3.5 h-3.5 text-blue-400 flex-shrink-0 mt-0.5" />
@@ -214,7 +215,7 @@ export function PricingOverlay({ open, onClose, feature }: PricingOverlayProps) 
                         <input
                           type="text"
                           placeholder="Enter code"
-                          className="flex-1 h-9 px-3 rounded-lg text-xs font-mono text-center text-white placeholder:text-white/30 outline-none bg-white/5 border border-white/10 focus:ring-1 focus:ring-blue-500/50"
+                          className="flex-1 h-8 px-2 rounded-lg text-[10px] font-mono text-center text-white placeholder:text-white/30 outline-none bg-white/5 border border-white/10 focus:ring-1 focus:ring-blue-500/50"
                           value={promoCode}
                           onChange={(e) => setPromoCode(e.target.value)}
                           onKeyDown={(e) => e.key === "Enter" && handlePromoSubmit()}
@@ -222,12 +223,12 @@ export function PricingOverlay({ open, onClose, feature }: PricingOverlayProps) 
                         <button
                           onClick={handlePromoSubmit}
                           disabled={isUpgrading}
-                          className="h-9 px-4 rounded-lg text-xs font-bold bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50 transition-all"
+                          className="h-8 px-3 rounded-lg text-[10px] font-bold bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50 transition-all"
                         >
                           {isUpgrading ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
                           ) : (
-                            "Unlock"
+                            <ArrowRight className="w-3.5 h-3.5" />
                           )}
                         </button>
                       </div>
@@ -244,7 +245,7 @@ export function PricingOverlay({ open, onClose, feature }: PricingOverlayProps) 
                   <button
                     onClick={() => router.push(user ? "/plan/new" : plan.href)}
                     disabled={upgraded}
-                    className={`w-full h-10 rounded-xl font-semibold text-xs transition-all duration-300 ${
+                    className={`w-full h-8 rounded-xl font-semibold text-[10px] transition-all duration-300 ${
                       upgraded
                         ? "bg-white/5 border border-white/10 text-white/40 cursor-not-allowed"
                         : plan.popular
@@ -262,7 +263,7 @@ export function PricingOverlay({ open, onClose, feature }: PricingOverlayProps) 
             })}
           </div>
 
-          <p className="text-center text-xs text-white/30 mt-6">
+          <p className="text-center text-[10px] text-white/30 mt-4">
             No commitment. Cancel anytime. All plans include a 14-day free trial of premium features.
           </p>
         </div>
