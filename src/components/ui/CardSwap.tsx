@@ -8,6 +8,7 @@ import React, {
   useEffect,
   useMemo,
   useRef,
+  useState,
 } from "react";
 import gsap from "gsap";
 import "./CardSwap.css";
@@ -63,6 +64,9 @@ interface CardSwapProps {
   skewAmount?: number;
   easing?: "linear" | "elastic";
   children: React.ReactNode;
+  mobileCardDistance?: number;
+  mobileVerticalDistance?: number;
+  mobileSkewAmount?: number;
 }
 
 const CardSwap: React.FC<CardSwapProps> = ({
@@ -75,8 +79,23 @@ const CardSwap: React.FC<CardSwapProps> = ({
   onCardClick,
   skewAmount = 6,
   easing = "elastic",
+  mobileCardDistance,
+  mobileVerticalDistance,
+  mobileSkewAmount,
   children,
 }) => {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 768);
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const distX = isMobile && mobileCardDistance != null ? mobileCardDistance : cardDistance;
+  const distY = isMobile && mobileVerticalDistance != null ? mobileVerticalDistance : verticalDistance;
+  const skew = isMobile && mobileSkewAmount != null ? mobileSkewAmount : skewAmount;
+
   const config =
     easing === "elastic"
       ? {
@@ -111,7 +130,7 @@ const CardSwap: React.FC<CardSwapProps> = ({
   useEffect(() => {
     const total = refs.length;
     refs.forEach((r, i) => {
-      if (r.current) placeNow(r.current, makeSlot(i, cardDistance, verticalDistance, total), skewAmount);
+      if (r.current) placeNow(r.current, makeSlot(i, distX, distY, total), skew);
     });
 
     const swap = () => {
@@ -133,7 +152,7 @@ const CardSwap: React.FC<CardSwapProps> = ({
       rest.forEach((idx, i) => {
         const el = refs[idx]?.current;
         if (!el) return;
-        const slot = makeSlot(i, cardDistance, verticalDistance, refs.length);
+        const slot = makeSlot(i, distX, distY, refs.length);
         tl.set(el, { zIndex: slot.zIndex }, "promote");
         tl.to(
           el,
@@ -150,8 +169,8 @@ const CardSwap: React.FC<CardSwapProps> = ({
 
       const backSlot = makeSlot(
         refs.length - 1,
-        cardDistance,
-        verticalDistance,
+        distX,
+        distY,
         refs.length
       );
       tl.addLabel(
@@ -206,7 +225,7 @@ const CardSwap: React.FC<CardSwapProps> = ({
     }
     return () => clearInterval(intervalRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cardDistance, verticalDistance, delay, pauseOnHover, skewAmount, easing]);
+  }, [distX, distY, delay, pauseOnHover, skew, easing]);
 
   const rendered = childArr.map((child, i) => {
     if (!isValidElement(child)) return child;

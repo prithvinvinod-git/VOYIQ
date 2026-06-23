@@ -605,15 +605,14 @@ export default function LandingPage() {
       </section>
 
       <section
-        className="py-24 relative z-10 px-5 md:px-16 bg-[#0c0f10]/80 border-t border-white/5 overflow-visible"
+        className="py-24 relative z-10 px-5 md:px-16 bg-[#0c0f10]/80 border-t border-white/5 overflow-hidden lg:overflow-visible"
         aria-label="Features"
       >
-        <div className="absolute left-0 top-0 w-[700px] h-[800px] -translate-x-1/4 -translate-y-[100px] pointer-events-none z-20">
+        <div className="absolute left-0 top-0 w-[700px] h-[800px] -translate-x-1/4 -translate-y-[100px] pointer-events-none z-20 hidden md:block">
           <Lanyard
             position={[0, 0, 30]}
             fov={20}
-            transparent
-            lanyardWidth={0.8}
+            lanyardWidth={0.6}
             frontImage="/logo.png"
             backImage="/logo.png"
           />
@@ -633,7 +632,7 @@ export default function LandingPage() {
         </div>
 
         <div className="max-w-[1280px] mx-auto flex flex-col lg:flex-row lg:items-start lg:justify-between gap-12 reveal-stitch">
-          <div className="flex-1 max-w-lg lg:pt-[300px]">
+          <div className="hidden lg:block flex-1 max-w-lg lg:pt-[300px]">
             <p className="text-[15px] leading-relaxed text-[#c4c7c8] mb-6">
               Every feature is crafted to eliminate friction and amplify the
               experience — from neural trip planning to real-time budget
@@ -651,7 +650,8 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="flex-shrink-0 w-full lg:w-[580px] h-[520px]">
+          <div className="flex-shrink-0 w-full max-w-full lg:overflow-visible lg:w-[580px] h-[260px] lg:h-[520px] relative z-10">
+            <div className="scale-[0.8] lg:scale-100 origin-top-left w-[500px] lg:w-auto">
             <CardSwap
               width={500}
               height={320}
@@ -660,6 +660,9 @@ export default function LandingPage() {
               delay={4000}
               pauseOnHover
               skewAmount={5}
+              mobileCardDistance={30}
+              mobileVerticalDistance={20}
+              mobileSkewAmount={2}
               easing="elastic"
             >
               {features.map((f) => {
@@ -687,6 +690,7 @@ export default function LandingPage() {
                 );
               })}
             </CardSwap>
+            </div>
           </div>
         </div>
       </section>

@@ -188,6 +188,15 @@ function Band({
   };
   const { nodes, materials } = useGLTF(cardGLB);
   const texture = useTexture(lanyardImage || lanyard);
+
+  useEffect(() => {
+    const _warn = console.warn;
+    console.warn = (...args: any[]) => {
+      if (typeof args[0] === "string" && args[0].includes("GLTFLoader: Couldn't load texture")) return;
+      _warn(...args);
+    };
+    return () => { console.warn = _warn; };
+  }, []);
   const frontTex = useTexture(frontImage || BLANK_PIXEL);
   const backTex = useTexture(backImage || BLANK_PIXEL);
 
