@@ -272,6 +272,58 @@ export default function LandingPage() {
 
   return (
     <main className="relative flex flex-col min-h-screen bg-[#111415] text-white antialiased selection:bg-white selection:text-[#111415] font-inter">
+      <nav
+        className="bg-white/60 backdrop-blur-md rounded-full shadow-sm pl-4 pr-2 py-2 flex items-center justify-between w-full md:w-fit mx-auto fixed top-4 left-1/2 -translate-x-1/2 z-[9999] md:gap-8 transition-all duration-300 hover:bg-white/70 max-w-[95vw]"
+        role="navigation"
+        aria-label="Main navigation"
+      >
+        <Link
+          href="/"
+          className="flex items-center gap-2 text-[#2f3131] mr-4 sm:mr-8 transition-transform hover:scale-95 active:scale-90"
+        >
+          <Image src="/logo.png" alt="Voyiq" width={28} height={28} className="object-contain" />
+          <span className="font-amoria text-2xl text-[#2f3131] tracking-[0.02em]">
+            Voyiq.
+          </span>
+        </Link>
+
+        <div className="hidden md:flex items-center gap-6">
+          <a className="text-[16px] leading-[1.5] text-[#444748] hover:text-black transition-colors" href="#">
+            Destinations
+          </a>
+          <Link className="text-[16px] leading-[1.5] text-[#444748] hover:text-black transition-colors" href="/pricing">
+            Pricing
+          </Link>
+          <Link className="text-[16px] leading-[1.5] text-[#444748] hover:text-black transition-colors" href="/dashboard">
+            Dashboard
+          </Link>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleProceed}
+            className="bg-[#111415] text-white px-4 md:px-6 py-2 rounded-full text-[10px] md:text-[12px] leading-[1] tracking-[0.05em] font-semibold uppercase hover:bg-[#323536] transition-colors ml-2 md:ml-4 shadow-lg scale-95 active:scale-90"
+          >
+            Start Exploring
+          </button>
+          <button
+            className="md:hidden w-10 h-10 flex items-center justify-center text-[#2f3131] hover:bg-white/20 rounded-full transition-colors"
+            onClick={() => setMobileNavOpen(!mobileNavOpen)}
+            aria-label={mobileNavOpen ? "Close menu" : "Open menu"}
+          >
+            {mobileNavOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
+      </nav>
+
+      {mobileNavOpen && (
+        <div className="md:hidden fixed top-20 left-1/2 -translate-x-1/2 z-[9999] glass-panel rounded-2xl p-3 flex flex-col gap-1 backdrop-blur-xl w-fit min-w-[200px]">
+          <a className="text-[14px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors px-4 py-2.5 rounded-xl hover:bg-white/10" href="#">Destinations</a>
+          <Link className="text-[14px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors px-4 py-2.5 rounded-xl hover:bg-white/10" href="/pricing">Pricing</Link>
+          <Link className="text-[14px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors px-4 py-2.5 rounded-xl hover:bg-white/10" href="/dashboard">Dashboard</Link>
+        </div>
+      )}
+
       <section className="relative h-screen mb-12 px-0 pt-0 pb-0.5">
         <div className="absolute inset-0 mt-[6px] ml-[6px] mr-[6px] rounded-[20px_20px_0_0] overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-[#1a2a3a] via-[#111415] to-[#0d1b2a]" />
@@ -292,61 +344,6 @@ export default function LandingPage() {
         </div>
 
         <div className="relative z-10 h-full flex flex-col">
-            <nav
-              className="bg-white/60 backdrop-blur-md rounded-full shadow-sm pl-4 pr-2 py-2 flex items-center justify-between w-full md:w-fit mx-auto mt-[30px] md:gap-8 transition-all duration-300 hover:bg-white/70 max-w-[95vw]"
-              role="navigation"
-              aria-label="Main navigation"
-            >
-              <Link
-                href="/"
-                className="flex items-center gap-2 text-[#2f3131] mr-4 sm:mr-8 transition-transform hover:scale-95 active:scale-90"
-              >
-                <Image src="/logo.png" alt="Voyiq" width={28} height={28} className="object-contain" />
-                <span className="font-amoria text-2xl text-[#2f3131] tracking-[0.02em]">
-                  Voyiq.
-                </span>
-              </Link>
-
-              <div className="hidden md:flex items-center gap-6">
-                <a className="text-[16px] leading-[1.5] text-[#444748] hover:text-black transition-colors" href="#">
-                  Destinations
-                </a>
-                <Link className="text-[16px] leading-[1.5] text-[#444748] hover:text-black transition-colors" href="/pricing">
-                  Pricing
-                </Link>
-                <Link className="text-[16px] leading-[1.5] text-[#444748] hover:text-black transition-colors" href="/dashboard">
-                  Dashboard
-                </Link>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleProceed}
-                  className="bg-[#111415] text-white px-4 md:px-6 py-2 rounded-full text-[10px] md:text-[12px] leading-[1] tracking-[0.05em] font-semibold uppercase hover:bg-[#323536] transition-colors ml-2 md:ml-4 shadow-lg scale-95 active:scale-90"
-                >
-                  Start Exploring
-                </button>
-                <button
-                  className="md:hidden w-10 h-10 flex items-center justify-center text-[#2f3131] hover:bg-white/20 rounded-full transition-colors"
-                  onClick={() => setMobileNavOpen(!mobileNavOpen)}
-                  aria-label={mobileNavOpen ? "Close menu" : "Open menu"}
-                >
-                  {mobileNavOpen ? (
-                    <X className="w-5 h-5" />
-                  ) : (
-                    <Menu className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
-            </nav>
-
-            {mobileNavOpen && (
-              <div className="md:hidden mt-2 glass-panel rounded-2xl p-3 flex flex-col gap-1 backdrop-blur-xl w-fit mx-auto min-w-[200px]">
-                <a className="text-[14px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors px-4 py-2.5 rounded-xl hover:bg-white/10" href="#">Destinations</a>
-                <Link className="text-[14px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors px-4 py-2.5 rounded-xl hover:bg-white/10" href="/pricing">Pricing</Link>
-                <Link className="text-[14px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors px-4 py-2.5 rounded-xl hover:bg-white/10" href="/dashboard">Dashboard</Link>
-              </div>
-            )}
 
             <div className="flex-grow" />
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 w-full max-w-[1280px] mx-auto px-5">
