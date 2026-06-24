@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   LogOut,
@@ -72,8 +72,21 @@ export function AppNavbar() {
 
   const isActive = (href: string) => pathname === href;
 
+  const navbarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (navbarRef.current && !navbarRef.current.contains(e.target as Node)) {
+        setSidebarOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [sidebarOpen]);
+
   return (
-    <>
+    <div ref={navbarRef}>
       <nav className="fixed top-0 left-0 right-0 z-50">
         <div className="max-w-5xl mx-auto px-3 sm:px-4 mt-[18px]">
           <div className="bg-white/85 backdrop-blur-md rounded-full shadow-sm px-3 py-1.5 flex items-center justify-between">
@@ -196,9 +209,9 @@ export function AppNavbar() {
         </div>
 
         {sidebarOpen && (
-          <div className="md:hidden mt-2 mx-4 sm:mx-6 bg-white/85 backdrop-blur-xl rounded-2xl p-4 border border-black/10">
+          <div className="md:hidden fixed top-[72px] right-4 z-[9999] w-56 rounded-xl bg-white/90 backdrop-blur-xl border border-black/10 shadow-md p-1.5">
             {user && (
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-black/5 border border-black/10 mb-4">
+              <div className="px-3 py-2 flex items-center gap-3 border-b border-black/10 mb-1">
                 <div className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden bg-blue-500/20 border border-blue-500/30">
                   {user?.photoURL ? (
                     <Image src={user.photoURL} alt="" width={36} height={36} className="object-cover w-full h-full" />
@@ -216,49 +229,62 @@ export function AppNavbar() {
                 </div>
               </div>
             )}
-            {navLinks.map((link) => (
-              <Link
-                key={link.label}
-                href={link.href}
-                className={`block py-2 text-sm font-medium transition-colors duration-200 ${
-                  isActive(link.href) ? "text-[#2f3131]" : "text-[#444748] hover:text-[#2f3131]"
-                }`}
-                onClick={() => setSidebarOpen(false)}
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              const Icon = link.icon;
+              return (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className="relative flex select-none items-center gap-2.5 px-3 py-2 text-sm outline-none transition-colors cursor-pointer rounded-lg text-[#444748] hover:text-[#2f3131] focus:text-[#2f3131] focus:bg-black/5"
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <Icon className="w-4 h-4" />
+                  {link.label}
+                </Link>
+              );
+            })}
             <button
               onClick={() => { setPricingFeature("Pricing"); setSidebarOpen(false); }}
-              className="block w-full text-left py-2 text-sm font-medium text-[#444748] hover:text-[#2f3131]"
+              className="relative flex select-none items-center gap-2.5 px-3 py-2 text-sm outline-none transition-colors cursor-pointer rounded-lg text-[#444748] hover:text-[#2f3131] focus:text-[#2f3131] focus:bg-black/5 w-full text-left"
             >
+              <CreditCard className="w-4 h-4" />
               Pricing
             </button>
-            {premiumLinks.map((link) => (
-              <button
-                key={link.label}
-                onClick={() => handlePremiumNav(link.feature, link.route)}
-                className="block w-full text-left py-2 text-sm font-medium text-[#444748] hover:text-[#2f3131] flex items-center gap-1.5"
-              >
-                {link.label}
-                {!isPremium && <Lock className="w-3 h-3 text-yellow-500/60" />}
-              </button>
-            ))}
+            <div role="separator" aria-orientation="horizontal" className="-mx-1 my-1 h-px bg-black/10" />
+            {premiumLinks.map((link) => {
+              const Icon = link.icon;
+              return (
+                <button
+                  key={link.label}
+                  onClick={() => handlePremiumNav(link.feature, link.route)}
+                  className="relative flex select-none items-center gap-2.5 px-3 py-2 text-sm outline-none transition-colors cursor-pointer rounded-lg text-[#444748] hover:text-[#2f3131] focus:text-[#2f3131] focus:bg-black/5 w-full text-left"
+                >
+                  <Icon className="w-4 h-4" />
+                  {link.label}
+                  {!isPremium && <Lock className="w-3 h-3 text-yellow-500/60" />}
+                </button>
+              );
+            })}
             {!user ? (
-              <Link
-                href="/auth"
-                className="block mt-3 px-5 py-2 text-center text-sm font-semibold rounded-full bg-[#111415] text-white"
-                onClick={() => setSidebarOpen(false)}
-              >
-                Sign In
-              </Link>
+              <div className="mt-1 border-t border-black/10 pt-1">
+                <Link
+                  href="/auth"
+                  className="relative flex select-none items-center gap-2.5 px-3 py-2 text-sm outline-none transition-colors cursor-pointer rounded-lg text-[#444748] hover:text-[#2f3131] focus:text-[#2f3131] focus:bg-black/5"
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  Sign In
+                </Link>
+              </div>
             ) : (
-              <button
-                onClick={handleLogout}
-                className="block w-full mt-3 px-5 py-2 text-center text-sm font-semibold rounded-full bg-black/5 border border-black/10 text-[#444748] hover:text-[#2f3131]"
-              >
-                Logout
-              </button>
+              <div className="mt-1 border-t border-black/10 pt-1">
+                <button
+                  onClick={handleLogout}
+                  className="relative flex select-none items-center gap-2.5 px-3 py-2 text-sm outline-none transition-colors cursor-pointer rounded-lg text-red-500 hover:text-red-600 focus:text-red-600 focus:bg-black/5 w-full text-left"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </button>
+              </div>
             )}
           </div>
         )}
@@ -269,6 +295,6 @@ export function AppNavbar() {
         onClose={() => setPricingFeature(null)}
         feature={pricingFeature || undefined}
       />
-    </>
+    </div>
   );
 }

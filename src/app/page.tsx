@@ -27,6 +27,9 @@ import {
   Leaf,
   Menu,
   X,
+  LayoutDashboard,
+  CreditCard,
+  LogOut,
 } from "lucide-react";
 import Image from "next/image";
 import { PlanSelectionDialog } from "@/components/shared/PlanSelectionDialog";
@@ -144,6 +147,18 @@ export default function LandingPage() {
   };
 
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const navContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (navContainerRef.current && !navContainerRef.current.contains(e.target as Node)) {
+        setMobileNavOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [mobileNavOpen]);
 
 
 
@@ -227,6 +242,7 @@ export default function LandingPage() {
 
   return (
     <main className="relative flex flex-col min-h-screen bg-[#111415] text-white antialiased selection:bg-white selection:text-[#111415] font-inter">
+      <div ref={navContainerRef}>
       <nav
         className="bg-white/60 backdrop-blur-md rounded-full shadow-sm pl-3 pr-1.5 py-1.5 md:pl-4 md:pr-2 md:py-2 flex items-center justify-between w-full md:w-fit mx-auto fixed top-4 left-1/2 -translate-x-1/2 z-[9999] md:gap-8 transition-all duration-300 hover:bg-white/70 max-w-[95vw]"
         role="navigation"
@@ -271,13 +287,23 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {mobileNavOpen && (
-        <div className="md:hidden fixed top-16 left-1/2 -translate-x-1/2 z-[9999] glass-panel rounded-2xl p-3 flex flex-col gap-1 backdrop-blur-xl w-fit min-w-[200px]">
-          <Link className="text-[14px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors px-4 py-2.5 rounded-xl hover:bg-white/10" href="/destinations">Destinations</Link>
-          <Link className="text-[14px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors px-4 py-2.5 rounded-xl hover:bg-white/10" href="/pricing">Pricing</Link>
-          <Link className="text-[14px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors px-4 py-2.5 rounded-xl hover:bg-white/10" href="/dashboard">Dashboard</Link>
-        </div>
-      )}
+        {mobileNavOpen && (
+          <div className="md:hidden fixed top-[72px] right-4 z-[9999] w-56 rounded-xl bg-white/70 backdrop-blur-xl border border-black/10 shadow-md p-1.5">
+            <Link className="relative flex select-none items-center gap-2.5 px-3 py-2 text-sm outline-none transition-colors cursor-pointer rounded-lg text-[#444748] hover:text-[#2f3131]" href="/destinations" onClick={() => setMobileNavOpen(false)}>
+              <Map className="w-4 h-4" />
+              Destinations
+            </Link>
+            <Link className="relative flex select-none items-center gap-2.5 px-3 py-2 text-sm outline-none transition-colors cursor-pointer rounded-lg text-[#444748] hover:text-[#2f3131]" href="/pricing" onClick={() => setMobileNavOpen(false)}>
+              <CreditCard className="w-4 h-4" />
+              Pricing
+            </Link>
+            <Link className="relative flex select-none items-center gap-2.5 px-3 py-2 text-sm outline-none transition-colors cursor-pointer rounded-lg text-[#444748] hover:text-[#2f3131]" href="/dashboard" onClick={() => setMobileNavOpen(false)}>
+              <LayoutDashboard className="w-4 h-4" />
+              Dashboard
+            </Link>
+          </div>
+        )}
+      </div>
 
       <section className="relative h-screen mb-12 px-0 pt-16 md:pt-0 pb-0.5">
         <div className="absolute inset-0 mt-[6px] ml-[6px] mr-[6px] rounded-[20px_20px_0_0] overflow-hidden">
