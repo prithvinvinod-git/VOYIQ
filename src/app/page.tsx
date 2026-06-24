@@ -14,7 +14,6 @@ import { collection, query, where, doc } from "firebase/firestore";
 import {
   ArrowRight,
   ArrowLeft,
-  Star,
   MapPin,
   Brain,
   Wallet,
@@ -34,27 +33,6 @@ import { PlanSelectionDialog } from "@/components/shared/PlanSelectionDialog";
 import CardSwap, { Card as SwapCard } from "@/components/ui/CardSwap";
 import dynamic from "next/dynamic";
 const Lanyard = dynamic(() => import("@/components/ui/Lanyard"), { ssr: false });
-
-function useCounter(target: number, enabled: boolean, decimals = 0) {
-  const [count, setCount] = useState(0);
-  useEffect(() => {
-    if (!enabled) return;
-    const speed = 200;
-    const inc = target / speed;
-    let current = 0;
-    const timer = setInterval(() => {
-      current += inc;
-      if (current >= target) {
-        setCount(target);
-        clearInterval(timer);
-      } else {
-        setCount(decimals > 0 ? +current.toFixed(decimals) : Math.ceil(current));
-      }
-    }, 10);
-    return () => clearInterval(timer);
-  }, [enabled, target, decimals]);
-  return count;
-}
 
 export default function LandingPage() {
   const router = useRouter();
@@ -157,29 +135,6 @@ export default function LandingPage() {
     return () => { document.body.style.backgroundColor = prev; };
   }, []);
 
-  const [countersVisible, setCountersVisible] = useState(false);
-  const statsRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = statsRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setCountersVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.3 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  const travelers = useCounter(10, countersVisible);
-  const countries = useCounter(50, countersVisible);
-  const tripsPlanned = useCounter(1, countersVisible);
-  const rating = useCounter(4.9, countersVisible, 1);
-
   const destRef = useRef<HTMLDivElement>(null);
   const scrollDest = (dir: "left" | "right") => {
     destRef.current?.scrollBy({
@@ -273,7 +228,7 @@ export default function LandingPage() {
   return (
     <main className="relative flex flex-col min-h-screen bg-[#111415] text-white antialiased selection:bg-white selection:text-[#111415] font-inter">
       <nav
-        className="bg-white/60 backdrop-blur-md rounded-full shadow-sm pl-4 pr-2 py-2 flex items-center justify-between w-full md:w-fit mx-auto fixed top-4 left-1/2 -translate-x-1/2 z-[9999] md:gap-8 transition-all duration-300 hover:bg-white/70 max-w-[95vw]"
+        className="bg-white/60 backdrop-blur-md rounded-full shadow-sm pl-3 pr-1.5 py-1.5 md:pl-4 md:pr-2 md:py-2 flex items-center justify-between w-full md:w-fit mx-auto fixed top-4 left-1/2 -translate-x-1/2 z-[9999] md:gap-8 transition-all duration-300 hover:bg-white/70 max-w-[95vw]"
         role="navigation"
         aria-label="Main navigation"
       >
@@ -282,7 +237,7 @@ export default function LandingPage() {
           className="flex items-center gap-2 text-[#2f3131] mr-4 sm:mr-8 transition-transform hover:scale-95 active:scale-90"
         >
           <Image src="/logo.png" alt="Voyiq" width={28} height={28} className="object-contain" />
-          <span className="font-amoria text-2xl text-[#2f3131] tracking-[0.02em]">
+          <span className="font-amoria text-xl md:text-2xl text-[#2f3131] tracking-[0.02em]">
             Voyiq.
           </span>
         </Link>
@@ -307,7 +262,7 @@ export default function LandingPage() {
             Start Exploring
           </button>
           <button
-            className="md:hidden w-10 h-10 flex items-center justify-center text-[#2f3131] hover:bg-white/20 rounded-full transition-colors"
+            className="md:hidden w-8 h-8 flex items-center justify-center text-[#2f3131] hover:bg-white/20 rounded-full transition-colors"
             onClick={() => setMobileNavOpen(!mobileNavOpen)}
             aria-label={mobileNavOpen ? "Close menu" : "Open menu"}
           >
@@ -317,14 +272,14 @@ export default function LandingPage() {
       </nav>
 
       {mobileNavOpen && (
-        <div className="md:hidden fixed top-20 left-1/2 -translate-x-1/2 z-[9999] glass-panel rounded-2xl p-3 flex flex-col gap-1 backdrop-blur-xl w-fit min-w-[200px]">
+        <div className="md:hidden fixed top-16 left-1/2 -translate-x-1/2 z-[9999] glass-panel rounded-2xl p-3 flex flex-col gap-1 backdrop-blur-xl w-fit min-w-[200px]">
           <a className="text-[14px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors px-4 py-2.5 rounded-xl hover:bg-white/10" href="#">Destinations</a>
           <Link className="text-[14px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors px-4 py-2.5 rounded-xl hover:bg-white/10" href="/pricing">Pricing</Link>
           <Link className="text-[14px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors px-4 py-2.5 rounded-xl hover:bg-white/10" href="/dashboard">Dashboard</Link>
         </div>
       )}
 
-      <section className="relative h-screen mb-12 px-0 pt-0 pb-0.5">
+      <section className="relative h-screen mb-12 px-0 pt-16 md:pt-0 pb-0.5">
         <div className="absolute inset-0 mt-[6px] ml-[6px] mr-[6px] rounded-[20px_20px_0_0] overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-[#1a2a3a] via-[#111415] to-[#0d1b2a]" />
           <video
@@ -348,14 +303,14 @@ export default function LandingPage() {
             <div className="flex-grow" />
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 w-full max-w-[1280px] mx-auto px-5">
               <div className="flex-1 max-w-2xl">
-                <h1 className="text-[44px] md:text-[80px] leading-[1.05] tracking-[0.02em] font-bold text-white mb-4 drop-shadow-md font-amoria">
+                <h1 className="text-[34px] md:text-[80px] leading-[1.05] tracking-[0.02em] font-bold text-white mb-4 drop-shadow-md font-amoria">
                   Travel Refined. Experience{" "}
                   <br />
-                  <span className="font-instrument-serif text-[48px] md:text-[88px] leading-[1.05] font-light text-[#dbe1ff] italic hover:bg-gradient-to-r hover:from-amber-300 hover:via-yellow-200 hover:to-amber-400 hover:bg-clip-text hover:text-transparent transition-all duration-500">
+                  <span className="font-instrument-serif text-[38px] md:text-[88px] leading-[1.05] font-light text-[#dbe1ff] italic hover:bg-gradient-to-r hover:from-amber-300 hover:via-yellow-200 hover:to-amber-400 hover:bg-clip-text hover:text-transparent transition-all duration-500">
                     Luxury
                   </span>
                 </h1>
-                <p className="text-[18px] leading-[1.6] text-[#c4c7c8] max-w-lg drop-shadow">
+                <p className="text-[14px] md:text-[18px] leading-[1.6] text-[#c4c7c8] max-w-lg drop-shadow">
                   Elevate your journey with AI-crafted itineraries that adapt to
                   your rhythm. Immerse yourself in the world&apos;s most
                   breathtaking destinations without the friction of planning.
@@ -452,47 +407,7 @@ export default function LandingPage() {
           </div>
       </section>
 
-      <section
-        ref={statsRef}
-        className="py-16 border-y border-white/5 bg-[#111415]/30 backdrop-blur-sm relative z-10 px-5 md:px-16"
-        aria-label="Statistics"
-      >
-        <div className="max-w-[1280px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 reveal-stitch">
-          <div className="glass-panel p-6 rounded-xl flex flex-col items-center justify-center text-center">
-            <div className="text-[32px] leading-[1.2] tracking-[-0.02em] font-semibold text-white mb-1">
-              <span>{travelers}</span>K+
-            </div>
-            <div className="text-[12px] leading-[1] tracking-[0.05em] font-semibold text-[#c4c7c8] uppercase tracking-wider">
-              Travelers
-            </div>
-          </div>
-          <div className="glass-panel p-6 rounded-xl flex flex-col items-center justify-center text-center">
-            <div className="text-[32px] leading-[1.2] tracking-[-0.02em] font-semibold text-white mb-1">
-              {countries}+
-            </div>
-            <div className="text-[12px] leading-[1] tracking-[0.05em] font-semibold text-[#c4c7c8] uppercase tracking-wider">
-              Countries
-            </div>
-          </div>
-          <div className="glass-panel p-6 rounded-xl flex flex-col items-center justify-center text-center">
-            <div className="text-[32px] leading-[1.2] tracking-[-0.02em] font-semibold text-white mb-1">
-              {tripsPlanned}M+
-            </div>
-            <div className="text-[12px] leading-[1] tracking-[0.05em] font-semibold text-[#c4c7c8] uppercase tracking-wider">
-              Trips Planned
-            </div>
-          </div>
-          <div className="glass-panel p-6 rounded-xl flex flex-col items-center justify-center text-center">
-            <div className="text-[32px] leading-[1.2] tracking-[-0.02em] font-semibold text-white mb-1 flex items-baseline justify-center gap-1">
-              {rating}
-              <Star className="w-5 h-5 fill-current text-white" />
-            </div>
-            <div className="text-[12px] leading-[1] tracking-[0.05em] font-semibold text-[#c4c7c8] uppercase tracking-wider">
-              App Rating
-            </div>
-          </div>
-        </div>
-      </section>
+
 
       <section className="py-8 border-b border-white/5 overflow-hidden bg-[#0c0f10]/50 relative z-10">
         <div className="slider">
@@ -614,14 +529,14 @@ export default function LandingPage() {
             backImage="/logo.png"
           />
         </div>
-        <div className="max-w-[1280px] reveal-stitch mb-16 text-center" style={{ marginLeft: 'calc(50% - 640px - 90px)', marginRight: 'auto' }}>
+        <div className="max-w-[1280px] mx-auto reveal-stitch mb-16 text-center px-5 md:px-16">
           <span className="text-[12px] leading-[1] tracking-[0.05em] font-semibold text-[#c4c7c8] tracking-widest uppercase mb-4 inline-block">
             The Toolkit
           </span>
-          <h2 className="font-amoria text-[36px] md:text-[68px] leading-[1.1] font-bold text-white mb-4 tracking-[0.02em]">
+          <h2 className="font-amoria text-[26px] md:text-[68px] leading-[1.1] font-bold text-white mb-4 tracking-[0.02em]">
             Intelligence built in.
           </h2>
-          <p className="text-[18px] leading-[1.6] text-[#c4c7c8] max-w-2xl mx-auto">
+          <p className="text-[15px] md:text-[18px] leading-[1.6] text-[#c4c7c8] max-w-2xl mx-auto">
             Our platform combines cutting-edge AI with intuitive design to
             handle the complexity of travel planning, leaving you with just the
             joy of the journey.
@@ -647,8 +562,8 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="flex-shrink-0 w-full max-w-full lg:overflow-visible lg:w-[580px] h-[260px] lg:h-[520px] relative z-10 -mt-[80px] -ml-[80px]">
-            <div className="scale-[0.8] lg:scale-100 origin-top-left w-[500px] lg:w-auto">
+          <div className="flex-shrink-0 w-full max-w-full lg:overflow-visible lg:w-[580px] h-[300px] lg:h-[520px] relative z-10 mt-[50px] lg:mt-0 lg:-mt-[80px] lg:-ml-[80px]">
+            <div className="lg:scale-100 origin-top-left w-full lg:w-auto">
             <CardSwap
               width={500}
               height={320}

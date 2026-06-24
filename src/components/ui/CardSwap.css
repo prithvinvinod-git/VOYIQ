@@ -45,11 +45,14 @@
 
 @media (max-width: 768px) {
   .card-swap-container {
-    height: 260px;
-    transform: translateX(-150px);
+    height: 300px;
+    perspective: 600px;
+  }
+  .card-swap-inner {
+    transform: translate(-50%, -50%);
   }
   .card-swap-inner > div {
-    width: 340px !important;
-    height: 300px !important;
+    width: 310px !important;
+    height: 260px !important;
   }
 }
