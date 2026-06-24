@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from "react";
@@ -6,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Compass, Mail, Lock, Loader2, AlertCircle, ChevronLeft, User } from "lucide-react";
+import { Compass, Mail, Lock, Loader2, AlertCircle, ChevronLeft, User, ArrowRight, Sparkles } from "lucide-react";
 import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth, useFirestore } from "@/firebase";
@@ -20,33 +19,6 @@ import {
 import { doc, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-
-function FloatingParticle({ style }: { style: React.CSSProperties }) {
-  return (
-    <div
-      className="absolute rounded-full pointer-events-none bg-primary/40"
-      style={{
-        width: 3,
-        height: 3,
-        ...style,
-      }}
-    />
-  );
-}
-
-function OrbRing({ size, delay }: { size: number; delay: string }) {
-  return (
-    <div
-      className="absolute rounded-full pointer-events-none border border-border/30 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-      style={{
-        width: size,
-        height: size,
-        animation: `spin-slow ${16 + size / 60}s linear infinite`,
-        animationDelay: delay,
-      }}
-    />
-  );
-}
 
 export default function AuthPage() {
   const router = useRouter();
@@ -129,105 +101,83 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex overflow-hidden relative bg-background">
-      {/* LEFT: Visual panel */}
-      <div className="hidden lg:flex lg:w-1/2 relative flex-col items-center justify-center overflow-hidden bg-muted/50 border-r border-border">
-        {/* Orbital rings */}
-        {[200, 320, 440, 560].map((s, i) => (
-          <OrbRing key={i} size={s} delay={`${i * -3}s`} />
-        ))}
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#111415]">
+      {/* Video Background */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover opacity-60"
+        src="/hf_20260602_150901_c45b90ec-18d7-42ff-90e2-b95d7109e330.mp4"
+      >
+        <source
+          src="/hf_20260602_150901_c45b90ec-18d7-42ff-90e2-b95d7109e330.mp4"
+          type="video/mp4"
+        />
+      </video>
 
-        {/* Center globe */}
-        <div className="relative z-10 flex flex-col items-center">
-          <div className="w-32 h-32 rounded-full flex items-center justify-center mb-8 bg-primary/10 border border-primary/20">
-            <Compass className="w-16 h-16 text-primary" />
-          </div>
+      {/* Gradient overlays - matching homepage style */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#111415]/80 via-[#111415]/60 to-[#111415]/90" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#111415]/40 via-transparent to-[#111415]/40" />
 
-          <h2 className="text-4xl font-headline font-extrabold text-foreground mb-3 tracking-tight text-center">
-            VOYIQ
-          </h2>
-          <p className="text-muted-foreground text-center max-w-xs leading-relaxed">
-            Sophisticated AI travel planning for the modern voyager.
-          </p>
+      {/* Ambient glow */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full bg-indigo-500/8 blur-[100px] pointer-events-none" />
 
-          {/* Feature pills */}
-          <div className="flex flex-col gap-3 mt-10">
-            {["AI-Crafted Itineraries", "Real-time Budget Sync", "Collaborative Planning"].map((feat) => (
-              <div
-                key={feat}
-                className="flex items-center gap-3 bg-muted/30 border border-border rounded-full px-5 py-3"
-              >
-                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                <span className="text-sm font-medium text-muted-foreground">{feat}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* Back button */}
+      <NextLink
+        href="/"
+        className="absolute top-6 left-6 z-20 inline-flex items-center gap-2 text-sm text-white/50 hover:text-white transition-colors group"
+      >
+        <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+        Back
+      </NextLink>
 
-        {/* Floating particles */}
-        {[...Array(14)].map((_, i) => (
-          <FloatingParticle
-            key={i}
-            style={{
-              left: `${5 + i * 7}%`,
-              top: `${15 + (i % 5) * 16}%`,
-              animation: `particle-float ${4 + (i % 3) * 2}s ease-in-out ${i * -0.5}s infinite`,
-              opacity: 0.5 + (i % 3) * 0.15,
-              background: i % 3 === 0 ? "hsl(var(--primary) / 0.8)" : i % 3 === 1 ? "hsl(var(--accent) / 0.7)" : "hsl(var(--primary) / 0.6)",
-              width: i % 4 === 0 ? 4 : 2,
-              height: i % 4 === 0 ? 4 : 2,
-            }}
-          />
-        ))}
-      </div>
+      {/* Config error */}
+      {configError && (
+        <Alert variant="destructive" className="absolute top-20 left-1/2 -translate-x-1/2 z-20 max-w-md bg-destructive/20 border-destructive/30 backdrop-blur-xl">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Configuration Required</AlertTitle>
+          <AlertDescription className="text-xs leading-relaxed">{configError}</AlertDescription>
+        </Alert>
+      )}
 
-      {/* RIGHT: Auth form */}
-      <div className="flex-1 flex items-center justify-center p-6 relative">
-        <div className="w-full max-w-md space-y-5 relative z-10">
-          <NextLink
-            href="/"
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors mb-2 group"
-          >
-            <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            Back to home
-          </NextLink>
+      {/* Auth Card */}
+      <div className="relative z-10 w-full max-w-md px-4">
+        <div className="relative">
+          {/* Glow behind card */}
+          <div className="absolute -inset-4 rounded-3xl bg-blue-500/5 blur-[60px]" />
 
-          {configError && (
-            <Alert variant="destructive" className="bg-destructive/10 border-destructive/20">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Configuration Required</AlertTitle>
-              <AlertDescription className="text-xs leading-relaxed">{configError}</AlertDescription>
-            </Alert>
-          )}
+          <div className="relative glass-panel rounded-3xl border border-white/10 backdrop-blur-2xl overflow-hidden">
+            {/* Top gradient line */}
+            <div className="h-[2px] w-full bg-gradient-to-r from-blue-500/0 via-blue-400 to-blue-500/0" />
 
-          {/* Auth card */}
-          <div className="bg-card border border-border rounded-2xl overflow-hidden">
-            {/* Top gradient bar */}
-            <div className="bg-gradient-to-r from-sky-500 via-indigo-500 to-violet-500 h-0.5 w-full" />
-
-            <div className="p-8">
-              {/* Logo */}
+            <div className="p-8 md:p-10">
+              {/* Logo & Brand */}
               <div className="text-center mb-8">
-                <div className="flex justify-center mb-5">
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-primary text-primary-foreground">
-                    <Compass className="w-8 h-8" />
-                  </div>
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 border border-blue-400/20 mb-5">
+                  <Compass className="w-8 h-8 text-blue-400" />
                 </div>
-                <h1 className="text-3xl font-headline font-bold text-foreground">Get Started</h1>
-                <p className="text-muted-foreground mt-2 text-sm">Sign in or create an account to begin your journey.</p>
+                <h1 className="text-3xl font-headline font-bold text-white mb-1">
+                  VOYIQ
+                </h1>
+                <p className="text-sm text-white/40">
+                  Sign in to continue your journey
+                </p>
               </div>
 
               <Tabs defaultValue="google" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-8 bg-muted/50 border border-border rounded-xl p-1">
-                  <TabsTrigger value="google" className="rounded-lg font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm">Google</TabsTrigger>
-                  <TabsTrigger value="email" className="rounded-lg font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm">Email</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 mb-8 bg-white/5 border border-white/10 rounded-xl p-1">
+                  <TabsTrigger value="google" className="rounded-lg font-semibold text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:shadow-none text-white/50">Google</TabsTrigger>
+                  <TabsTrigger value="email" className="rounded-lg font-semibold text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:shadow-none text-white/50">Email</TabsTrigger>
                 </TabsList>
 
                 {/* Google tab */}
                 <TabsContent value="google" className="space-y-4 animate-fade-in">
                   <Button
                     variant="outline"
-                    className="w-full h-14 flex gap-3 text-base rounded-2xl font-medium bg-muted/50 border-border hover:bg-muted/80"
+                    className="w-full h-12 flex gap-3 text-sm rounded-xl font-medium bg-white/5 border-white/10 hover:bg-white/10 text-white"
                     onClick={handleGoogleSignIn}
                     disabled={loading}
                   >
@@ -248,22 +198,22 @@ export default function AuthPage() {
                 {/* Email tab */}
                 <TabsContent value="email" className="space-y-4 animate-fade-in">
                   <Tabs defaultValue="login" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 mb-6 h-9 bg-muted/50 border border-border rounded-xl p-1">
-                      <TabsTrigger value="login" className="text-xs rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Log In</TabsTrigger>
-                      <TabsTrigger value="signup" className="text-xs rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Sign Up</TabsTrigger>
+                    <TabsList className="grid w-full grid-cols-2 mb-6 h-9 bg-white/5 border border-white/10 rounded-xl p-1">
+                      <TabsTrigger value="login" className="text-xs rounded-lg data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:shadow-none text-white/50">Log In</TabsTrigger>
+                      <TabsTrigger value="signup" className="text-xs rounded-lg data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:shadow-none text-white/50">Sign Up</TabsTrigger>
                     </TabsList>
 
                     <div className="space-y-4">
                       <TabsContent value="signup" className="space-y-4 mt-0">
                         <div className="space-y-2">
-                          <Label htmlFor="signup-name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground opacity-60">Full Name</Label>
+                          <Label htmlFor="signup-name" className="text-[11px] font-semibold uppercase tracking-widest text-white/30">Full Name</Label>
                           <div className="relative">
-                            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                             <Input
                               id="signup-name"
                               type="text"
                               placeholder="John Doe"
-                              className="pl-11 h-12 rounded-xl bg-muted/50 border border-border"
+                              className="pl-11 h-12 rounded-xl bg-white/5 border-white/10 text-white placeholder:text-white/20"
                               value={name}
                               onChange={(e) => setName(e.target.value)}
                             />
@@ -272,28 +222,28 @@ export default function AuthPage() {
                       </TabsContent>
 
                       <div className="space-y-2">
-                        <Label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-muted-foreground opacity-60">Email Address</Label>
+                        <Label htmlFor="email" className="text-[11px] font-semibold uppercase tracking-widest text-white/30">Email Address</Label>
                         <div className="relative">
-                          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                           <Input
                             id="email"
                             type="email"
                             placeholder="name@example.com"
-                            className="pl-11 h-12 rounded-xl bg-muted/50 border border-border"
+                            className="pl-11 h-12 rounded-xl bg-white/5 border-white/10 text-white placeholder:text-white/20"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                           />
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="password" className="text-xs font-bold uppercase tracking-widest text-muted-foreground opacity-60">Password</Label>
+                        <Label htmlFor="password" className="text-[11px] font-semibold uppercase tracking-widest text-white/30">Password</Label>
                         <div className="relative">
-                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                           <Input
                             id="password"
                             type="password"
                             placeholder="••••••••"
-                            className="pl-11 h-12 rounded-xl bg-muted/50 border border-border"
+                            className="pl-11 h-12 rounded-xl bg-white/5 border-white/10 text-white placeholder:text-white/20"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                           />
@@ -302,7 +252,7 @@ export default function AuthPage() {
 
                       <TabsContent value="login" className="mt-0">
                         <Button
-                          className="w-full h-12 rounded-xl font-bold mt-2 bg-primary text-primary-foreground hover:bg-primary/90"
+                          className="w-full h-12 rounded-xl font-bold mt-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600 shadow-lg shadow-blue-500/20"
                           onClick={() => handleEmailAuth(false)}
                           disabled={loading}
                         >
@@ -311,7 +261,7 @@ export default function AuthPage() {
                       </TabsContent>
                       <TabsContent value="signup" className="mt-0">
                         <Button
-                          className="w-full h-12 rounded-xl font-bold mt-2 bg-primary text-primary-foreground hover:bg-primary/90"
+                          className="w-full h-12 rounded-xl font-bold mt-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600 shadow-lg shadow-blue-500/20"
                           onClick={() => handleEmailAuth(true)}
                           disabled={loading}
                         >
@@ -323,12 +273,18 @@ export default function AuthPage() {
                 </TabsContent>
               </Tabs>
 
-              <p className="text-xs text-muted-foreground text-center mt-6 px-4 leading-relaxed">
+              <p className="text-[11px] text-white/25 text-center mt-6 px-4 leading-relaxed">
                 By continuing, you agree to VOYIQ&apos;s Terms of Service and Privacy Policy.
               </p>
             </div>
           </div>
         </div>
+
+        {/* Bottom decorative text */}
+        <p className="text-center text-[11px] text-white/20 mt-6 flex items-center justify-center gap-2">
+          <Sparkles className="w-3 h-3" />
+          AI-powered travel planning for the modern voyager
+        </p>
       </div>
     </div>
   );
