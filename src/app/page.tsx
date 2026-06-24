@@ -243,9 +243,9 @@ export default function LandingPage() {
         </Link>
 
         <div className="hidden md:flex items-center gap-6">
-          <a className="text-[16px] leading-[1.5] text-[#444748] hover:text-black transition-colors" href="#">
+          <Link className="text-[16px] leading-[1.5] text-[#444748] hover:text-black transition-colors" href="/destinations">
             Destinations
-          </a>
+          </Link>
           <Link className="text-[16px] leading-[1.5] text-[#444748] hover:text-black transition-colors" href="/pricing">
             Pricing
           </Link>
@@ -273,7 +273,7 @@ export default function LandingPage() {
 
       {mobileNavOpen && (
         <div className="md:hidden fixed top-16 left-1/2 -translate-x-1/2 z-[9999] glass-panel rounded-2xl p-3 flex flex-col gap-1 backdrop-blur-xl w-fit min-w-[200px]">
-          <a className="text-[14px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors px-4 py-2.5 rounded-xl hover:bg-white/10" href="#">Destinations</a>
+          <Link className="text-[14px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors px-4 py-2.5 rounded-xl hover:bg-white/10" href="/destinations">Destinations</Link>
           <Link className="text-[14px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors px-4 py-2.5 rounded-xl hover:bg-white/10" href="/pricing">Pricing</Link>
           <Link className="text-[14px] leading-[1.5] text-[#c4c7c8] hover:text-white transition-colors px-4 py-2.5 rounded-xl hover:bg-white/10" href="/dashboard">Dashboard</Link>
         </div>

@@ -31,7 +31,7 @@ import {
 import { PricingOverlay } from "@/components/shared/PricingOverlay";
 
 const navLinks = [
-  { label: "Destinations", href: "#", icon: Map },
+  { label: "Destinations", href: "/destinations", icon: Map },
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
 ];
 
