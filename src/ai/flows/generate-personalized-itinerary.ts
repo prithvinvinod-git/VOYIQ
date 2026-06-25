@@ -7,6 +7,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { verifyIdToken } from '@/lib/serverAuth';
+import { withRetry } from '@/ai/retry';
 
 const GeneratePersonalizedItineraryInputSchema = z.object({
   idToken: z.string().describe('Firebase ID token for authentication.'),
@@ -59,7 +60,7 @@ const GeneratePersonalizedItineraryOutputSchema = z.object({
 export type GeneratePersonalizedItineraryOutput = z.infer<typeof GeneratePersonalizedItineraryOutputSchema>;
 
 export async function generatePersonalizedItinerary(input: GeneratePersonalizedItineraryInput): Promise<GeneratePersonalizedItineraryOutput> {
-  return generatePersonalizedItineraryFlow(input);
+  return withRetry(() => generatePersonalizedItineraryFlow(input));
 }
 
 const itineraryGenerationPrompt = ai.definePrompt({

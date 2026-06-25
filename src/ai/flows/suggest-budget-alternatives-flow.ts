@@ -10,6 +10,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { verifyIdToken, verifyTripAccess } from '@/lib/serverAuth';
+import { withRetry } from '@/ai/retry';
 
 const SuggestBudgetAlternativesInputSchema = z.object({
   idToken: z.string().describe('Firebase ID token for authentication.'),
@@ -38,7 +39,7 @@ const SuggestBudgetAlternativesOutputSchema = z.object({
 export type SuggestBudgetAlternativesOutput = z.infer<typeof SuggestBudgetAlternativesOutputSchema>;
 
 export async function suggestBudgetAlternatives(input: SuggestBudgetAlternativesInput): Promise<SuggestBudgetAlternativesOutput> {
-  return suggestBudgetAlternativesFlow(input);
+  return withRetry(() => suggestBudgetAlternativesFlow(input));
 }
 
 const prompt = ai.definePrompt({

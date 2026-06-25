@@ -12,6 +12,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { verifyTripAccess } from '@/lib/serverAuth';
+import { withRetry } from '@/ai/retry';
 
 // Define the schema for a single itinerary slot
 const ItinerarySlotSchema = z.object({
@@ -87,5 +88,5 @@ const replanDailyItineraryFlow = ai.defineFlow(
  * @returns A promise that resolves to the replanned daily itinerary.
  */
 export async function replanDailyItinerary(input: ReplanDailyItineraryInput): Promise<ReplanDailyItineraryOutput> {
-  return replanDailyItineraryFlow(input);
+  return withRetry(() => replanDailyItineraryFlow(input));
 }

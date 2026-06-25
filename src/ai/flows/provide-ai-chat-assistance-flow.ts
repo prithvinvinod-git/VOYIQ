@@ -11,6 +11,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { verifyTripAccess } from '@/lib/serverAuth';
+import { withRetry } from '@/ai/retry';
 
 // Define schemas
 const ChatMessageSchema = z.object({
@@ -167,5 +168,5 @@ const provideAIChatAssistanceFlow = ai.defineFlow(
 
 // Wrapper function to be exported
 export async function provideAIChatAssistance(input: AIChatInput): Promise<AIChatOutput> {
-  return provideAIChatAssistanceFlow(input);
+  return withRetry(() => provideAIChatAssistanceFlow(input));
 }

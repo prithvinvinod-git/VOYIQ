@@ -10,3 +10,6 @@ export const ai = genkit({
   ],
   model: 'googleai/gemini-2.5-flash',
 });
+
+/** Fallback model used when gemini-2.5-flash returns 503 */
+export const FALLBACK_MODEL = 'googleai/gemini-2.0-flash';
