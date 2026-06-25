@@ -76,6 +76,48 @@ const TripMap = dynamic(() => import("@/components/trip/TripMap"), {
 
 const CATEGORIES = ["Food", "Transport", "Stay", "Activities", "Misc"];
 
+/** Maps AI-generated category strings → canonical budget bucket */
+const CATEGORY_MAP: Record<string, string> = {
+  // Food
+  food: "Food", dining: "Food", restaurant: "Food", meal: "Food",
+  breakfast: "Food", lunch: "Food", dinner: "Food", cafe: "Food",
+  coffee: "Food", snack: "Food", street: "Food", culinary: "Food",
+  // Transport
+  transport: "Transport", transportation: "Transport", transfer: "Transport",
+  taxi: "Transport", cab: "Transport", uber: "Transport", auto: "Transport",
+  bus: "Transport", train: "Transport", metro: "Transport", subway: "Transport",
+  flight: "Transport", ferry: "Transport", boat: "Transport", rental: "Transport",
+  drive: "Transport", commute: "Transport",
+  // Stay
+  stay: "Stay", hotel: "Stay", accommodation: "Stay", hostel: "Stay",
+  resort: "Stay", airbnb: "Stay", lodge: "Stay", motel: "Stay",
+  guesthouse: "Stay", inn: "Stay", check: "Stay",
+  // Activities
+  activities: "Activities", activity: "Activities", sightseeing: "Activities",
+  tour: "Activities", attraction: "Activities", museum: "Activities",
+  temple: "Activities", monument: "Activities", park: "Activities",
+  adventure: "Activities", experience: "Activities", entertainment: "Activities",
+  shopping: "Activities", spa: "Activities", show: "Activities",
+  beach: "Activities", hike: "Activities", trekking: "Activities",
+  // Misc
+  misc: "Misc", miscellaneous: "Misc", other: "Misc",
+};
+
+function normaliseCategory(raw: string): string {
+  if (!raw) return "Misc";
+  // Exact match first (respects proper casing like "Food")
+  if (CATEGORIES.includes(raw)) return raw;
+  // Lowercase keyword lookup
+  const lower = raw.toLowerCase();
+  // Check full string
+  if (CATEGORY_MAP[lower]) return CATEGORY_MAP[lower];
+  // Check if any keyword is contained in the category string
+  for (const [keyword, bucket] of Object.entries(CATEGORY_MAP)) {
+    if (lower.includes(keyword)) return bucket;
+  }
+  return "Misc";
+}
+
 export default function TripDetail() {
   const { tripId } = useParams();
   const firestore = useFirestore();
@@ -91,6 +133,7 @@ export default function TripDetail() {
   const [expenseAmount, setExpenseAmount] = useState("");
   const [expenseCategory, setExpenseCategory] = useState("Misc");
   const [expenseNote, setExpenseNote] = useState("");
+  const [activeBudgetTab, setActiveBudgetTab] = useState<'budget' | 'ai'>('budget');
 
   useEffect(() => {
     if (!isUserLoading && !user) { router.push("/auth"); }
@@ -138,13 +181,11 @@ export default function TripDetail() {
       Misc: { planned: 0, actual: 0 },
     };
     (currentDay?.slots || []).forEach((slot: any) => {
-      const cat = slot.category || "Misc";
-      const key = CATEGORIES.includes(cat) ? cat : "Misc";
+      const key = normaliseCategory(slot.category);
       stats[key].planned += slot.estimatedCostINR || 0;
     });
     extraExpenses?.forEach((exp) => {
-      const cat = exp.category || "Misc";
-      const key = CATEGORIES.includes(cat) ? cat : "Misc";
+      const key = normaliseCategory(exp.category);
       stats[key].actual += exp.amount || 0;
     });
     return Object.entries(stats).map(([category, values]) => ({ category, ...values }));
@@ -498,21 +539,52 @@ export default function TripDetail() {
                           <h4 className={`text-sm font-bold ${slot.completed ? "text-white/50 line-through" : "text-white"}`}>
                             {slot.activity}
                           </h4>
+                          {/* Category pill */}
+                          {slot.category && (() => {
+                            const catStyles: Record<string, string> = {
+                              Food: "bg-orange-500/10 text-orange-400 border-orange-500/20",
+                              Transport: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+                              Stay: "bg-violet-500/10 text-violet-400 border-violet-500/20",
+                              Activities: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+                              Misc: "bg-white/5 text-white/40 border-white/10",
+                            };
+                            const style = catStyles[slot.category] || catStyles.Misc;
+                            return (
+                              <span className={`mt-1 inline-flex text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border ${style}`}>
+                                {slot.category}
+                              </span>
+                            );
+                          })()}
                         </div>
-                        {slot.estimatedCostINR && (
+                        {slot.estimatedCostINR ? (
                           <span className="text-[11px] font-medium text-white/30 whitespace-nowrap">
                             {trip?.currency} {slot.estimatedCostINR}
                           </span>
-                        )}
+                        ) : null}
                       </div>
                       <p className="text-xs text-white/40 mt-1 line-clamp-2">{slot.description}</p>
                       <div className="flex items-center gap-1.5 mt-2">
                         <MapPin className="w-3 h-3 text-white/30" />
                         <span className="text-[10px] text-white/30">{slot.location}</span>
                       </div>
+                      {/* Local phrase */}
+                      {slot.localPhrase?.romanised && (
+                        <div className="mt-3 flex items-start gap-2 px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.07]">
+                          <span className="text-base leading-none mt-0.5">💬</span>
+                          <div className="min-w-0">
+                            <p className="text-[11px] font-semibold text-white/80 italic">
+                              "{slot.localPhrase.romanised}"
+                            </p>
+                            <p className="text-[10px] text-white/35 mt-0.5">
+                              {slot.localPhrase.meaning}
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
+
               ))}
               {(!currentDay?.slots || currentDay.slots.length === 0) && (
                 <div className="glass-panel rounded-2xl py-12 text-center">
@@ -545,102 +617,121 @@ export default function TripDetail() {
             </div>
           </div>
 
-          {/* BudgetSync */}
-          <div className="glass-panel rounded-2xl p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <CreditCard className="w-4 h-4 text-violet-400" />
-              <span className="text-xs font-bold text-white/60 uppercase tracking-widest">BudgetSync</span>
-            </div>
-            <BudgetBreakdown data={budgetStats} currency={trip?.currency || "USD"} />
-            <div className="mt-4 p-4 rounded-xl bg-white/5 border border-white/10">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[10px] uppercase font-bold text-white/30 tracking-widest">Left to Spend</span>
-                <span className="text-lg font-bold text-white tabular-nums">{trip?.currency} {budgetProgress.remaining.toFixed(0)}</span>
-              </div>
-              <div className="h-2 rounded-full bg-white/5 overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-yellow-500 to-red-500 transition-all duration-500"
-                  style={{ width: `${budgetProgress.percent}%` }}
-                />
-              </div>
-              <p className="text-[10px] text-right text-white/30 font-bold mt-2 tabular-nums">{Math.round(budgetProgress.percent)}% OF TOTAL BUDGET</p>
-            </div>
-            <Button
-              className="w-full h-11 rounded-xl font-semibold text-xs mt-4 bg-white/5 border border-white/10 text-white hover:bg-white/10"
-              variant="outline"
-              onClick={() => setIsExpenseDialogOpen(true)}
-            >
-              <Plus className="w-4 h-4 mr-2" /> Log Actual Expense
-            </Button>
-          </div>
-
-          {/* AI Optimizer */}
-          <div className="glass-panel rounded-2xl p-5">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-500/10 border border-blue-500/20">
-                <Brain className="text-blue-400 w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-headline font-bold text-white">AI Optimizer</h3>
-                <p className="text-[11px] text-white/40">Smart suggestions to balance your spend.</p>
-              </div>
+          {/* BudgetSync + AI Optimizer — tabbed */}
+          <div className="glass-panel rounded-2xl overflow-hidden">
+            {/* Tab header */}
+            <div className="flex border-b border-white/5">
+              <button
+                onClick={() => setActiveBudgetTab('budget')}
+                className={`flex-1 flex items-center justify-center gap-2 py-3.5 text-[11px] font-bold uppercase tracking-widest transition-all duration-200 ${
+                  activeBudgetTab === 'budget'
+                    ? 'text-violet-400 border-b-2 border-violet-400 bg-violet-500/5'
+                    : 'text-white/30 hover:text-white/60 hover:bg-white/5'
+                }`}
+              >
+                <CreditCard className="w-3.5 h-3.5" /> BudgetSync
+              </button>
+              <button
+                onClick={() => setActiveBudgetTab('ai')}
+                className={`flex-1 flex items-center justify-center gap-2 py-3.5 text-[11px] font-bold uppercase tracking-widest transition-all duration-200 ${
+                  activeBudgetTab === 'ai'
+                    ? 'text-blue-400 border-b-2 border-blue-400 bg-blue-500/5'
+                    : 'text-white/30 hover:text-white/60 hover:bg-white/5'
+                }`}
+              >
+                <Brain className="w-3.5 h-3.5" /> AI Optimizer
+              </button>
             </div>
 
-            {isAiLoading ? (
-              <div className="py-10 text-center rounded-xl bg-white/5">
-                <Loader2 className="w-8 h-8 text-blue-400 mx-auto mb-3 animate-spin" />
-                <p className="text-xs text-white/40">Running budget optimization analysis...</p>
-              </div>
-            ) : aiSuggestions ? (
-              <div className="space-y-3">
-                {aiSuggestions.alternatives.map((alt, i) => (
-                  <div key={i} className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                        {alt.category}
-                      </span>
-                      <div className="flex items-center gap-1 font-bold text-xs text-emerald-400">
-                        <TrendingDown className="w-3 h-3" />
-                        Save ~{trip?.currency} {alt.estimatedSavings}
-                      </div>
+            <div className="p-5">
+              {/* ── Budget tab ── */}
+              {activeBudgetTab === 'budget' && (
+                <div className="space-y-4">
+                  <BudgetBreakdown data={budgetStats} currency={trip?.currency || "USD"} />
+                  <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] uppercase font-bold text-white/30 tracking-widest">Left to Spend</span>
+                      <span className="text-lg font-bold text-white tabular-nums">{trip?.currency} {budgetProgress.remaining.toFixed(0)}</span>
                     </div>
-                    <p className="text-xs text-white/60 leading-relaxed">{alt.suggestion}</p>
+                    <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-yellow-500 to-red-500 transition-all duration-500"
+                        style={{ width: `${budgetProgress.percent}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-right text-white/30 font-bold mt-2 tabular-nums">{Math.round(budgetProgress.percent)}% OF TOTAL BUDGET</p>
                   </div>
-                ))}
-                <Button
-                  onClick={handleRunOptimizer}
-                  className="w-full h-10 rounded-xl text-xs font-semibold gap-2 bg-white/5 border border-white/10 text-white hover:bg-white/10"
-                >
-                  <Sparkles className="w-3.5 h-3.5" /> Recalculate Suggestions
-                </Button>
-              </div>
-            ) : (
-              <div className="py-8 text-center rounded-xl bg-white/5 space-y-3">
-                {budgetStats.some(stat => stat.actual > stat.planned) ? (
-                  <>
-                    <AlertTriangle className="w-8 h-8 text-orange-400 mx-auto opacity-70" />
-                    <div className="space-y-1">
-                      <p className="text-xs text-white font-bold">Category Budgets Exceeded</p>
-                      <p className="text-[11px] text-white/40 px-4">Get AI tips to balance your spending.</p>
+                  <Button
+                    className="w-full h-10 rounded-xl font-semibold text-xs bg-white/5 border border-white/10 text-white hover:bg-white/10"
+                    variant="outline"
+                    onClick={() => setIsExpenseDialogOpen(true)}
+                  >
+                    <Plus className="w-4 h-4 mr-2" /> Log Actual Expense
+                  </Button>
+                </div>
+              )}
+
+              {/* ── AI Optimizer tab ── */}
+              {activeBudgetTab === 'ai' && (
+                <div>
+                  {isAiLoading ? (
+                    <div className="py-10 text-center rounded-xl bg-white/5">
+                      <Loader2 className="w-8 h-8 text-blue-400 mx-auto mb-3 animate-spin" />
+                      <p className="text-xs text-white/40">Running budget optimization analysis...</p>
                     </div>
-                    <Button
-                      onClick={handleRunOptimizer}
-                      className="h-9 px-5 rounded-xl text-xs font-semibold gap-2 bg-blue-500 hover:bg-blue-600 text-white"
-                    >
-                      <Brain className="w-3.5 h-3.5" /> Run Budget Optimizer
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="w-8 h-8 text-blue-400 mx-auto opacity-70" />
-                    <div className="space-y-1">
-                      <p className="text-xs text-white font-bold">Budget is On Track</p>
-                      <p className="text-[11px] text-white/40 px-4">Your spending is within the planned budget.</p>
+                  ) : aiSuggestions ? (
+                    <div className="space-y-3">
+                      {aiSuggestions.alternatives.map((alt, i) => (
+                        <div key={i} className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                              {alt.category}
+                            </span>
+                            <div className="flex items-center gap-1 font-bold text-xs text-emerald-400">
+                              <TrendingDown className="w-3 h-3" />
+                              Save ~{trip?.currency} {alt.estimatedSavings}
+                            </div>
+                          </div>
+                          <p className="text-xs text-white/60 leading-relaxed">{alt.suggestion}</p>
+                        </div>
+                      ))}
+                      <Button
+                        onClick={handleRunOptimizer}
+                        className="w-full h-10 rounded-xl text-xs font-semibold gap-2 bg-white/5 border border-white/10 text-white hover:bg-white/10"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" /> Recalculate Suggestions
+                      </Button>
                     </div>
-                  </>
-                )}
-              </div>
-            )}
+                  ) : (
+                    <div className="py-8 text-center rounded-xl bg-white/5 space-y-3">
+                      {budgetStats.some(stat => stat.actual > stat.planned) ? (
+                        <>
+                          <AlertTriangle className="w-8 h-8 text-orange-400 mx-auto opacity-70" />
+                          <div className="space-y-1">
+                            <p className="text-xs text-white font-bold">Category Budgets Exceeded</p>
+                            <p className="text-[11px] text-white/40 px-4">Get AI tips to balance your spending.</p>
+                          </div>
+                          <Button
+                            onClick={handleRunOptimizer}
+                            className="h-9 px-5 rounded-xl text-xs font-semibold gap-2 bg-blue-500 hover:bg-blue-600 text-white"
+                          >
+                            <Brain className="w-3.5 h-3.5" /> Run Budget Optimizer
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-8 h-8 text-blue-400 mx-auto opacity-70" />
+                          <div className="space-y-1">
+                            <p className="text-xs text-white font-bold">Budget is On Track</p>
+                            <p className="text-[11px] text-white/40 px-4">Your spending is within the planned budget.</p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
         </div>
