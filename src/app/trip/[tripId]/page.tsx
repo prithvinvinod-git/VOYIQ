@@ -76,6 +76,13 @@ const TripMap = dynamic(() => import("@/components/trip/TripMap"), {
 
 const CATEGORIES = ["Food", "Transport", "Stay", "Activities", "Misc"];
 
+const CURRENCY_RATES_TO_INR: Record<string, number> = {
+  INR: 1,
+  USD: 83,
+  EUR: 90,
+  GBP: 105,
+};
+
 /** Maps AI-generated category strings → canonical budget bucket */
 const CATEGORY_MAP: Record<string, string> = {
   // Food
@@ -180,16 +187,19 @@ export default function TripDetail() {
       Activities: { planned: 0, actual: 0 },
       Misc: { planned: 0, actual: 0 },
     };
+    const rate = trip?.currency ? (CURRENCY_RATES_TO_INR[trip.currency] || 83) : 83;
     (currentDay?.slots || []).forEach((slot: any) => {
       const key = normaliseCategory(slot.category);
-      stats[key].planned += slot.estimatedCostINR || 0;
+      // Convert estimatedCostINR (INR) to the trip's currency
+      const costInTripCurrency = (slot.estimatedCostINR || 0) / rate;
+      stats[key].planned += costInTripCurrency;
     });
     extraExpenses?.forEach((exp) => {
       const key = normaliseCategory(exp.category);
       stats[key].actual += exp.amount || 0;
     });
     return Object.entries(stats).map(([category, values]) => ({ category, ...values }));
-  }, [currentDay, extraExpenses]);
+  }, [currentDay, extraExpenses, trip?.currency]);
 
   const budgetProgress = useMemo(() => {
     if (!trip) return { total: 0, spent: 0, remaining: 0, percent: 0 };
@@ -290,9 +300,10 @@ export default function TripDetail() {
     const flightStart = new Date(tripStart);
     flightStart.setDate(flightStart.getDate() - 1);
     const flightStartStr = flightStart.toISOString().split("T")[0];
-    const origin = encodeURIComponent(trip.origin || "");
-    const destination = encodeURIComponent(trip.destination || "");
-    window.open(`https://www.google.com/travel/flights?q=Flights from ${origin} to ${destination} on ${flightStartStr} returning ${trip.endDate} for ${trip.numTravelers} adults`, "_blank");
+    const origin = trip.origin || "";
+    const destination = trip.destination || "";
+    const query = encodeURIComponent(`Flights from ${origin} to ${destination} on ${flightStartStr} returning ${trip.endDate} for ${trip.numTravelers} adults`);
+    window.open(`https://www.google.com/travel/flights/search?q=${query}`, "_blank");
   };
 
   const handleRunOptimizer = async () => {
@@ -556,11 +567,15 @@ export default function TripDetail() {
                             );
                           })()}
                         </div>
-                        {slot.estimatedCostINR ? (
-                          <span className="text-[11px] font-medium text-white/30 whitespace-nowrap">
-                            {trip?.currency} {slot.estimatedCostINR}
-                          </span>
-                        ) : null}
+                        {slot.estimatedCostINR ? (() => {
+                          const rate = trip?.currency ? (CURRENCY_RATES_TO_INR[trip.currency] || 83) : 83;
+                          const costInTripCurrency = slot.estimatedCostINR / rate;
+                          return (
+                            <span className="text-[11px] font-medium text-white/30 whitespace-nowrap">
+                              {trip?.currency} {costInTripCurrency.toFixed(0)}
+                            </span>
+                          );
+                        })() : null}
                       </div>
                       <p className="text-xs text-white/40 mt-1 line-clamp-2">{slot.description}</p>
                       <div className="flex items-center gap-1.5 mt-2">

@@ -357,29 +357,43 @@ function TripWizardContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#111415] flex flex-col items-center justify-center gap-10 relative px-6">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-violet-500/5" />
-        <div className="w-20 h-20 rounded-3xl flex items-center justify-center animate-float-slow bg-blue-500/10 border border-blue-500/30">
-          <Sparkles className="w-9 h-9 text-blue-400 animate-pulse" />
+      <div className="min-h-screen bg-[#111415] flex flex-col items-center justify-center gap-10 relative overflow-hidden px-6">
+        {/* Video background */}
+        <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
+          <video autoPlay muted loop playsInline className="w-full h-full object-cover opacity-25">
+            <source src="/hf_20260331_074327_a4d6275d-82d9-4c83-bfbe-f1fb2213c17c.mp4" type="video/mp4" />
+          </video>
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `radial-gradient(circle at center, rgba(17,20,21,0.2) 0%, #111415 100%)`,
+            }}
+          />
         </div>
-        <ProgressiveFluxLoader
-          duration={18}
-          loop={false}
-          showLabel
-          phases={[
-            { at: 0,   label: "Gathering intel..." },
-            { at: 20,  label: "Designing routes..." },
-            { at: 45,  label: "Optimising budget..." },
-            { at: 70,  label: "Curating experiences..." },
-            { at: 90,  label: "Almost ready..." },
-            { at: 100, label: "Ready!" },
-          ]}
-          className="w-full max-w-md"
-          textClassName="text-white"
-        />
-        <p className="text-white/40 text-sm text-center">
-          Our AI is crafting your personalised itinerary
-        </p>
+
+        <div className="relative z-10 flex flex-col items-center gap-10 max-w-md w-full">
+          <div className="w-20 h-20 rounded-3xl flex items-center justify-center animate-float-slow bg-blue-500/10 border border-blue-500/30 backdrop-blur-md">
+            <Sparkles className="w-9 h-9 text-blue-400 animate-pulse" />
+          </div>
+          <ProgressiveFluxLoader
+            duration={18}
+            loop={false}
+            showLabel
+            phases={[
+              { at: 0,   label: "Gathering intel..." },
+              { at: 20,  label: "Designing routes..." },
+              { at: 45,  label: "Optimising budget..." },
+              { at: 70,  label: "Curating experiences..." },
+              { at: 90,  label: "Almost ready..." },
+              { at: 100, label: "Ready!" },
+            ]}
+            className="w-full"
+            textClassName="text-white"
+          />
+          <p className="text-white/40 text-sm text-center">
+            Our AI is crafting your personalised itinerary
+          </p>
+        </div>
       </div>
     );
   }

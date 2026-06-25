@@ -4,7 +4,7 @@
  * @fileOverview Genkit flow for generating personalized travel itineraries.
  */
 
-import { ai, FALLBACK_MODEL } from '@/ai/genkit';
+import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { verifyIdToken } from '@/lib/serverAuth';
 import { withRetry } from '@/ai/retry';
@@ -78,7 +78,7 @@ const GeneratePersonalizedItineraryOutputSchema = z.object({
 export type GeneratePersonalizedItineraryOutput = z.infer<typeof GeneratePersonalizedItineraryOutputSchema>;
 
 export async function generatePersonalizedItinerary(input: GeneratePersonalizedItineraryInput): Promise<GeneratePersonalizedItineraryOutput> {
-  return withRetry(() => generatePersonalizedItineraryFlow(input));
+  return withRetry(() => generatePersonalizedItineraryFlow(input), { maxAttempts: 5, baseDelayMs: 2000 });
 }
 
 export const itineraryGenerationPrompt = ai.definePrompt({
@@ -171,28 +171,7 @@ const generatePersonalizedItineraryFlow = ai.defineFlow(
   },
   async (input) => {
     await verifyIdToken(input.idToken);
-    
-    let output;
-    try {
-      const response = await itineraryGenerationPrompt(input);
-      output = response.output;
-    } catch (error: any) {
-      const isRetryable =
-        error?.status === 'UNAVAILABLE' ||
-        error?.code === 503 ||
-        error?.message?.includes('503') ||
-        error?.message?.includes('high demand') ||
-        error?.message?.includes('UNAVAILABLE');
-
-      if (isRetryable) {
-        console.warn(`[AI] Primary model (gemini-2.5-flash) failed with 503. Falling back to ${FALLBACK_MODEL}...`);
-        const response = await itineraryGenerationPrompt(input, { model: FALLBACK_MODEL });
-        output = response.output;
-      } else {
-        throw error;
-      }
-    }
-
+    const { output } = await itineraryGenerationPrompt(input);
     if (!output) throw new Error('Failed to generate itinerary.');
     // Strip any undefined properties to make it safe for Next.js Server Action serialization and Firestore writes
     return JSON.parse(JSON.stringify(output));
