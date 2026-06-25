@@ -197,8 +197,46 @@ export default function TripDetail() {
 
   const handleNavigateAll = () => {
     if (!isPremium) { setIsPlanDialogOpen(true); return; }
-    router.push(`/ar/${tripId}`);
+
+    const slots = currentDay?.slots || [];
+    const validSlots = slots.filter((s: any) => s.lat && s.lng);
+
+    if (validSlots.length === 0) {
+      // No coordinates — fall back to a destination search
+      const query = encodeURIComponent(trip?.destination || "");
+      window.open(`https://www.google.com/maps/search/${query}`, "_blank");
+      return;
+    }
+
+    if (validSlots.length === 1) {
+      // Single location — open it directly
+      const { lat, lng, activity } = validSlots[0];
+      window.open(
+        `https://www.google.com/maps/search/?api=1&query=${lat},${lng}&query_place_id=${encodeURIComponent(activity)}`,
+        "_blank"
+      );
+      return;
+    }
+
+    // Multiple locations → build a full directions URL
+    // origin = first stop, destination = last stop, waypoints = everything in between
+    const origin = `${validSlots[0].lat},${validSlots[0].lng}`;
+    const destination = `${validSlots[validSlots.length - 1].lat},${validSlots[validSlots.length - 1].lng}`;
+    const waypoints = validSlots
+      .slice(1, -1)
+      .map((s: any) => `${s.lat},${s.lng}`)
+      .join("|");
+
+    const url =
+      `https://www.google.com/maps/dir/?api=1` +
+      `&origin=${encodeURIComponent(origin)}` +
+      `&destination=${encodeURIComponent(destination)}` +
+      (waypoints ? `&waypoints=${encodeURIComponent(waypoints)}` : "") +
+      `&travelmode=walking`;
+
+    window.open(url, "_blank");
   };
+
 
   const handleLaunchAR = () => {
     if (!isPremium) { setIsPlanDialogOpen(true); }
@@ -278,7 +316,29 @@ export default function TripDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-[#111415] text-white">
+    <div className="min-h-screen bg-[#111415] text-white relative overflow-x-hidden">
+      {/* Hero video background — same as dashboard */}
+      <div className="absolute top-0 left-0 w-full h-[55vh] overflow-hidden pointer-events-none z-0">
+        <video autoPlay muted loop playsInline className="w-full h-full object-cover object-top opacity-30">
+          <source src="/hf_20260602_150901_c45b90ec-18d7-42ff-90e2-b95d7109e330.mp4" type="video/mp4" />
+        </video>
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `linear-gradient(to bottom,
+              transparent 0%,
+              transparent 25%,
+              rgba(17,20,21,0.08) 40%,
+              rgba(17,20,21,0.2) 55%,
+              rgba(17,20,21,0.5) 70%,
+              rgba(17,20,21,0.75) 82%,
+              #111415 92%,
+              #111415 100%
+            )`,
+          }}
+        />
+      </div>
+
       <AppNavbar />
 
       {/* Trip Hero */}

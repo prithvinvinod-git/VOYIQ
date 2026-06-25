@@ -102,8 +102,10 @@ export function AppNavbar() {
                 <Link
                   key={link.label}
                   href={link.href}
-                  className={`text-sm font-medium transition-colors duration-200 ${
-                    isActive(link.href) ? "text-[#2f3131]" : "text-[#444748] hover:text-[#2f3131]"
+                  className={`text-sm font-medium px-3 py-1.5 rounded-lg transition-all duration-200 ${
+                    isActive(link.href)
+                      ? "text-[#2f3131] bg-black/[0.05]"
+                      : "text-[#444748] hover:text-[#2f3131] hover:bg-black/[0.03]"
                   }`}
                 >
                   {link.label}
@@ -111,8 +113,10 @@ export function AppNavbar() {
               ))}
               <button
                 onClick={() => setPricingFeature("Pricing")}
-                className={`text-sm font-medium transition-colors duration-200 ${
-                  pathname === "/pricing" ? "text-[#2f3131]" : "text-[#444748] hover:text-[#2f3131]"
+                className={`text-sm font-medium px-3 py-1.5 rounded-lg transition-all duration-200 ${
+                  pathname === "/pricing"
+                    ? "text-[#2f3131] bg-black/[0.05]"
+                    : "text-[#444748] hover:text-[#2f3131] hover:bg-black/[0.03]"
                 }`}
               >
                 Pricing
@@ -121,7 +125,7 @@ export function AppNavbar() {
                 <button
                   key={link.label}
                   onClick={() => handlePremiumNav(link.feature, link.route)}
-                  className="text-sm font-medium text-[#444748] hover:text-[#2f3131] transition-colors duration-200 flex items-center gap-1.5"
+                  className="text-sm font-medium px-3 py-1.5 rounded-lg text-[#444748] hover:text-[#2f3131] hover:bg-black/[0.03] transition-all duration-200 flex items-center gap-1.5"
                 >
                   {link.label}
                   {!isPremium && <Lock className="w-3 h-3 text-yellow-500/60" />}
