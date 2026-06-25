@@ -249,7 +249,21 @@ function TripWizardContent() {
     groupType: "solo" as any,
     totalBudget: prefilledBudget ? parseInt(prefilledBudget) : 0,
     currency: prefilledCurrency || "USD",
-    travelStyle: prefilledStyle ? prefilledStyle.split(",") : ([] as string[]),
+    travelStyle: prefilledStyle
+      ? prefilledStyle.split(",").map((s) => {
+          const trimmed = s.trim();
+          const lower = trimmed.toLowerCase();
+          if (lower === "luxury") return "Luxury";
+          if (lower === "adventure") return "Adventure";
+          if (lower === "balanced" || lower === "culture") return "Culture";
+          if (lower === "food") return "Food";
+          if (lower === "nature") return "Nature";
+          if (lower === "budget") return "Budget";
+          if (lower === "wellness") return "Wellness";
+          if (lower === "backpacking") return "Backpacking";
+          return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+        })
+      : ([] as string[]),
     pace: "Balanced" as any,
     dietaryPreferences: ["No preference"] as any[],
     mobilityNeeds: false,

@@ -21,6 +21,7 @@ interface FlowingMenuProps {
   borderColor?: string;
   autoPlay?: boolean;
   autoPlayInterval?: number;
+  onItemClick?: (item: FlowingMenuItem) => void;
 }
 
 function FlowingMenu({
@@ -33,6 +34,7 @@ function FlowingMenu({
   borderColor = "#ffffff",
   autoPlay = false,
   autoPlayInterval = 2000,
+  onItemClick,
 }: FlowingMenuProps) {
   const [activeIndex, setActiveIndex] = useState(-1);
   const [paused, setPaused] = useState(false);
@@ -69,6 +71,7 @@ function FlowingMenu({
               if (activeIndex !== idx) setActiveIndex(-1);
             }}
             onResume={() => setPaused(false)}
+            onItemClick={onItemClick}
           />
         ))}
       </nav>
@@ -89,6 +92,7 @@ function MenuItem({
   itemIndex,
   onPause,
   onResume,
+  onItemClick,
 }: FlowingMenuItem & {
   speed: number;
   textColor: string;
@@ -99,6 +103,7 @@ function MenuItem({
   itemIndex?: number;
   onPause?: () => void;
   onResume?: () => void;
+  onItemClick?: (item: FlowingMenuItem) => void;
 }) {
   const itemRef = useRef<HTMLDivElement>(null);
   const marqueeRef = useRef<HTMLDivElement>(null);
@@ -220,11 +225,19 @@ function MenuItem({
       .to(marqueeInnerRef.current, { y: edge === "top" ? "101%" : "-101%" }, 0);
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    if (onItemClick) {
+      e.preventDefault();
+      onItemClick({ link, text, image });
+    }
+  };
+
   return (
     <div className="menu__item" ref={itemRef} style={{ borderColor }}>
       <a
         className="menu__item-link"
         href={link}
+        onClick={handleClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         style={{ color: textColor, opacity: isActive ? 0 : undefined }}
