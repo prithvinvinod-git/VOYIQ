@@ -1,8 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import firebaseLogo from "@/assets/brand-logos/firebase.png";
+import vercelLogo from "@/assets/brand-logos/vercel.png";
+import geminiLogo from "@/assets/brand-logos/gemini.png";
+import mapsLogo from "@/assets/brand-logos/maps.png";
 import {
   useUser,
   useFirestore,
@@ -31,7 +36,6 @@ import {
   CreditCard,
   LogOut,
 } from "lucide-react";
-import Image from "next/image";
 import { PlanSelectionDialog } from "@/components/shared/PlanSelectionDialog";
 import CardSwap, { Card as SwapCard } from "@/components/ui/CardSwap";
 import dynamic from "next/dynamic";
@@ -578,6 +582,40 @@ export default function LandingPage() {
             handle the complexity of travel planning, leaving you with just the
             joy of the journey.
           </p>
+        </div>
+
+        <div className="hidden md:flex max-w-[1280px] mx-auto px-5 md:px-16 mb-10 reveal-stitch">
+          <div className="flex flex-col gap-2 w-fit ml-[250px]">
+            <div className="flex gap-2">
+              <div className="cursor-target relative w-[270px] h-[60px] rounded-xl border border-white/10 bg-white/[0.03] flex items-center justify-center transition-all duration-500 hover:-translate-y-0.5 hover:border-blue-400/60 hover:bg-white/[0.06] group overflow-hidden">
+                <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ boxShadow: 'inset 0 0 20px rgba(59,130,246,0.15)' }} />
+                <div className="relative z-10 flex items-center gap-2">
+                  <Image src={firebaseLogo} alt="Firebase" width={20} height={20} className="w-5 h-5 object-contain" />
+                  <span className="text-[14px] leading-none tracking-[0.05em] font-semibold uppercase text-[#c4c7c8]/60 group-hover:text-blue-300 transition-colors duration-300">Firebase</span>
+                </div>
+              </div>
+              <div className="cursor-target relative w-[200px] h-[60px] rounded-xl border border-white/10 bg-white/[0.03] flex items-center justify-center transition-all duration-500 hover:-translate-y-0.5 hover:border-violet-400/60 hover:bg-white/[0.06] group overflow-hidden">
+                <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ boxShadow: 'inset 0 0 20px rgba(139,92,246,0.15)' }} />
+                <div className="relative z-10 flex items-center gap-2">
+                  <Image src={vercelLogo} alt="Vercel" width={20} height={20} className="w-5 h-5 object-contain" />
+                  <span className="text-[14px] leading-none tracking-[0.05em] font-semibold uppercase text-[#c4c7c8]/60 group-hover:text-violet-300 transition-colors duration-300">Vercel</span>
+                </div>
+              </div>
+            </div>
+            <div className="cursor-target relative w-[478px] h-[60px] rounded-xl border border-white/10 bg-white/[0.03] flex items-center justify-center transition-all duration-500 hover:-translate-y-0.5 hover:border-emerald-400/60 hover:bg-white/[0.06] group overflow-hidden">
+              <div className="relative z-10 flex items-center gap-2">
+                <Image src={geminiLogo} alt="Gemini" width={20} height={20} className="w-5 h-5 object-contain" />
+                <span className="text-[14px] leading-none tracking-[0.05em] font-semibold uppercase text-[#c4c7c8]/60 group-hover:text-emerald-300 transition-colors duration-300">Google Gemini | Genkit Generative AI</span>
+              </div>
+            </div>
+            <div className="cursor-target relative w-[220px] h-[60px] rounded-xl border border-white/10 bg-white/[0.03] flex items-center justify-center transition-all duration-500 hover:-translate-y-0.5 hover:border-amber-400/60 hover:bg-white/[0.06] group overflow-hidden">
+              <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ boxShadow: 'inset 0 0 20px rgba(251,191,36,0.15)' }} />
+              <div className="relative z-10 flex items-center gap-2">
+                <Image src={mapsLogo} alt="Google Maps" width={20} height={20} className="w-5 h-5 object-contain" />
+                <span className="text-[14px] leading-none tracking-[0.05em] font-semibold uppercase text-[#c4c7c8]/60 group-hover:text-amber-300 transition-colors duration-300">Google Maps</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="max-w-[1280px] mx-auto flex flex-col lg:flex-row lg:items-start lg:justify-between gap-12 reveal-stitch">
