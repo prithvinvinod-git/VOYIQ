@@ -431,11 +431,11 @@ export default function DestinationsPage() {
           `}</style>
           <div className="relative w-28 h-28 animate-oscillate flex items-center justify-center">
             <Image
-              src="/logo.png"
+              src="/whitelogo.png"
               alt="Voyiq Logo"
               width={112}
               height={112}
-              className="object-contain filter drop-shadow-[0_0_15px_rgba(59,130,246,0.6)]"
+              className="object-contain"
               priority
             />
           </div>

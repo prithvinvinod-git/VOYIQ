@@ -247,8 +247,6 @@ export default function TripDetail() {
   };
 
   const handleNavigateAll = () => {
-    if (!isPremium) { setIsPlanDialogOpen(true); return; }
-
     const slots = currentDay?.slots || [];
     const validSlots = slots.filter((s: any) => s.lat && s.lng);
 

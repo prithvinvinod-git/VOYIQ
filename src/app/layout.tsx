@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/hooks/use-theme";
 export const metadata: Metadata = {
   title: 'VOYIQ — AI-Powered Travel Intelligence',
   description: 'Next-generation AI travel planning. Smart itineraries, real-time budget sync, and collaborative trip design for modern explorers.',
+  icons: { icon: '/whitelogo.png' },
 };
 
 export default function RootLayout({

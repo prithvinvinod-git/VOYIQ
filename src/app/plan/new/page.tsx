@@ -39,6 +39,7 @@ import { generatePersonalizedItinerary } from "@/ai/flows/generate-personalized-
 import { AppNavbar } from "@/components/layout/AppNavbar";
 import { PlanSelectionDialog } from "@/components/shared/PlanSelectionDialog";
 import { ProgressiveFluxLoader } from "@/components/ui/progressive-flux-loader";
+import Image from "next/image";
 import {
   Select,
   SelectContent,
@@ -386,8 +387,24 @@ function TripWizardContent() {
         </div>
 
         <div className="relative z-10 flex flex-col items-center gap-10 max-w-md w-full">
-          <div className="w-20 h-20 rounded-3xl flex items-center justify-center animate-float-slow bg-blue-500/10 border border-blue-500/30 backdrop-blur-md">
-            <Sparkles className="w-9 h-9 text-blue-400 animate-pulse" />
+          <style>{`
+            @keyframes oscillate {
+              0%, 100% { transform: translateY(0px) rotate(-3deg) scale(1); }
+              50% { transform: translateY(-15px) rotate(3deg) scale(1.05); }
+            }
+            .animate-oscillate {
+              animation: oscillate 4s ease-in-out infinite;
+            }
+          `}</style>
+          <div className="relative w-28 h-28 animate-oscillate flex items-center justify-center">
+            <Image
+              src="/whitelogo.png"
+              alt="Voyiq Logo"
+              width={112}
+              height={112}
+              className="object-contain"
+              priority
+            />
           </div>
           <ProgressiveFluxLoader
             duration={18}
