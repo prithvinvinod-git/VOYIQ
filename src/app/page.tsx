@@ -35,6 +35,7 @@ import Image from "next/image";
 import { PlanSelectionDialog } from "@/components/shared/PlanSelectionDialog";
 import CardSwap, { Card as SwapCard } from "@/components/ui/CardSwap";
 import dynamic from "next/dynamic";
+import TargetCursor from "@/components/ui/TargetCursor";
 const Lanyard = dynamic(() => import("@/components/ui/Lanyard"), { ssr: false });
 
 export default function LandingPage() {
@@ -146,6 +147,7 @@ export default function LandingPage() {
     });
   };
 
+  const featuresRef = useRef<HTMLDivElement>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const navContainerRef = useRef<HTMLDivElement>(null);
 
@@ -543,6 +545,7 @@ export default function LandingPage() {
       </section>
 
       <section
+        ref={featuresRef}
         className="py-24 relative z-10 px-5 md:px-16 bg-[#0c0f10]/80 border-t border-white/5 overflow-hidden lg:overflow-visible"
         aria-label="Features"
       >
@@ -555,6 +558,14 @@ export default function LandingPage() {
             backImage="/logo.png"
           />
         </div>
+        <TargetCursor
+          containerRef={featuresRef}
+          spinDuration={2}
+          hideDefaultCursor={true}
+          parallaxOn={true}
+          cursorColor="#ffffff"
+          cursorColorOnTarget="#60a5fa"
+        />
         <div className="max-w-[1280px] mx-auto reveal-stitch mb-16 text-center px-5 md:px-16">
           <span className="text-[12px] leading-[1] tracking-[0.05em] font-semibold text-[#c4c7c8] tracking-widest uppercase mb-4 inline-block">
             The Toolkit
@@ -576,15 +587,15 @@ export default function LandingPage() {
               experience — from neural trip planning to real-time budget
               intelligence.
             </p>
-            <div className="flex flex-wrap gap-3">
-              {features.map((f) => (
-                <span
-                  key={f.title}
-                  className="text-[11px] leading-none tracking-[0.05em] font-semibold uppercase text-[#c4c7c8]/60 border border-white/10 rounded-full px-3.5 py-2"
-                >
-                  {f.title}
-                </span>
-              ))}
+              <div className="flex flex-wrap gap-3">
+                {features.map((f) => (
+                  <span
+                    key={f.title}
+                    className="cursor-target text-[11px] leading-none tracking-[0.05em] font-semibold uppercase text-[#c4c7c8]/60 border border-white/10 rounded-full px-3.5 py-2"
+                  >
+                    {f.title}
+                  </span>
+                ))}
             </div>
           </div>
 
@@ -607,7 +618,7 @@ export default function LandingPage() {
                 const Icon = f.icon;
                 return (
                   <SwapCard key={f.title}>
-                    <div className="p-7 flex flex-col h-full">
+                    <div className="cursor-target p-7 flex flex-col h-full">
                       <div className="flex items-center gap-3 mb-4">
                         <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center ring-1 ring-white/[0.08]">
                           <Icon className="w-5 h-5 text-white" />
