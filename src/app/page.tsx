@@ -550,7 +550,7 @@ export default function LandingPage() {
 
       <section
         ref={featuresRef}
-        className="py-24 relative z-10 px-5 md:px-16 bg-[#0c0f10]/80 border-t border-white/5 overflow-hidden lg:overflow-visible"
+        className="pt-[100px] pb-0 relative z-10 px-5 md:px-16 bg-[#0c0f10]/80 border-t border-white/5 overflow-hidden lg:overflow-visible"
         aria-label="Features"
       >
         <div className="absolute left-0 top-0 w-[700px] h-[800px] -translate-x-1/4 -translate-y-[100px] pointer-events-none z-20 hidden md:block">
@@ -587,11 +587,11 @@ export default function LandingPage() {
         <div className="hidden md:flex max-w-[1280px] mx-auto px-5 md:px-16 mb-10 reveal-stitch">
           <div className="flex flex-col gap-2 w-fit ml-[250px]">
             <div className="flex gap-2">
-              <div className="cursor-target relative w-[270px] h-[60px] rounded-xl border border-white/10 bg-white/[0.03] flex items-center justify-center transition-all duration-500 hover:-translate-y-0.5 hover:border-blue-400/60 hover:bg-white/[0.06] group overflow-hidden">
-                <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ boxShadow: 'inset 0 0 20px rgba(59,130,246,0.15)' }} />
+              <div className="cursor-target relative w-[270px] h-[60px] rounded-xl border border-white/10 bg-white/[0.03] flex items-center justify-center transition-all duration-500 hover:-translate-y-0.5 hover:border-orange-400/60 hover:bg-white/[0.06] group overflow-hidden">
+                <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ boxShadow: 'inset 0 0 20px rgba(251,146,60,0.15)' }} />
                 <div className="relative z-10 flex items-center gap-2">
                   <Image src={firebaseLogo} alt="Firebase" width={20} height={20} className="w-5 h-5 object-contain" />
-                  <span className="text-[14px] leading-none tracking-[0.05em] font-semibold uppercase text-[#c4c7c8]/60 group-hover:text-blue-300 transition-colors duration-300">Firebase</span>
+                  <span className="text-[14px] leading-none tracking-[0.05em] font-semibold uppercase text-[#c4c7c8]/60 group-hover:text-orange-300 transition-colors duration-300">Firebase</span>
                 </div>
               </div>
               <div className="cursor-target relative w-[200px] h-[60px] rounded-xl border border-white/10 bg-white/[0.03] flex items-center justify-center transition-all duration-500 hover:-translate-y-0.5 hover:border-violet-400/60 hover:bg-white/[0.06] group overflow-hidden">
@@ -619,7 +619,7 @@ export default function LandingPage() {
         </div>
 
         <div className="max-w-[1280px] mx-auto flex flex-col lg:flex-row lg:items-start lg:justify-between gap-12 reveal-stitch">
-          <div className="hidden lg:block flex-1 max-w-lg lg:pt-[300px]">
+          <div className="hidden lg:block flex-1 max-w-lg lg:pt-[100px]">
             <p className="text-[15px] leading-relaxed text-[#c4c7c8] mb-6">
               Every feature is crafted to eliminate friction and amplify the
               experience — from neural trip planning to real-time budget
@@ -684,7 +684,7 @@ export default function LandingPage() {
 
       <section className="py-24 relative z-10 px-5 md:px-16 mb-12">
         <div className="max-w-4xl mx-auto glass-panel p-8 md:p-20 rounded-3xl text-center relative overflow-hidden border border-[#444748] reveal-stitch">
-          <h2 className="font-instrument-serif text-[36px] md:text-[68px] leading-[1.1] font-bold text-white mb-6 tracking-tight">
+          <h2 className="font-amoria text-[36px] md:text-[68px] leading-[1.1] font-bold text-white mb-6 tracking-tight">
             Ready for your next journey?
           </h2>
           <p className="text-[18px] leading-[1.6] text-[#c4c7c8] mb-10 max-w-xl mx-auto">
